@@ -1,0 +1,34 @@
+{
+  "name": "medici",
+  "version": "0.1.0",
+  "description": "Simple double-entry accounting for Node + Mongoose",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/jraede/medici"
+  },
+  "keywords": [
+    "accounting",
+    "account",
+    "finance"
+  ],
+  "author": {
+    "name": "Jason Raede"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jraede/medici/issues"
+  },
+  "dependencies": {
+    "underscore": "~1.5.2",
+    "mongoose": "~3.8.0",
+    "q":"*"
+  },
+  "readme": "medici\n======\n\nDouble-entry accounting system for nodejs + mongoose\n",
+  "readmeFilename": "README.md",
+  "_id": "medici@0.1.0",
+  "_from": "medici@"
+}
