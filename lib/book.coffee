@@ -9,7 +9,6 @@ module.exports = class Book
 		@name = name
 
 	entry:(memo, date=null, original_journal=null) ->
-		console.log 'writing with original journal:', original_journal
 		return entry.write(@, memo, date,original_journal)
 
 
@@ -52,11 +51,9 @@ module.exports = class Book
 		for key,val of query
 			if keys.indexOf(key) >= 0
 				# If it starts with a _ assume it's a reference
-				###if key.substr(0, 1) is '_'
-					console.log 'setting val to obj id'
+				if key.substr(0, 1) is '_' and val instanceof String
+					
 					val = mongoose.Types.ObjectId(val)
-					console.log 'set val to oj id'
-				console.log val###
 				parsed[key] = val
 			else
 				# Assume *_id is an OID
@@ -85,15 +82,15 @@ module.exports = class Book
 				debit:
 					$sum:'$debit'
 		
-
 		mongoose.model('Medici_Transaction').aggregate match, group, (err, result) ->
 			if err
 				deferred.reject(err)
 			else
-
 				result = result.shift()
+				if !result?
+					return deferred.resolve(0)
+
 				total = result.credit - (result.debit)
-				console.log 'got total:', total
 				deferred.resolve(total)
 			
 		return deferred.promise

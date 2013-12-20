@@ -5,14 +5,12 @@ module.exports = class Entry
 	@write:(book, memo, date=null,original_journal=null) ->
 		return new @(book, memo, date, original_journal)
 	constructor:(book, memo, date,original_journal) ->
-		console.log 'constructed entry with original journal:', original_journal
 		@book = book
 		journalClass = mongoose.model('Medici_Journal')
 		@journal = new journalClass()
 		@journal.memo = memo
 
 		if original_journal
-			console.log 'setting journal original to', original_journal
 			@journal._original_journal = original_journal
 
 		if !date
@@ -76,7 +74,6 @@ module.exports = class Entry
 		meta = {}
 		for key,val of extra
 			if keys.indexOf(key) >= 0
-				console.log key, 'is part of schema, setting to', val
 				transaction[key] = val
 			else
 				meta[key] = val
@@ -103,7 +100,7 @@ module.exports = class Entry
 	commit: (success) ->
 		deferred = Q.defer()
 
-		console.log 'committing in commit method...'
+
 		@transactionsSaved = 0
 		total = 0.0
 		for transaction in @transactions
@@ -120,7 +117,6 @@ module.exports = class Entry
 				saves.push(@saveTransaction(trans))
 
 			Q.all(saves).then =>
-				console.log 'saved journal...'
 				@journal.save (err, result) =>
 					if err
 						mongoose.model('Medici_Transaction').remove 
@@ -130,7 +126,6 @@ module.exports = class Entry
 						deferred.resolve(@journal)
 						if success? then success(@journal)
 			, (err) ->
-				console.log 'could not save all transactions', err
 				deferred.reject(err)
 
 

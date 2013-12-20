@@ -1,6 +1,6 @@
 {
   "name": "medici",
-  "version": "0.5.0",
+  "version": "0.7.1",
   "description": "Simple double-entry accounting for Node + Mongoose",
   "main": "index.js",
   "scripts": {
