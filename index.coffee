@@ -50,6 +50,9 @@ journalSchema = new Schema
 	void_reason:String
 
 
+# In case you need to override it, this is separate.
+journalSchema.methods.getTransactionModel = ->
+	return mongoose.model('Medici_Transaction')
 
 journalSchema.methods.void = (book, reason) ->
 	deferred = Q.defer()
@@ -62,10 +65,9 @@ journalSchema.methods.void = (book, reason) ->
 	else
 		@void_reason = reason
 
-	console.log 'VOID REASON IS:', @void_reason
 	voidTransaction = (trans_id) =>
 		d = Q.defer()
-		mongoose.model('Medici_Transaction').findByIdAndUpdate trans_id,
+		@getTransactionModel().findByIdAndUpdate trans_id,
 			voided:true
 			void_reason:@void_reason
 		, (err, trans) ->
@@ -110,7 +112,6 @@ journalSchema.methods.void = (book, reason) ->
 				entry.debit(trans.account_path, trans.credit, meta)
 			if trans.debit
 				entry.credit(trans.account_path, trans.debit, meta)
-			console.log 'did credit or debit'
 
 		entry.commit().then (entry) ->
 			deferred.resolve(entry)

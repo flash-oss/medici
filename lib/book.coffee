@@ -7,6 +7,8 @@ module.exports = class Book
 
 	constructor:(name) ->
 		@name = name
+		@transactionModel = mongoose.model('Medici_Transaction')
+		@journalModel = mongoose.model('Medici_Journal')
 
 	entry:(memo, date=null, original_journal=null) ->
 		return entry.write(@, memo, date,original_journal)
@@ -47,7 +49,7 @@ module.exports = class Book
 				$lte:new Date(parseInt(query.end_date))
 			delete query.end_date
 
-		keys = _.keys(mongoose.model('Medici_Transaction').schema.paths)
+		keys = _.keys(@transactionModel.schema.paths)
 		for key,val of query
 			if keys.indexOf(key) >= 0
 				# If it starts with a _ assume it's a reference
@@ -82,7 +84,7 @@ module.exports = class Book
 				debit:
 					$sum:'$debit'
 		
-		mongoose.model('Medici_Transaction').aggregate match, group, (err, result) ->
+		@transactionModel.aggregate match, group, (err, result) ->
 			if err
 				deferred.reject(err)
 			else
@@ -100,7 +102,7 @@ module.exports = class Book
 		deferred = Q.defer()
 
 		query = @parseQuery(query)
-		q = mongoose.model('Medici_Transaction').find(query)
+		q = @transactionModel.find(query)
 		if populate
 			for pop in populate
 				q.populate(pop)
@@ -108,15 +110,15 @@ module.exports = class Book
 			if err
 				deferred.reject(err)
 			else
+
 				deferred.resolve(results)
-		
+
 		return deferred.promise
 
 	void:(journal_id, reason) ->
 		deferred = Q.defer()
 
-		# Find the journal
-		mongoose.model('Medici_Journal').findById journal_id, (err, journal) =>
+		@journalModel.findById journal_id, (err, journal) =>
 			if err
 				deferred.reject(err)
 			else
@@ -128,13 +130,15 @@ module.exports = class Book
 		return deferred.promise
 
 	listAccounts: ->
+		console.log 'Listing accounts'
 		deferred = Q.defer()
 
-		mongoose.model('Medici_Transaction').find
+		@transactionModel.find
 			book:@name
 		.distinct 'accounts', (err, results) ->
 			# Make array
 			if err
+				console.error err
 				deferred.reject(err)
 			else
 				final = []
@@ -144,5 +148,6 @@ module.exports = class Book
 					for acct in paths
 						prev.push(acct)
 						final.push(prev.join(':'))
+				console.log 'resolving'
 				deferred.resolve(_.uniq(final))
 		return deferred.promise

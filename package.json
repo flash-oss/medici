@@ -1,6 +1,6 @@
 {
   "name": "medici",
-  "version": "0.7.1",
+  "version": "0.9.1",
   "description": "Simple double-entry accounting for Node + Mongoose",
   "main": "index.js",
   "scripts": {
@@ -25,10 +25,18 @@
   "dependencies": {
     "underscore": "~1.5.2",
     "mongoose": "~3.8.0",
-    "q":"*"
+    "q": "*"
   },
   "readme": "medici\n======\n\nDouble-entry accounting system for nodejs + mongoose\n",
   "readmeFilename": "README.md",
-  "_id": "medici@0.1.0",
-  "_from": "medici@"
+  "_id": "medici@0.7.1",
+  "_from": "medici@~0.7.1",
+  "homepage": "https://github.com/jraede/medici",
+  "dist": {
+    "shasum": "0cb8b943c064f695d5cccd78c381a2711e7759c9"
+  },
+  "_resolved": "https://registry.npmjs.org/medici/-/medici-0.7.1.tgz",
+  "devDependencies": {
+    "should": "~2.1.1"
+  }
 }
