@@ -6,7 +6,7 @@ module.exports = class Entry
 		return new @(book, memo, date, original_journal)
 	constructor:(book, memo, date,original_journal) ->
 		@book = book
-		journalClass = mongoose.model('Medici_Journal')
+		journalClass = @book.journalClass
 		@journal = new journalClass()
 		@journal.memo = memo
 
@@ -39,7 +39,7 @@ module.exports = class Entry
 			timestamp:new Date()
 
 		# Loop through the meta and see if there are valid keys on the schema
-		keys = _.keys(mongoose.model('Medici_Transaction').schema.paths)
+		keys = _.keys(@book.transactionClass.schema.paths)
 		meta = {}
 		for key,val of extra
 			if keys.indexOf(key) >= 0
@@ -70,7 +70,7 @@ module.exports = class Entry
 			_original_journal:@journal._original_journal
 		
 		# Loop through the meta and see if there are valid keys on the schema
-		keys = _.keys(mongoose.model('Medici_Transaction').schema.paths)
+		keys = _.keys(@book.transactionClass.schema.paths)
 		meta = {}
 		for key,val of extra
 			if keys.indexOf(key) >= 0
@@ -87,7 +87,7 @@ module.exports = class Entry
 	saveTransaction:(transaction) ->
 		d = Q.defer()
 
-		modelClass = mongoose.model('Medici_Transaction')
+		modelClass = @book.transactionClass
 
 		model = new modelClass(transaction)
 		@journal._transactions.push(model._id)
@@ -119,7 +119,7 @@ module.exports = class Entry
 			Q.all(saves).then =>
 				@journal.save (err, result) =>
 					if err
-						mongoose.model('Medici_Transaction').remove 
+						@book.transactionClass.remove 
 							_journal:@journal._id
 						deferred.reject(new Error('Failure to save journal'))
 					else
