@@ -68,7 +68,7 @@ describe('Medici', function() {
       });
     });
   });
-  return it('should list all accounts', function(done) {
+  it('should list all accounts', function(done) {
     var book;
     book = new medici.book('MyBook');
     return book.listAccounts().then(function(accounts) {
@@ -76,6 +76,21 @@ describe('Medici', function() {
       accounts.indexOf('Assets:Receivable').should.be.greaterThan(-1);
       accounts.indexOf('Income').should.be.greaterThan(-1);
       accounts.indexOf('Income:Rent').should.be.greaterThan(-1);
+      return done();
+    });
+  });
+  return it('should return ledger with array of accounts', function(done) {
+    var book;
+    book = new medici.book('MyBook');
+    return book.ledger({
+      account: ['Assets', 'Income']
+    }).then(function(results) {
+      var res, _i, _len;
+      results.length.should.equal(4);
+      for (_i = 0, _len = results.length; _i < _len; _i++) {
+        res = results[_i];
+        ((res.account_path.indexOf('Assets') >= 0) || (res.account_path.indexOf('Income') >= 0)).should.equal(true);
+      }
       return done();
     });
   });

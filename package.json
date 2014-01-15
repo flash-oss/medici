@@ -1,6 +1,6 @@
 {
   "name": "medici",
-  "version": "0.9.2",
+  "version": "0.10.0",
   "description": "Simple double-entry accounting for Node + Mongoose",
   "main": "index.js",
   "scripts": {
@@ -29,10 +29,14 @@
   },
   "readme": "medici\n======\n\nDouble-entry accounting system for nodejs + mongoose\n",
   "readmeFilename": "README.md",
-
   "homepage": "https://github.com/jraede/medici",
-
   "devDependencies": {
-    "should": "~2.1.1"
+    "should": "~2.1.1",
+    "grunt": "~0.4.2",
+    "grunt-exec": "~0.4.3",
+    "grunt-contrib-coffee": "~0.8.0",
+    "grunt-sed": "~0.1.1",
+    "grunt-contrib-watch": "~0.5.3",
+    "semver": "~2.2.1"
   }
 }
