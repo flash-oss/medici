@@ -30,13 +30,11 @@ describe 'Medici', ->
 		book.balance
 			account:'Assets'
 		.then (bal) ->
-			console.log 'Balance:', bal
 			bal.should.equal(-1200)
 
 			book.balance
 				account:'Assets:Receivable'
 			.then (bal) ->
-				console.log 'Checked balance of accts receivable, got to here'
 				bal.should.equal(-1200)
 
 				book.balance
@@ -45,16 +43,15 @@ describe 'Medici', ->
 					bal.should.equal(0)
 
 					done()
-		, (err) ->
-			console.log err.stack
 
 	it 'should return full ledger', (done) ->
 		book = new medici.book('MyBook')
 		book.ledger
 			account:'Assets'
-		.then (results) ->
-			results.length.should.equal(2)
+		.then (res) ->
+			res.results.length.should.equal(2)
 			done()
+
 
 	it 'should allow you to void a journal entry', (done) ->
 		book = new medici.book('MyBook')
@@ -78,9 +75,9 @@ describe 'Medici', ->
 		book = new medici.book('MyBook')
 		book.ledger
 			account:['Assets','Income']
-		.then (results) ->
-			results.length.should.equal(6)
-			for res in results
+		.then (response) ->
+			response.results.length.should.equal(6)
+			for res in response.results
 				((res.account_path.indexOf('Assets') >= 0) or (res.account_path.indexOf('Income') >= 0)).should.equal(true)
 			done()
 
@@ -90,11 +87,11 @@ describe 'Medici', ->
 			account:['Assets','Income']
 			perPage:2
 			page:3
-		.then (results) ->
-			console.log 'Got to here', results
-			results.length.should.equal(2)
-
+		.then (response) ->
+			response.results.length.should.equal(2)
+			response.total.should.equal(6)
 			# verify correct sorting
-			results[0].memo.should.equal('Test Entry 2')
-			results[1].memo.should.equal('Test Entry 2')
+			response.results[0].memo.should.equal('Test Entry 2')
+			response.results[1].memo.should.equal('Test Entry 2')
 			done()
+

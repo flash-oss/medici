@@ -40,12 +40,10 @@ describe('Medici', function() {
     return book.balance({
       account: 'Assets'
     }).then(function(bal) {
-      console.log('Balance:', bal);
       bal.should.equal(-1200);
       return book.balance({
         account: 'Assets:Receivable'
       }).then(function(bal) {
-        console.log('Checked balance of accts receivable, got to here');
         bal.should.equal(-1200);
         return book.balance({
           account: 'Assets:Other'
@@ -54,8 +52,6 @@ describe('Medici', function() {
           return done();
         });
       });
-    }, function(err) {
-      return console.log(err.stack);
     });
   });
   it('should return full ledger', function(done) {
@@ -63,8 +59,8 @@ describe('Medici', function() {
     book = new medici.book('MyBook');
     return book.ledger({
       account: 'Assets'
-    }).then(function(results) {
-      results.length.should.equal(2);
+    }).then(function(res) {
+      res.results.length.should.equal(2);
       return done();
     });
   });
@@ -96,11 +92,12 @@ describe('Medici', function() {
     book = new medici.book('MyBook');
     return book.ledger({
       account: ['Assets', 'Income']
-    }).then(function(results) {
-      var res, _i, _len;
-      results.length.should.equal(6);
-      for (_i = 0, _len = results.length; _i < _len; _i++) {
-        res = results[_i];
+    }).then(function(response) {
+      var res, _i, _len, _ref;
+      response.results.length.should.equal(6);
+      _ref = response.results;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        res = _ref[_i];
         ((res.account_path.indexOf('Assets') >= 0) || (res.account_path.indexOf('Income') >= 0)).should.equal(true);
       }
       return done();
@@ -113,11 +110,11 @@ describe('Medici', function() {
       account: ['Assets', 'Income'],
       perPage: 2,
       page: 3
-    }).then(function(results) {
-      console.log('Got to here', results);
-      results.length.should.equal(2);
-      results[0].memo.should.equal('Test Entry 2');
-      results[1].memo.should.equal('Test Entry 2');
+    }).then(function(response) {
+      response.results.length.should.equal(2);
+      response.total.should.equal(6);
+      response.results[0].memo.should.equal('Test Entry 2');
+      response.results[1].memo.should.equal('Test Entry 2');
       return done();
     });
   });

@@ -126,19 +126,37 @@ module.exports = class Book
 		q = @transactionModel.find(query)
 
 		if pagination
-			q.skip((pagination.page - 1) * pagination.perPage).limit(pagination.perPage)
+			@transactionModel.count query, (err, count) =>
+				q.skip((pagination.page - 1) * pagination.perPage).limit(pagination.perPage)
+				q.sort
+					datetime:-1
+					timestamp:-1
+				if populate
+					for pop in populate
+						q.populate(pop)
+				q.exec (err, results) ->
+					if err
+						deferred.reject(err)
+					else
+						deferred.resolve
+							results:results
+							total:count
+		else
+			q.sort
+				datetime:-1
+				timestamp:-1
+			if populate
+				for pop in populate
+					q.populate(pop)
+			q.exec (err, results) ->
+				if err
+					deferred.reject(err)
+				else
+					returnVal = 
+						results:results
+						total:results.length
+					return deferred.resolve(returnVal)
 
-		q.sort
-			datetime:-1
-			timestamp:-1
-		if populate
-			for pop in populate
-				q.populate(pop)
-		q.exec (err, results) ->
-			if err
-				deferred.reject(err)
-			else
-				deferred.resolve(results)
 
 		return deferred.promise
 
