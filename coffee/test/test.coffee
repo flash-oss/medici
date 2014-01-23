@@ -3,7 +3,7 @@ mongoose = require 'mongoose'
 
 mongoose.connect('mongodb://localhost/medici_test')
 mongoose.set('debug', true)
-
+util = require 'util'
 medici = require '../index'
 require 'should'
 moment = require 'moment'
@@ -96,13 +96,32 @@ describe 'Medici', ->
 			response.results[1].memo.should.equal('Test Entry 2')
 			done()
 
-	it 'should give you the balance after a specific transaction', (done) ->
+	it 'should give you the balance by page', (done) ->
+
+		
 		book = new medici.book('MyBook')
-		book.balanceAfterTransaction(@journal._transactions[0], 'Assets').then (balance) =>
-			balance.should.equal(-1200)
-			book.balanceAfterTransaction(@journal2._transactions[1], 'Income').then (balance) ->
-				balance.should.equal(700)
-				done()
-		, (err) ->
-			done(err)
+		book.balance
+			account:'Assets'
+			perPage:1
+			page:1
+		.then (balance) =>
+			balance.should.equal(-700)
+
+			book.balance
+				account:'Assets'
+				perPage:1
+				page:2
+			.then (balance) =>
+				balance.should.equal(-1200)
+
+				book.balance
+					account:'Assets'
+					perPage:1
+					page:3
+				.then (balance) =>
+					balance.should.equal(-700)
+					done()
+			
+		
+
 

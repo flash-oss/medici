@@ -87,9 +87,16 @@ module.exports = class Book
 
 
 
-		query = @parseQuery(query)
-
 		
+
+		if query.perPage
+			pagination =
+				perPage:query.perPage
+				page: if query.page then query.page else 1
+
+			delete query.perPage
+			delete query.page
+		query = @parseQuery(query)
 		match = 
 			$match:query
 		group = 
@@ -99,66 +106,17 @@ module.exports = class Book
 					$sum:'$credit'
 				debit:
 					$sum:'$debit'
-		
-		@transactionModel.aggregate match, group, (err, result) ->
-			if err
-				deferred.reject(err)
-			else
-				result = result.shift()
-				if !result?
-					return deferred.resolve(0)
+		if pagination
+			skip = 
+				$skip:(pagination.page - 1) * pagination.perPage
+			sort =
+				$sort:
+					'datetime':-1
+					'timestamp':-1
+			@transactionModel.aggregate match, sort, skip, group, (err, result) ->
 
-				total = result.credit - (result.debit)
-				deferred.resolve(total)
-			
-		return deferred.promise
-	
-	balanceAfterTransaction: (_id, accounts) ->
-		deferred = Q.defer()
-		query = 
-			account:accounts
-
-		# Should just give us the accounts.
-		query = @parseQuery(query)
-
-		@transactionModel.findById _id, (err, res) =>
-			if err
-				return deferred.reject(err)
-			if !res
-				return deferred.reject(new Error('Transaction not found'))
-
-			
-			# Add the following to the query:
-			# 
-			# EITHER
-			# 	datetime < res.datetime
-			# OR
-			# 	datetime == res.datetime && timestamp <= res.timestamp
-			
-			dateQuery = 
-				$or: [
-						'datetime':
-							$lt:res.datetime
-					,
-						'datetime':res.datetime
-						'timestamp':
-							$lte:res.timestamp
-				]
-
-			match = 
-				$match:
-					$and:[query, dateQuery]
-			group = 
-				$group:
-					_id:'1'
-					credit:
-						$sum:'$credit'
-					debit:
-						$sum:'$debit'
-
-			@transactionModel.aggregate match, group, (err, result) ->
 				if err
-					return deferred.reject(err)
+					deferred.reject(err)
 				else
 					result = result.shift()
 					if !result?
@@ -166,8 +124,22 @@ module.exports = class Book
 
 					total = result.credit - (result.debit)
 					deferred.resolve(total)
-				
+
+		else
+			@transactionModel.aggregate match, group, (err, result) ->
+				if err
+					deferred.reject(err)
+				else
+					result = result.shift()
+					if !result?
+						return deferred.resolve(0)
+
+					total = result.credit - (result.debit)
+					deferred.resolve(total)
+			
 		return deferred.promise
+	
+
 
 	ledger: (query, populate=null) ->
 		deferred = Q.defer()

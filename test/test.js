@@ -1,10 +1,12 @@
-var medici, moment, mongoose;
+var medici, moment, mongoose, util;
 
 mongoose = require('mongoose');
 
 mongoose.connect('mongodb://localhost/medici_test');
 
 mongoose.set('debug', true);
+
+util = require('util');
 
 medici = require('../index');
 
@@ -119,18 +121,31 @@ describe('Medici', function() {
       return done();
     });
   });
-  return it('should give you the balance after a specific transaction', function(done) {
+  return it('should give you the balance by page', function(done) {
     var book,
       _this = this;
     book = new medici.book('MyBook');
-    return book.balanceAfterTransaction(this.journal._transactions[0], 'Assets').then(function(balance) {
-      balance.should.equal(-1200);
-      return book.balanceAfterTransaction(_this.journal2._transactions[1], 'Income').then(function(balance) {
-        balance.should.equal(700);
-        return done();
+    return book.balance({
+      account: 'Assets',
+      perPage: 1,
+      page: 1
+    }).then(function(balance) {
+      balance.should.equal(-700);
+      return book.balance({
+        account: 'Assets',
+        perPage: 1,
+        page: 2
+      }).then(function(balance) {
+        balance.should.equal(-1200);
+        return book.balance({
+          account: 'Assets',
+          perPage: 1,
+          page: 3
+        }).then(function(balance) {
+          balance.should.equal(-700);
+          return done();
+        });
       });
-    }, function(err) {
-      return done(err);
     });
   });
 });
