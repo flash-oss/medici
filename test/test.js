@@ -13,7 +13,7 @@ require('should');
 moment = require('moment');
 
 describe('Medici', function() {
-  this.timeout(3000);
+  this.timeout(15000);
   before(function(done) {
     mongoose.connection.collections.medici_transactions.drop();
     mongoose.connection.collections.medici_journals.drop();

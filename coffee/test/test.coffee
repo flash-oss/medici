@@ -8,7 +8,7 @@ medici = require '../index'
 require 'should'
 moment = require 'moment'
 describe 'Medici', ->
-	@timeout(3000)
+	@timeout(15000)
 	before (done) ->
 		mongoose.connection.collections.medici_transactions.drop()
 		mongoose.connection.collections.medici_journals.drop()
