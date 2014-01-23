@@ -60,6 +60,8 @@ module.exports = class Book
 				$lte:new Date(parseInt(query.end_date))
 			delete query.end_date
 
+
+
 		keys = _.keys(@transactionModel.schema.paths)
 		for key,val of query
 			if keys.indexOf(key) >= 0
@@ -112,8 +114,23 @@ module.exports = class Book
 	ledger: (query, populate=null) ->
 		deferred = Q.defer()
 
+		# Pagination
+		if query.perPage
+			pagination =
+				perPage:query.perPage
+				page: if query.page then query.page else 1
+
+			delete query.perPage
+			delete query.page
 		query = @parseQuery(query)
 		q = @transactionModel.find(query)
+
+		if pagination
+			q.skip((pagination.page - 1) * pagination.perPage).limit(pagination.perPage)
+
+		q.sort
+			datetime:-1
+			timestamp:-1
 		if populate
 			for pop in populate
 				q.populate(pop)
