@@ -29,7 +29,10 @@ try {
       type: Schema.Types.ObjectId,
       ref: 'Medici_Journal'
     },
-    timestamp: Date,
+    timestamp: {
+      type: Date,
+      "default": Date.now
+    },
     voided: {
       type: Boolean,
       "default": false

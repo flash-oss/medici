@@ -28,6 +28,7 @@ describe('Medici', function() {
       journal._transactions.length.should.equal(2);
       _this.journal = journal;
       return book.entry('Test Entry 2', moment().subtract('days', 3).toDate()).debit('Assets:Receivable', 700).credit('Income:Rent', 700).commit().then(function(journal) {
+        _this.journal2 = journal;
         journal.memo.should.equal('Test Entry 2');
         journal._transactions.length.should.equal(2);
         return done();
@@ -103,7 +104,7 @@ describe('Medici', function() {
       return done();
     });
   });
-  return it('should give you a paginated ledger when requested', function(done) {
+  it('should give you a paginated ledger when requested', function(done) {
     var book;
     book = new medici.book('MyBook');
     return book.ledger({
@@ -116,6 +117,20 @@ describe('Medici', function() {
       response.results[0].memo.should.equal('Test Entry 2');
       response.results[1].memo.should.equal('Test Entry 2');
       return done();
+    });
+  });
+  return it('should give you the balance after a specific transaction', function(done) {
+    var book,
+      _this = this;
+    book = new medici.book('MyBook');
+    return book.balanceAfterTransaction(this.journal._transactions[0], 'Assets').then(function(balance) {
+      balance.should.equal(-1200);
+      return book.balanceAfterTransaction(_this.journal2._transactions[1], 'Income').then(function(balance) {
+        balance.should.equal(700);
+        return done();
+      });
+    }, function(err) {
+      return done(err);
     });
   });
 });

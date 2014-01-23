@@ -21,6 +21,7 @@ describe 'Medici', ->
 			journal._transactions.length.should.equal(2)
 			@journal = journal
 			book.entry('Test Entry 2', moment().subtract('days', 3).toDate()).debit('Assets:Receivable', 700).credit('Income:Rent', 700).commit().then (journal) =>
+				@journal2 = journal
 				journal.memo.should.equal('Test Entry 2')
 				journal._transactions.length.should.equal(2)
 				done()
@@ -94,4 +95,14 @@ describe 'Medici', ->
 			response.results[0].memo.should.equal('Test Entry 2')
 			response.results[1].memo.should.equal('Test Entry 2')
 			done()
+
+	it 'should give you the balance after a specific transaction', (done) ->
+		book = new medici.book('MyBook')
+		book.balanceAfterTransaction(@journal._transactions[0], 'Assets').then (balance) =>
+			balance.should.equal(-1200)
+			book.balanceAfterTransaction(@journal2._transactions[1], 'Income').then (balance) ->
+				balance.should.equal(700)
+				done()
+		, (err) ->
+			done(err)
 

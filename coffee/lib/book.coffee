@@ -1,7 +1,7 @@
 mongoose = require('mongoose')
 entry = require('./entry')
 _  = require('underscore')
-
+util = require 'util'
 Q = require('q')
 module.exports = class Book
 
@@ -84,6 +84,9 @@ module.exports = class Book
 
 	balance: (query) ->
 		deferred = Q.defer()
+
+
+
 		query = @parseQuery(query)
 
 		
@@ -110,6 +113,61 @@ module.exports = class Book
 			
 		return deferred.promise
 	
+	balanceAfterTransaction: (_id, accounts) ->
+		deferred = Q.defer()
+		query = 
+			account:accounts
+
+		# Should just give us the accounts.
+		query = @parseQuery(query)
+
+		@transactionModel.findById _id, (err, res) =>
+			if err
+				return deferred.reject(err)
+			if !res
+				return deferred.reject(new Error('Transaction not found'))
+
+			
+			# Add the following to the query:
+			# 
+			# EITHER
+			# 	datetime < res.datetime
+			# OR
+			# 	datetime == res.datetime && timestamp <= res.timestamp
+			
+			dateQuery = 
+				$or: [
+						'datetime':
+							$lt:res.datetime
+					,
+						'datetime':res.datetime
+						'timestamp':
+							$lte:res.timestamp
+				]
+
+			match = 
+				$match:
+					$and:[query, dateQuery]
+			group = 
+				$group:
+					_id:'1'
+					credit:
+						$sum:'$credit'
+					debit:
+						$sum:'$debit'
+
+			@transactionModel.aggregate match, group, (err, result) ->
+				if err
+					return deferred.reject(err)
+				else
+					result = result.shift()
+					if !result?
+						return deferred.resolve(0)
+
+					total = result.credit - (result.debit)
+					deferred.resolve(total)
+				
+		return deferred.promise
 
 	ledger: (query, populate=null) ->
 		deferred = Q.defer()
