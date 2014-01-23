@@ -59,5 +59,5 @@ module.exports = function(grunt) {
 		});
 	});
 
-	grunt.registerTask('test', ['dropTestDb', 'exec:test']);
+	grunt.registerTask('test', ['exec:test', 'dropTestDb']);
 };

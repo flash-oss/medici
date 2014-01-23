@@ -4,7 +4,7 @@
   "description": "Simple double-entry accounting for Node + Mongoose",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "grunt test"
   },
   "repository": {
     "type": "git",
