@@ -99,6 +99,12 @@ module.exports = class Book
 		query = @parseQuery(query)
 		match = 
 			$match:query
+		project =
+			$project:
+				debit:'$debit'
+				credit:'$credit'
+				datetime:'$datetime'
+				timestamp:'$timestamp'
 		group = 
 			$group:
 				_id:'1'
@@ -106,6 +112,8 @@ module.exports = class Book
 					$sum:'$credit'
 				debit:
 					$sum:'$debit'
+				count:
+					$sum:1
 		if pagination
 			skip = 
 				$skip:(pagination.page - 1) * pagination.perPage
@@ -113,29 +121,40 @@ module.exports = class Book
 				$sort:
 					'datetime':-1
 					'timestamp':-1
-			@transactionModel.aggregate match, sort, skip, group, (err, result) ->
+			@transactionModel.aggregate match, project, sort, skip, group, (err, result) ->
 
 				if err
 					deferred.reject(err)
 				else
 					result = result.shift()
 					if !result?
-						return deferred.resolve(0)
+						return deferred.resolve
+							balance:0
+							notes:0
 
 					total = result.credit - (result.debit)
-					deferred.resolve(total)
+
+
+					deferred.resolve
+						balance:total
+						notes:result.count
 
 		else
-			@transactionModel.aggregate match, group, (err, result) ->
+			@transactionModel.aggregate match, project, group, (err, result) ->
 				if err
 					deferred.reject(err)
 				else
 					result = result.shift()
 					if !result?
-						return deferred.resolve(0)
+						return deferred.resolve
+							balance:0
+							notes:0
 
 					total = result.credit - (result.debit)
-					deferred.resolve(total)
+					deferred.resolve
+						balance:total
+						notes:result.count
+
 			
 		return deferred.promise
 	

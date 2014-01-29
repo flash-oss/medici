@@ -27,21 +27,36 @@ describe 'Medici', ->
 				done()
 
 	it 'Should have updated the balance for assets and income and accurately give balance for subaccounts', (done) ->
+
+		console.log 'Starting Balance'
 		book = new medici.book('MyBook')
 		book.balance
 			account:'Assets'
-		.then (bal) ->
+		.then (data) ->
+			bal = data.balance
+			notes = data.notes
+			notes.should.equal(2)
 			bal.should.equal(-1200)
 
+			console.log 'Got to here!'
 			book.balance
 				account:'Assets:Receivable'
-			.then (bal) ->
+			.then (data) ->
+				bal = data.balance
+				notes = data.notes
 				bal.should.equal(-1200)
+				notes.should.equal(2)
 
 				book.balance
 					account:'Assets:Other'
-				.then (bal) ->
+				.then (data) ->
+					console.log 'Got to here!'
+					bal = data.balance
+					notes = data.notes
+
+					console.log data
 					bal.should.equal(0)
+					notes.should.equal(0)
 
 					done()
 
@@ -59,8 +74,8 @@ describe 'Medici', ->
 		book.void(@journal._id, 'Messed up').then ->
 			book.balance
 				account:'Assets'
-			.then (bal) ->
-				bal.should.equal(-700)
+			.then (data) ->
+				data.balance.should.equal(-700)
 				done()
 
 	it 'should list all accounts', (done) ->
@@ -104,22 +119,22 @@ describe 'Medici', ->
 			account:'Assets'
 			perPage:1
 			page:1
-		.then (balance) =>
-			balance.should.equal(-700)
+		.then (data) =>
+			data.balance.should.equal(-700)
 
 			book.balance
 				account:'Assets'
 				perPage:1
 				page:2
-			.then (balance) =>
-				balance.should.equal(-1200)
+			.then (data) =>
+				data.balance.should.equal(-1200)
 
 				book.balance
 					account:'Assets'
 					perPage:1
 					page:3
-				.then (balance) =>
-					balance.should.equal(-700)
+				.then (data) =>
+					data.balance.should.equal(-700)
 					done()
 			
 		

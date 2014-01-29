@@ -39,19 +39,33 @@ describe('Medici', function() {
   });
   it('Should have updated the balance for assets and income and accurately give balance for subaccounts', function(done) {
     var book;
+    console.log('Starting Balance');
     book = new medici.book('MyBook');
     return book.balance({
       account: 'Assets'
-    }).then(function(bal) {
+    }).then(function(data) {
+      var bal, notes;
+      bal = data.balance;
+      notes = data.notes;
+      notes.should.equal(2);
       bal.should.equal(-1200);
+      console.log('Got to here!');
       return book.balance({
         account: 'Assets:Receivable'
-      }).then(function(bal) {
+      }).then(function(data) {
+        bal = data.balance;
+        notes = data.notes;
         bal.should.equal(-1200);
+        notes.should.equal(2);
         return book.balance({
           account: 'Assets:Other'
-        }).then(function(bal) {
+        }).then(function(data) {
+          console.log('Got to here!');
+          bal = data.balance;
+          notes = data.notes;
+          console.log(data);
           bal.should.equal(0);
+          notes.should.equal(0);
           return done();
         });
       });
@@ -73,8 +87,8 @@ describe('Medici', function() {
     return book["void"](this.journal._id, 'Messed up').then(function() {
       return book.balance({
         account: 'Assets'
-      }).then(function(bal) {
-        bal.should.equal(-700);
+      }).then(function(data) {
+        data.balance.should.equal(-700);
         return done();
       });
     });
@@ -129,20 +143,20 @@ describe('Medici', function() {
       account: 'Assets',
       perPage: 1,
       page: 1
-    }).then(function(balance) {
-      balance.should.equal(-700);
+    }).then(function(data) {
+      data.balance.should.equal(-700);
       return book.balance({
         account: 'Assets',
         perPage: 1,
         page: 2
-      }).then(function(balance) {
-        balance.should.equal(-1200);
+      }).then(function(data) {
+        data.balance.should.equal(-1200);
         return book.balance({
           account: 'Assets',
           perPage: 1,
           page: 3
-        }).then(function(balance) {
-          balance.should.equal(-700);
+        }).then(function(data) {
+          data.balance.should.equal(-700);
           return done();
         });
       });
