@@ -18,6 +18,11 @@ module.exports = class Entry
 		@journal.datetime = date
 		@transactions = []
 		@transactionModels = []
+		@journal.approved = true
+
+	setApproved:(bool) ->
+		@journal.approved = bool
+		return @
 	credit:(account_path, amount, extra=null) ->
 		amount = parseFloat(amount)
 		if typeof account_path is 'string'
@@ -100,7 +105,9 @@ module.exports = class Entry
 	commit: (success) ->
 		deferred = Q.defer()
 
-
+		# First of all, set approved on transactions to approved on journal
+		for transaction in @transactions
+			transaction.approved = @journal.approved
 		@transactionsSaved = 0
 		total = 0.0
 		for transaction in @transactions

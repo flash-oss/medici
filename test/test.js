@@ -41,10 +41,12 @@ describe('Medici', function() {
     var book;
     console.log('Starting Balance');
     book = new medici.book('MyBook');
+    console.log('Getting balance...');
     return book.balance({
       account: 'Assets'
     }).then(function(data) {
       var bal, notes;
+      console.log('got data');
       bal = data.balance;
       notes = data.notes;
       notes.should.equal(2);
@@ -135,7 +137,7 @@ describe('Medici', function() {
       return done();
     });
   });
-  return it('should give you the balance by page', function(done) {
+  it('should give you the balance by page', function(done) {
     var book,
       _this = this;
     book = new medici.book('MyBook');
@@ -157,6 +159,46 @@ describe('Medici', function() {
           page: 3
         }).then(function(data) {
           data.balance.should.equal(-700);
+          return done();
+        });
+      });
+    });
+  });
+  return describe('approved/pending transactions', function() {
+    it('should not include pending transactions in balance', function(done) {
+      var book,
+        _this = this;
+      book = new medici.book('MyBook');
+      return book.entry('Test Entry').debit('Foo', 500).credit('Bar', 500).setApproved(false).commit().then(function(journal) {
+        _this.pendingJournal = journal;
+        return book.balance({
+          account: 'Foo'
+        }).then(function(data) {
+          data.balance.should.equal(0);
+          return done();
+        });
+      });
+    });
+    it('should not include pending transactions in ledger', function(done) {
+      var book;
+      book = new medici.book('MyBook');
+      return book.ledger({
+        account: ['Foo']
+      }).then(function(response) {
+        response.results.length.should.equal(0);
+        return done();
+      });
+    });
+    return it('should set all transactions to approved when approving the journal', function(done) {
+      var book;
+      book = new medici.book('MyBook');
+      this.pendingJournal.approved = true;
+      return this.pendingJournal.save(function() {
+        var _this = this;
+        return book.balance({
+          account: 'Bar'
+        }).then(function(data) {
+          data.balance.should.equal(500);
           return done();
         });
       });

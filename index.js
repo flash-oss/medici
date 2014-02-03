@@ -38,7 +38,11 @@ try {
       "default": false
     },
     void_reason: String,
-    _original_journal: Schema.Types.ObjectId
+    _original_journal: Schema.Types.ObjectId,
+    approved: {
+      type: Boolean,
+      "default": true
+    }
   });
   mongoose.model('Medici_Transaction', transactionSchema);
 }
@@ -64,7 +68,11 @@ try {
       type: Boolean,
       "default": false
     },
-    void_reason: String
+    void_reason: String,
+    approved: {
+      type: Boolean,
+      "default": true
+    }
   });
   journalSchema.methods["void"] = function(book, reason) {
     var deferred, trans_id, voidTransaction, voids, _i, _len, _ref,
@@ -148,6 +156,27 @@ try {
     });
     return deferred.promise;
   };
+  journalSchema.pre('save', function(next) {
+    var promises;
+    if (this.isModified('approved') && this.approved === true) {
+      promises = [];
+      return mongoose.model('Medici_Transaction').find({
+        _journal: this._id
+      }, function(err, transactions) {
+        var transaction, _i, _len;
+        for (_i = 0, _len = transactions.length; _i < _len; _i++) {
+          transaction = transactions[_i];
+          transaction.approved = true;
+          promises.push(transaction.save());
+        }
+        return Q.all(promises).then(function() {
+          return next();
+        });
+      });
+    } else {
+      return next();
+    }
+  });
   mongoose.model('Medici_Journal', journalSchema);
 }
 

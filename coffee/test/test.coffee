@@ -30,9 +30,11 @@ describe 'Medici', ->
 
 		console.log 'Starting Balance'
 		book = new medici.book('MyBook')
+		console.log 'Getting balance...'
 		book.balance
 			account:'Assets'
 		.then (data) ->
+			console.log 'got data'
 			bal = data.balance
 			notes = data.notes
 			notes.should.equal(2)
@@ -136,6 +138,36 @@ describe 'Medici', ->
 				.then (data) =>
 					data.balance.should.equal(-700)
 					done()
+
+	describe 'approved/pending transactions',  ->
+		it 'should not include pending transactions in balance', (done) ->
+			book = new medici.book('MyBook')
+			
+			book.entry('Test Entry').debit('Foo', 500).credit('Bar', 500).setApproved(false).commit().then (journal) =>
+				@pendingJournal = journal
+				# Balance should still be 0 since they're not approved
+				book.balance
+					account:'Foo'
+				.then (data) =>
+					data.balance.should.equal(0)
+					done()
+		it 'should not include pending transactions in ledger', (done) ->
+			book = new medici.book('MyBook')
+			book.ledger
+				account:['Foo']
+			.then (response) ->
+				response.results.length.should.equal(0)
+				done()
+		it 'should set all transactions to approved when approving the journal', (done) ->
+			book = new medici.book('MyBook')
+			@pendingJournal.approved = true
+			@pendingJournal.save ->
+				book.balance
+					account:'Bar'
+				.then (data) =>
+					data.balance.should.equal(500)
+					done()
+
 			
 		
 

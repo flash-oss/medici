@@ -31,6 +31,9 @@ catch err
 		void_reason:String
 		# The journal that this is voiding, if any
 		_original_journal:Schema.Types.ObjectId
+		approved:
+			type:Boolean
+			default:true
 	mongoose.model('Medici_Transaction', transactionSchema)
 
 # We really only need journals so we can group by journal entry and void all transactions. Datetime
@@ -53,6 +56,9 @@ catch err
 			type:Boolean
 			default:false
 		void_reason:String
+		approved:
+			type:Boolean
+			default:true
 
 
 
@@ -124,6 +130,23 @@ catch err
 
 		return deferred.promise
 
+	journalSchema.pre 'save', (next)->
+		if @isModified('approved') and @approved is true
+			promises = []
+			mongoose.model('Medici_Transaction').find
+				_journal:@_id
+			, (err, transactions) ->
+				for transaction in transactions
+					transaction.approved = true
+					promises.push(transaction.save())
+
+				Q.all(promises).then ->
+					next()
+		else
+			next()
 	mongoose.model('Medici_Journal', journalSchema)
+
+	
+
 module.exports = 
 	book:book
