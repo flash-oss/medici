@@ -80,6 +80,8 @@ module.exports = class Book
 			
 		# Add the book
 		parsed.book = @name
+
+		parsed.approved = true
 		return parsed
 
 	balance: (query) ->
@@ -99,6 +101,7 @@ module.exports = class Book
 		query = @parseQuery(query)
 		match = 
 			$match:query
+
 		project =
 			$project:
 				debit:'$debit'
