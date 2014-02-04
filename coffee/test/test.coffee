@@ -22,6 +22,7 @@ describe 'Medici', ->
 			@journal = journal
 			book.entry('Test Entry 2', moment().subtract('days', 3).toDate()).debit('Assets:Receivable', 700).credit('Income:Rent', 700).commit().then (journal) =>
 				@journal2 = journal
+				journal.book.should.equal('MyBook')
 				journal.memo.should.equal('Test Entry 2')
 				journal._transactions.length.should.equal(2)
 				done()

@@ -31,6 +31,7 @@ describe('Medici', function() {
       _this.journal = journal;
       return book.entry('Test Entry 2', moment().subtract('days', 3).toDate()).debit('Assets:Receivable', 700).credit('Income:Rent', 700).commit().then(function(journal) {
         _this.journal2 = journal;
+        journal.book.should.equal('MyBook');
         journal.memo.should.equal('Test Entry 2');
         journal._transactions.length.should.equal(2);
         return done();

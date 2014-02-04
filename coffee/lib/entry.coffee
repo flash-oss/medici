@@ -16,6 +16,7 @@ module.exports = class Entry
 		if !date
 			date = new Date()
 		@journal.datetime = date
+		@journal.book = @book.name
 		@transactions = []
 		@transactionModels = []
 	credit:(account_path, amount, extra=null) ->
