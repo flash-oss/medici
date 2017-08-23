@@ -1,4 +1,3 @@
-const Q = require('q');
 module.exports = class Entry {
 	static write(book, memo, date=null,original_journal=null) {
 		return new (this)(book, memo, date, original_journal);
@@ -108,63 +107,48 @@ module.exports = class Entry {
 		return this;
 	}
 
+    /**
+     * Save a transaction to the database
+     * @param transaction
+     * @returns {Promise}
+     */
 	saveTransaction(transaction) {
-		const d = Q.defer();
-
 		const modelClass = this.book.transactionModel;
 
 		const model = new modelClass(transaction);
 		this.journal._transactions.push(model._id);
-		model.save(function(err, res) {
-			if (err) {
-				d.reject(err);
-			} else {
-				d.resolve(res);
-			}
-		});
-
-		return d.promise;
+		return model.save();
 	}
 
-	commit(success) {
-		const deferred = Q.defer();
-
+	commit() {
 		// First of all, set approved on transactions to approved on journal
-		for (var transaction of this.transactions) {
-			transaction.approved = this.journal.approved;
+		for (let tx of this.transactions) {
+			tx.approved = this.journal.approved;
 		}
 		this.transactionsSaved = 0;
 		let total = 0.0;
-		for (transaction of this.transactions) {
-			total += transaction.credit;
-			total -= transaction.debit;
+		for (let tx of this.transactions) {
+			total += tx.credit;
+			total -= tx.debit;
 		}
+
 		if ((total > 0) || (total < 0)) {
 			const err = new Error("INVALID_JOURNAL");
 			err.code = 400;
 			console.error('Journal is invalid. Total is:', total);
-			deferred.reject(err);
+			return Promise.reject(err)
 		} else {
-			const saves = [];
-			for (let trans of this.transactions) {
-				saves.push(this.saveTransaction(trans));
-			}
-
-			Q.all(saves).then(() => {
-				return this.journal.save((err, result) => {
-					if (err) {
-						this.book.transactionModel.remove({
-							_journal:this.journal._id});
-						return deferred.reject(new Error('Failure to save journal'));
-					} else {
-						deferred.resolve(this.journal);
-						if (success) { return success(this.journal); }
-					}
-				});
-			}
-			, err => deferred.reject(err));
+			return Promise.all(this.transactions.map(tx => this.saveTransaction(tx)))
+            .then(() => {
+				return this.journal
+                .save()
+                .then(() => this.journal)
+                .catch(err => {
+                    this.book.transactionModel.remove({
+                        _journal:this.journal._id});
+                    throw new Error(`Failure to save journal: ${err.message}`);
+                });
+			});
 		}
-
-		return deferred.promise;
 	}
 };

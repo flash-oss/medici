@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const entry = require('./entry');
-const Q = require('q');
+
 module.exports = class Book {
 	constructor(name) {
 		this.name = name;
@@ -99,7 +99,6 @@ module.exports = class Book {
 
 	balance(query) {
 		let pagination;
-		const deferred = Q.defer();
 
 		if (query.perPage) {
 			pagination = {
@@ -145,58 +144,46 @@ module.exports = class Book {
 					'timestamp':-1
 				}
 			};
-			this.transactionModel.aggregate(match, project, sort, skip, group, function(err, result) {
+			return this.transactionModel.aggregate(match, project, sort, skip, group)
+            .then(function(result) {
+                result = result.shift();
+                if (!result) {
+                    return {
+                        balance:0,
+                        notes:0
+                    };
+                }
 
-				if (err) {
-					return deferred.reject(err);
-				} else {
-					result = result.shift();
-					if ((result == null)) {
-						return deferred.resolve({
-							balance:0,
-							notes:0
-						});
-					}
+                const total = result.credit - (result.debit);
 
-					const total = result.credit - (result.debit);
-
-
-					return deferred.resolve({
-						balance:total,
-						notes:result.count
-					});
-				}
+                return {
+                    balance:total,
+                    notes:result.count
+                };
 			});
 
 		} else {
-			this.transactionModel.aggregate(match, project, group, function(err, result) {
-				if (err) {
-					return deferred.reject(err);
-				} else {
-					result = result.shift();
-					if ((result == null)) {
-						return deferred.resolve({
-							balance:0,
-							notes:0
-						});
-					}
+			return this.transactionModel.aggregate(match, project, group)
+            .then(function(result) {
+                result = result.shift();
+                if (!result) {
+                    return {
+                        balance:0,
+                        notes:0
+                    };
+                }
 
-					const total = result.credit - (result.debit);
-					return deferred.resolve({
-						balance:total,
-						notes:result.count
-					});
-				}
+                const total = result.credit - (result.debit);
+                return {
+                    balance:total,
+                    notes:result.count
+                };
 			});
 		}
-
-
-		return deferred.promise;
 	}
 
 	ledger(query, populate=null) {
 		let pagination;
-		const deferred = Q.defer();
 
 		// Pagination
 		if (query.perPage) {
@@ -212,7 +199,8 @@ module.exports = class Book {
 		const q = this.transactionModel.find(query);
 
 		if (pagination) {
-			this.transactionModel.count(query, (err, count) => {
+			return this.transactionModel.count(query)
+            .then((count) => {
 				q.skip((pagination.page - 1) * pagination.perPage).limit(pagination.perPage);
 				q.sort({
 					datetime:-1,
@@ -223,15 +211,13 @@ module.exports = class Book {
 						q.populate(pop);
 					}
 				}
-				return q.exec(function(err, results) {
-					if (err) {
-						return deferred.reject(err);
-					} else {
-						return deferred.resolve({
-							results,
-							total:count
-						});
-					}
+
+				return q.exec()
+                .then(function(results) {
+                    return {
+                        results,
+                        total: count
+                    };
 				});
 			});
 		} else {
@@ -244,61 +230,41 @@ module.exports = class Book {
 					q.populate(pop);
 				}
 			}
-			q.exec(function(err, results) {
-				if (err) {
-					return deferred.reject(err);
-				} else {
-					const returnVal = {
-						results,
-						total:results.length
-					};
-					return deferred.resolve(returnVal);
-				}
+
+			return q.exec()
+            .then(function(results) {
+                return {
+                    results,
+                    total: results.length
+                };
 			});
 		}
-
-		return deferred.promise;
 	}
 
 	void(journal_id, reason) {
-		const deferred = Q.defer();
-
-		this.journalModel.findById(journal_id, (err, journal) => {
-			if (err) {
-				return deferred.reject(err);
-			} else {
-				return journal.void(this, reason).then(() => deferred.resolve()
-				, err => deferred.reject(err));
-			}
-		});
-
-		return deferred.promise;
+		return this.journalModel.findById(journal_id)
+        .then((journal) => journal.void(this, reason));
 	}
 
 	listAccounts() {
-		const deferred = Q.defer();
-
-		this.transactionModel.find({
-			book:this.name})
-		.distinct('accounts', function(err, results) {
+		return this.transactionModel.find({book: this.name})
+		.distinct('accounts')
+        .then(function(results) {
 			// Make array
-			if (err) {
-				console.error(err);
-				deferred.reject(err);
-			} else {
-				const final = [];
-				for (let result of results) {
-					const paths = result.split(':');
-					const prev = [];
-					for (let acct of paths) {
-						prev.push(acct);
-						final.push(prev.join(':'));
-					}
-				}
-				const uniques = Array.from(new Set(final));
-				deferred.resolve(uniques);
-			}
-		});
-		return deferred.promise;
+            const final = [];
+            for (let result of results) {
+                const paths = result.split(':');
+                const prev = [];
+                for (let acct of paths) {
+                    prev.push(acct);
+                    final.push(prev.join(':'));
+                }
+            }
+            return Array.from(new Set(final)); // uniques
+		})
+        .catch((err) => {
+            console.error(err);
+            throw err;
+        });
 	}
 };

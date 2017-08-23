@@ -29,8 +29,7 @@
     "url": "https://github.com/jraede/medici/issues"
   },
   "dependencies": {
-    "mongoose": "^4.11.7",
-    "q": "*"
+    "mongoose": "^4.11.7"
   },
   "homepage": "https://github.com/jraede/medici",
   "devDependencies": {

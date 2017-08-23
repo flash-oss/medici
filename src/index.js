@@ -1,16 +1,12 @@
-let err, journalSchema;
-let entry = require('./entry');
 const book = require('./book');
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
-const Q = require('q');
 
 // This lets you register your own schema before including Medici. Useful if you want to store additional information
 // along side each transaction
-try { 
+try {
 	mongoose.model('Medici_Transaction');
 } catch (error) {
-	err = error;
 	const transactionSchema = new Schema({
 		credit:Number,
 		debit:Number,
@@ -46,10 +42,10 @@ try {
 // We really only need journals so we can group by journal entry and void all transactions. Datetime
 // and memo also go to the transaction for easy searching without having to populate the journal
 // model each time.
-try { 
+let journalSchema;
+try {
 	journalSchema = mongoose.model('Medici_Journal');
-} catch (error1) {
-	err = error1;
+} catch (error) {
 	journalSchema = new Schema({
 		datetime:Date,
 		memo: {
@@ -73,13 +69,11 @@ try {
 		}
 	});
 
-
-
 	journalSchema.methods.void = function(book, reason) {
-		const deferred = Q.defer();
 		if (this.voided === true) {
-			deferred.reject(new Error('Journal already voided'));
+			return Promise.reject(new Error('Journal already voided'));
 		}
+
 		// Set this to void with reason and also set all associated transactions
 		this.voided = true;
 		if (!reason) {
@@ -89,29 +83,22 @@ try {
 		}
 
 		const voidTransaction = trans_id => {
-			const d = Q.defer();
-			mongoose.model('Medici_Transaction').findByIdAndUpdate(trans_id, {
+			return mongoose.model('Medici_Transaction').findByIdAndUpdate(trans_id, {
 				voided:true,
 				void_reason:this.void_reason
-			}
-			, function(err, trans) {
-				if (err) {
-					console.error('Failed to void transaction:', err);
-					d.reject(err);
-				} else {
-					d.resolve(trans);
-				}
-			});
-			return d.promise;
+			})
+            .catch(err => {
+                console.error('Failed to void transaction:', err);
+                throw err;
+            });
 		};
-			
 
 		const voids = [];
 		for (let trans_id of this._transactions) {
 			voids.push(voidTransaction(trans_id));
 		}
 
-		Q.all(voids).then(transactions => {
+		return Promise.all(voids).then(transactions => {
 			let newMemo;
 			if (this.void_reason) {
 				newMemo = this.void_reason;
@@ -128,7 +115,7 @@ try {
 				}
 			}
 			// Ok now create an equal and opposite journal
-			entry = book.entry(newMemo, null, this._id);
+			const entry = book.entry(newMemo, null, this._id);
 			const valid_fields = ['credit','debit','account_path','accounts','datetime','book','memo','timestamp','voided','void_reason','_original_journal'];
 
 			for (let trans of transactions) {
@@ -151,35 +138,25 @@ try {
 				}
 			}
 
-			return entry.commit().then(entry => deferred.resolve(entry)
-			, err => deferred.reject(err));
-		}
-		, err => deferred.reject(err));
-
-		return deferred.promise;
+			return entry.commit();
+		});
 	};
 
 	journalSchema.pre('save', function(next){
-		if (this.isModified('approved') && (this.approved === true)) {
-			const promises = [];
-			return mongoose.model('Medici_Transaction').find(
-				{_journal:this._id}
-			, function(err, transactions) {
-				for (let transaction of transactions) {
-					transaction.approved = true;
-					promises.push(transaction.save());
-				}
+        if (!(this.isModified('approved') && (this.approved === true))) {
+            return next();
+        }
 
-				Q.all(promises).then(() => next());
-			});
-		} else {
-			next();
-		}
+        return mongoose.model('Medici_Transaction').find({_journal: this._id})
+        .then(function (transactions) {
+            return Promise.all(transactions.map((tx) => {
+                tx.approved = true;
+                return tx.save();
+            }))
+            .then(() => next());
+        });
 	});
 	mongoose.model('Medici_Journal', journalSchema);
 }
 
-	
-
-module.exports = 
-	{book};
+module.exports = {book};
