@@ -5,7 +5,7 @@ module.exports = class Entry {
 
 	constructor(book, memo, date,original_journal) {
 		this.book = book;
-		var { journalModel } = this.book;
+		const { journalModel } = this.book;
 		this.journal = new journalModel();
 		this.journal.memo = memo;
 
@@ -38,7 +38,7 @@ module.exports = class Entry {
 			throw "Account path is too deep (maximum 3)";
 		}
 
-		var transaction = {
+		const transaction = {
 			account_path,
 			accounts:account_path.join(':'),
 			credit:amount,
@@ -52,10 +52,10 @@ module.exports = class Entry {
 		};
 
 		// Loop through the meta and see if there are valid keys on the schema
-		var keys = Object.keys(this.book.transactionModel.schema.paths);
-		var meta = {};
-		for (var key in extra) {
-			var val = extra[key];
+		const keys = Object.keys(this.book.transactionModel.schema.paths);
+		const meta = {};
+		for (let key in extra) {
+			const val = extra[key];
 			if (keys.indexOf(key) >= 0) {
 				transaction[key] = val;
 			} else {
@@ -77,7 +77,7 @@ module.exports = class Entry {
 			throw "Account path is too deep (maximum 3)";
 		}
 
-		var transaction = {
+		const transaction = {
 			account_path,
 			accounts:account_path.join(':'),
 			credit:0.0,
@@ -90,10 +90,10 @@ module.exports = class Entry {
 		};
 
 		// Loop through the meta and see if there are valid keys on the schema
-		var keys = Object.keys(this.book.transactionModel.schema.paths);
-		var meta = {};
-		for (var key in extra) {
-			var val = extra[key];
+		const keys = Object.keys(this.book.transactionModel.schema.paths);
+		const meta = {};
+		for (let key in extra) {
+			const val = extra[key];
 			if (keys.indexOf(key) >= 0) {
 				transaction[key] = val;
 			} else {
@@ -113,27 +113,27 @@ module.exports = class Entry {
      * @returns {Promise}
      */
 	saveTransaction(transaction) {
-		var modelClass = this.book.transactionModel;
+		const modelClass = this.book.transactionModel;
 
-		var model = new modelClass(transaction);
+		const model = new modelClass(transaction);
 		this.journal._transactions.push(model._id);
 		return model.save();
 	}
 
 	commit() {
 		// First of all, set approved on transactions to approved on journal
-		for (var tx of this.transactions) {
+		for (let tx of this.transactions) {
 			tx.approved = this.journal.approved;
 		}
 		this.transactionsSaved = 0;
-		var total = 0.0;
-		for (var tx of this.transactions) {
+		let total = 0.0;
+		for (let tx of this.transactions) {
 			total += tx.credit;
 			total -= tx.debit;
 		}
 
 		if ((total > 0) || (total < 0)) {
-			var err = new Error("INVALID_JOURNAL");
+			const err = new Error("INVALID_JOURNAL");
 			err.code = 400;
 			console.error('Journal is invalid. Total is:', total);
 			return Promise.reject(err)
