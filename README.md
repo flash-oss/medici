@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/jraede/medici.png?branch=master)](https://travis-ci.org/jraede/medici)
+[![Build Status](https://travis-ci.org/koresar/medici.png?branch=master)](https://travis-ci.org/koresar/medici)
 
 medici
 ======
@@ -38,7 +38,7 @@ Now write an entry:
 // You can specify a Date object as the second argument in the book.entry() method if you want the transaction to be for a different date than today
 myBook.entry('Received payment')
 .debit('Assets:Cash', 1000)
-.credit('Income', 1000, {client:'Joe Blow'})
+.credit('Income', 1000, {client: 'Joe Blow'})
 .write().then(function(journal) { });
 ```
 
@@ -53,7 +53,7 @@ To query account balance, just use the `book.balance()` method:
 ```js
 myBook.balance({
     account:'Assets:Accounts Receivable',
-    client:'Joe Blow'	
+    client:'Joe Blow'
 }).then((balance) => {
     console.log("Joe Blow owes me", balance);
 });
@@ -83,7 +83,7 @@ myBook.ledger({
 Sometimes you will make an entry that turns out to be inaccurate or that otherwise needs to be voided. Keeping with traditional double-entry accounting, instead of simply deleting that journal entry, Medici instead will mark the entry as "voided", and then add an equal, opposite journal entry to offset the transactions in the original. This gives you a clear picture of all actions taken with your book.
 
 To void a journal entry, you can either call the `void(void_reason)` method on a Medici_Journal document, or use the `book.void(journal_id, void_reason)` method if you know the journal document's ID.
-	
+    
 ```js
 myBook.void("123456", "I made a mistake").then(() => {
     // Do something after voiding
@@ -99,21 +99,21 @@ Journals are schemed in Mongoose as follows:
 
 ```js
 JournalSchema = {
-	datetime: Date,
-	memo: {
-		type: String,
-		default: ''
+    datetime: Date,
+    memo: {
+        type: String,
+        default: ''
     },
-	_transactions: [{
+    _transactions: [{
         type: Schema.Types.ObjectId,
         ref: 'Medici_Transaction'
-	}],
-	book: String,
-	voided: {
-		type: Boolean,
-		default: false
+    }],
+    book: String,
+    voided: {
+        type: Boolean,
+        default: false
     },
-	void_reason: String
+    void_reason: String
 }
 ```
 
@@ -121,24 +121,24 @@ Transactions are schemed as follows:
 
 ```js
 TransactionSchema = {
-	credit: Number,
-	debit: Number,
-	meta: Schema.Types.Mixed,
-	datetime: Date,
-	account_path: [String],
-	accounts: String,
-	book: String,
-	memo: String,
-	_journal: {
-		type: Schema.Types.ObjectId,
-		ref:'Medici_Journal'
+    credit: Number,
+    debit: Number,
+    meta: Schema.Types.Mixed,
+    datetime: Date,
+    account_path: [String],
+    accounts: String,
+    book: String,
+    memo: String,
+    _journal: {
+        type: Schema.Types.ObjectId,
+        ref:'Medici_Journal'
     },
-	timestamp: Date,
-	voided: {
-		type: Boolean,
-		default: false
+    timestamp: Date,
+    voided: {
+        type: Boolean,
+        default: false
     },
-	void_reason: String
+    void_reason: String
 }
 ```
 
@@ -154,28 +154,28 @@ For example, if you want transactions to have a related "person" document, you c
 
 ```js
 MyTransactionSchema = {
-	_person: {
-		type:Schema.Types.ObjectId,
-		ref:'Person'
+    _person: {
+        type:Schema.Types.ObjectId,
+        ref:'Person'
     },
-	credit: Number,
-	debit: Number,
-	meta: Schema.Types.Mixed,
-	datetime: Date,
-	account_path: [String],
-	accounts: String,
-	book: String,
-	memo: String,
-	_journal: {
-		type: Schema.Types.ObjectId,
-		ref: 'Medici_Journal'
+    credit: Number,
+    debit: Number,
+    meta: Schema.Types.Mixed,
+    datetime: Date,
+    account_path: [String],
+    accounts: String,
+    book: String,
+    memo: String,
+    _journal: {
+        type: Schema.Types.ObjectId,
+        ref: 'Medici_Journal'
     },
-	timestamp: Date,
-	voided: {
-		type: Boolean,
-		default: false
+    timestamp: Date,
+    voided: {
+        type: Boolean,
+        default: false
     },
-	void_reason: String
+    void_reason: String
 }
 ```
 
@@ -188,5 +188,7 @@ Then when you query transactions using the `book.ledger()` method, you can speci
   * **BREAKING**: Upgraded `mongoose` to v4. This allows `medici` to be used with wider mongodb versions.
   * Dropped production dependencies: `moment`, `q`, `underscore`.
   * Dropped dev dependencies: `grunt`, `grunt-exec`, `grunt-contrib-coffee`, `grunt-sed`, `grunt-contrib-watch`, `semver`.
-  * No `.coffee` any more. Using node.js v4 compatible JavaScript only.
-  
+  * No `.coffee` any more. Using node.js v6 compatible JavaScript only.
+  * There are no API changes.
+  * Fixed a [bug](https://github.com/koresar/medici/issues/4). Transaction meta data was not voided correctly. 
+  * This module maintainer is now [koresar](https://github.com/koresar) instead of the original author [jraede](http://github.com/jraede).
