@@ -6,7 +6,7 @@ describe('Medici', function () {
     const book = new medici.book('MyBook');
     book
     .entry('Test Entry')
-    .debit('Assets:Receivable', 500)
+    .debit('Assets:Receivable', 500, {clientId: '12345'})
     .credit('Income:Rent', 500)
     .commit()
     .then(journal => {
@@ -31,25 +31,18 @@ describe('Medici', function () {
   });
 
   it('Should have updated the balance for assets and income and accurately give balance for subaccounts', function (done) {
-    console.log('Starting Balance');
     const book = new medici.book('MyBook');
-    console.log('Getting balance...');
     book
     .balance({
       account: 'Assets'
     })
     .then(function (data) {
-      console.log('got data');
       let bal = data.balance;
       let {notes} = data;
       notes.should.equal(2);
       bal.should.equal(-1200);
 
-      console.log('Got to here!');
-      return book
-      .balance({
-        account: 'Assets:Receivable'
-      })
+      return book.balance({account: 'Assets:Receivable'})
       .then(function (data) {
         bal = data.balance;
         ({notes} = data);
@@ -61,11 +54,9 @@ describe('Medici', function () {
           account: 'Assets:Other'
         })
         .then(function (data) {
-          console.log('Got to here!');
           bal = data.balance;
           ({notes} = data);
 
-          console.log(data);
           bal.should.equal(0);
           notes.should.equal(0);
 
@@ -91,24 +82,32 @@ describe('Medici', function () {
 
   it('should allow you to void a journal entry', function (done) {
     const book = new medici.book('MyBook');
-    book
-    .void(this.journal._id, 'Messed up')
+    book.balance({
+      account: 'Assets',
+      clientId: '12345'
+    }).then(function (data) {
+      data.balance.should.equal(-500);
+    })
+    .then(() =>
+      book.void(this.journal._id, 'Messed up')
+    )
     .then(() =>
       book
       .balance({
         account: 'Assets'
       })
-      .then(function (data) {
+      .then((data) => {
         data.balance.should.equal(-700);
-
-        return book.balance({
-          account: 'Assets',
-          clientId: "12345"
-        })
-        .then(function (data2) {
-          data2.balance.should.equal(0);
-          return done();
-        });
+      })
+    )
+    .then(() =>
+      book.balance({
+        account: 'Assets',
+        clientId: '12345'
+      })
+      .then((data) => {
+        data.balance.should.equal(0);
+        done();
       })
     )
     .catch(done);
@@ -224,6 +223,7 @@ describe('Medici', function () {
       })
       .catch(done);
     });
+
     it('should not include pending transactions in ledger', function (done) {
       const book = new medici.book('MyBook');
       book
@@ -236,6 +236,7 @@ describe('Medici', function () {
       })
       .catch(done);
     });
+
     it('should set all transactions to approved when approving the journal', function (done) {
       const book = new medici.book('MyBook');
       this.pendingJournal.approved = true;

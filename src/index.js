@@ -145,10 +145,10 @@ try {
           const val = trans[key];
           if (key === 'meta') {
             Object.keys(trans['meta']).forEach(keyMeta => {
-              processMetaField(valid_fields, keyMeta, trans['meta'][keyMeta], meta);
+              processMetaField(keyMeta, trans['meta'][keyMeta], meta);
             });
           } else {
-            processMetaField(valid_fields, key, val, meta);
+            processMetaField(key, val, meta);
           }
         });
 
