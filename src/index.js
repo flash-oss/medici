@@ -1,10 +1,3 @@
-/*
- * decaffeinate suggestions:
- * DS101: Remove unnecessary use of Array.from
- * DS102: Remove unnecessary code created because of implicit returns
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
 let err, journalSchema;
 let entry = require('./entry');
 const book = require('./book');
@@ -89,7 +82,7 @@ try {
 		}
 		// Set this to void with reason and also set all associated transactions
 		this.voided = true;
-		if ((reason == null)) {
+		if (!reason) {
 			this.void_reason = '';
 		} else {
 			this.void_reason = reason;
@@ -104,9 +97,9 @@ try {
 			, function(err, trans) {
 				if (err) {
 					console.error('Failed to void transaction:', err);
-					return d.reject(err);
+					d.reject(err);
 				} else {
-					return d.resolve(trans);
+					d.resolve(trans);
 				}
 			});
 			return d.promise;
@@ -114,7 +107,7 @@ try {
 			
 
 		const voids = [];
-		for (let trans_id of Array.from(this._transactions)) {
+		for (let trans_id of this._transactions) {
 			voids.push(voidTransaction(trans_id));
 		}
 
@@ -138,7 +131,7 @@ try {
 			entry = book.entry(newMemo, null, this._id);
 			const valid_fields = ['credit','debit','account_path','accounts','datetime','book','memo','timestamp','voided','void_reason','_original_journal'];
 
-			for (let trans of Array.from(transactions)) {
+			for (let trans of transactions) {
 				trans = trans.toObject();
 				const meta = {};
 				for (let key in trans) {
@@ -172,15 +165,15 @@ try {
 			return mongoose.model('Medici_Transaction').find(
 				{_journal:this._id}
 			, function(err, transactions) {
-				for (let transaction of Array.from(transactions)) {
+				for (let transaction of transactions) {
 					transaction.approved = true;
 					promises.push(transaction.save());
 				}
 
-				return Q.all(promises).then(() => next());
+				Q.all(promises).then(() => next());
 			});
 		} else {
-			return next();
+			next();
 		}
 	});
 	mongoose.model('Medici_Journal', journalSchema);

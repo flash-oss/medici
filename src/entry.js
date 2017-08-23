@@ -1,16 +1,9 @@
-/*
- * decaffeinate suggestions:
- * DS101: Remove unnecessary use of Array.from
- * DS102: Remove unnecessary code created because of implicit returns
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
-let Entry;
 const Q = require('q');
-module.exports = (Entry = class Entry {
+module.exports = class Entry {
 	static write(book, memo, date=null,original_journal=null) {
 		return new (this)(book, memo, date, original_journal);
 	}
+
 	constructor(book, memo, date,original_journal) {
 		this.book = book;
 		const { journalModel } = this.book;
@@ -35,12 +28,13 @@ module.exports = (Entry = class Entry {
 		this.journal.approved = bool;
 		return this;
 	}
+
 	credit(account_path, amount, extra=null) {
 		amount = parseFloat(amount);
 		if (typeof account_path === 'string') {
 			account_path = account_path.split(':');
 		}
-		
+
 		if (account_path.length > 3) {
 			throw "Account path is too deep (maximum 3)";
 		}
@@ -72,9 +66,9 @@ module.exports = (Entry = class Entry {
 		transaction.meta = meta;
 		this.transactions.push(transaction);
 
-
 		return this;
 	}
+
 	debit(account_path, amount, extra=null) {
 		amount = parseFloat(amount);
 		if (typeof account_path === 'string') {
@@ -83,7 +77,7 @@ module.exports = (Entry = class Entry {
 		if (account_path.length > 3) {
 			throw "Account path is too deep (maximum 3)";
 		}
-			
+
 		const transaction = {
 			account_path,
 			accounts:account_path.join(':'),
@@ -95,7 +89,7 @@ module.exports = (Entry = class Entry {
 			datetime:this.journal.datetime,
 			_original_journal:this.journal._original_journal
 		};
-		
+
 		// Loop through the meta and see if there are valid keys on the schema
 		const keys = Object.keys(this.book.transactionModel.schema.paths);
 		const meta = {};
@@ -110,10 +104,9 @@ module.exports = (Entry = class Entry {
 
 		this.transactions.push(transaction);
 		transaction.meta = meta;
-		
+
 		return this;
 	}
-
 
 	saveTransaction(transaction) {
 		const d = Q.defer();
@@ -124,23 +117,25 @@ module.exports = (Entry = class Entry {
 		this.journal._transactions.push(model._id);
 		model.save(function(err, res) {
 			if (err) {
-				return d.reject(err);
+				d.reject(err);
 			} else {
-				return d.resolve(res);
+				d.resolve(res);
 			}
 		});
+
 		return d.promise;
 	}
+
 	commit(success) {
 		const deferred = Q.defer();
 
 		// First of all, set approved on transactions to approved on journal
-		for (var transaction of Array.from(this.transactions)) {
+		for (var transaction of this.transactions) {
 			transaction.approved = this.journal.approved;
 		}
 		this.transactionsSaved = 0;
 		let total = 0.0;
-		for (transaction of Array.from(this.transactions)) {
+		for (transaction of this.transactions) {
 			total += transaction.credit;
 			total -= transaction.debit;
 		}
@@ -151,29 +146,25 @@ module.exports = (Entry = class Entry {
 			deferred.reject(err);
 		} else {
 			const saves = [];
-			for (let trans of Array.from(this.transactions)) {
+			for (let trans of this.transactions) {
 				saves.push(this.saveTransaction(trans));
 			}
 
 			Q.all(saves).then(() => {
 				return this.journal.save((err, result) => {
 					if (err) {
-						this.book.transactionModel.remove({ 
+						this.book.transactionModel.remove({
 							_journal:this.journal._id});
 						return deferred.reject(new Error('Failure to save journal'));
 					} else {
 						deferred.resolve(this.journal);
-						if (success != null) { return success(this.journal); }
+						if (success) { return success(this.journal); }
 					}
 				});
 			}
 			, err => deferred.reject(err));
 		}
 
-
 		return deferred.promise;
 	}
-});
-
-		
-		
+};

@@ -1,16 +1,7 @@
-/*
- * decaffeinate suggestions:
- * DS101: Remove unnecessary use of Array.from
- * DS102: Remove unnecessary code created because of implicit returns
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
-let Book;
 const mongoose = require('mongoose');
 const entry = require('./entry');
 const Q = require('q');
-module.exports = (Book = class Book {
-
+module.exports = class Book {
 	constructor(name) {
 		this.name = name;
 		this.transactionModel = mongoose.model('Medici_Transaction');
@@ -21,23 +12,21 @@ module.exports = (Book = class Book {
 		return entry.write(this, memo, date,original_journal);
 	}
 
-
-	// Turn query into an object readable by MongoDB
-	//
-	// PARAMETERS
-	//	account:	acct:subacct:subsubacct(:...)
-	//	start_date:
-	//	month_date:
-	//	meta:
+    /**
+	 * Turn query into an object readable by MongoDB.
+	 *
+     * @param query {{account: {acct, subacct, subsubacct}, start_date, month_date, meta}}
+     * @returns {Object}
+     */
 	parseQuery(query) {
 		let account, end_date, start_date;
 		const parsed = {};
 		if (account = query.account) {
-			let accounts, acct, i;
+			let accounts, i;
 			if (account instanceof Array) {
 
 				const $or = [];
-				for (acct of Array.from(account)) {
+				for (let acct of account) {
 					accounts = acct.split(':');
 					const match = {};
 					for (i = 0; i < accounts.length; i++) {
@@ -50,7 +39,7 @@ module.exports = (Book = class Book {
 			} else {
 				accounts = account.split(':');
 				for (i = 0; i < accounts.length; i++) {
-					acct = accounts[i];
+					const acct = accounts[i];
 					parsed[`account_path.${i}`] = acct;
 				}
 			}
@@ -61,7 +50,7 @@ module.exports = (Book = class Book {
 			parsed['_journal'] = query._journal;
 		}
 
-		if ((query.start_date != null) && (query.end_date != null)) {
+		if (query.start_date && query.end_date) {
 			start_date = new Date(parseInt(query.start_date));
 			end_date = new Date(parseInt(query.end_date));
 			parsed['datetime'] = {
@@ -70,17 +59,15 @@ module.exports = (Book = class Book {
 			};
 			delete query.start_date;
 			delete query.end_date;
-		} else if (query.start_date != null) {
+		} else if (query.start_date) {
 			parsed['datetime'] =
 				{$gte:new Date(parseInt(query.start_date))};
 			delete query.start_date;
-		} else if (query.end_date != null) {
+		} else if (query.end_date) {
 			parsed['datetime'] =
 				{$lte:new Date(parseInt(query.end_date))};
 			delete query.end_date;
 		}
-
-
 
 		const keys = Object.keys(this.transactionModel.schema.paths);
 		for (let key in query) {
@@ -88,7 +75,7 @@ module.exports = (Book = class Book {
 			if (keys.indexOf(key) >= 0) {
 				// If it starts with a _ assume it's a reference
 				if ((key.substr(0, 1) === '_') && val instanceof String) {
-					
+
 					val = mongoose.Types.ObjectId(val);
 				}
 				parsed[key] = val;
@@ -102,7 +89,7 @@ module.exports = (Book = class Book {
 			}
 		}
 
-			
+
 		// Add the book
 		parsed.book = this.name;
 
@@ -114,10 +101,6 @@ module.exports = (Book = class Book {
 		let pagination;
 		const deferred = Q.defer();
 
-
-
-		
-
 		if (query.perPage) {
 			pagination = {
 				perPage:query.perPage,
@@ -128,7 +111,7 @@ module.exports = (Book = class Book {
 			delete query.page;
 		}
 		query = this.parseQuery(query);
-		const match = 
+		const match =
 			{$match:query};
 
 		const project = {
@@ -139,7 +122,7 @@ module.exports = (Book = class Book {
 				timestamp:'$timestamp'
 			}
 		};
-		const group = { 
+		const group = {
 			$group: {
 				_id:'1',
 				credit: {
@@ -154,7 +137,7 @@ module.exports = (Book = class Book {
 			}
 		};
 		if (pagination) {
-			const skip = 
+			const skip =
 				{$skip:(pagination.page - 1) * pagination.perPage};
 			const sort = {
 				$sort: {
@@ -207,14 +190,12 @@ module.exports = (Book = class Book {
 			});
 		}
 
-			
+
 		return deferred.promise;
 	}
-	
-
 
 	ledger(query, populate=null) {
-		let pagination, pop;
+		let pagination;
 		const deferred = Q.defer();
 
 		// Pagination
@@ -238,7 +219,7 @@ module.exports = (Book = class Book {
 					timestamp:-1
 				});
 				if (populate) {
-					for (pop of Array.from(populate)) {
+					for (let pop of Array.from(populate)) {
 						q.populate(pop);
 					}
 				}
@@ -259,7 +240,7 @@ module.exports = (Book = class Book {
 				timestamp:-1
 			});
 			if (populate) {
-				for (pop of Array.from(populate)) {
+				for (let pop of Array.from(populate)) {
 					q.populate(pop);
 				}
 			}
@@ -267,7 +248,7 @@ module.exports = (Book = class Book {
 				if (err) {
 					return deferred.reject(err);
 				} else {
-					const returnVal = { 
+					const returnVal = {
 						results,
 						total:results.length
 					};
@@ -275,7 +256,6 @@ module.exports = (Book = class Book {
 				}
 			});
 		}
-
 
 		return deferred.promise;
 	}
@@ -295,8 +275,6 @@ module.exports = (Book = class Book {
 		return deferred.promise;
 	}
 
-
-
 	listAccounts() {
 		const deferred = Q.defer();
 
@@ -306,21 +284,21 @@ module.exports = (Book = class Book {
 			// Make array
 			if (err) {
 				console.error(err);
-				return deferred.reject(err);
+				deferred.reject(err);
 			} else {
 				const final = [];
-				for (let result of Array.from(results)) {
+				for (let result of results) {
 					const paths = result.split(':');
 					const prev = [];
-					for (let acct of Array.from(paths)) {
+					for (let acct of paths) {
 						prev.push(acct);
 						final.push(prev.join(':'));
 					}
 				}
 				const uniques = Array.from(new Set(final));
-				return deferred.resolve(uniques);
+				deferred.resolve(uniques);
 			}
 		});
 		return deferred.promise;
 	}
-});
+};

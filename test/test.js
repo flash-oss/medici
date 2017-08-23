@@ -1,23 +1,22 @@
-/*
- * decaffeinate suggestions:
- * DS101: Remove unnecessary use of Array.from
- * DS102: Remove unnecessary code created because of implicit returns
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
-
 const mongoose = require('mongoose');
 
 mongoose.connect('mongodb://localhost/medici_test');
 mongoose.set('debug', true);
 const medici = require('../');
 require('should');
-const moment = require('moment');
+
 describe('Medici', function() {
 	this.timeout(15000);
+	function droptables(done) {
+        mongoose.connection.collections.medici_transactions.drop();
+        mongoose.connection.collections.medici_journals.drop();
+        done();
+	}
 	before(function(done) {
-		mongoose.connection.collections.medici_transactions.drop();
-		mongoose.connection.collections.medici_journals.drop();
-		return done();
+		droptables(done);
+	});
+	after(function(done) {
+        droptables(done);
 	});
 
 	it('Should let you create a basic transaction', function(done) {
@@ -26,12 +25,13 @@ describe('Medici', function() {
 			journal.memo.should.equal('Test Entry');
 			journal._transactions.length.should.equal(2);
 			this.journal = journal;
-			return book.entry('Test Entry 2', moment().subtract('days', 3).toDate()).debit('Assets:Receivable', 700).credit('Income:Rent', 700).commit().then(journal => {
+			const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+			return book.entry('Test Entry 2', threeDaysAgo).debit('Assets:Receivable', 700).credit('Income:Rent', 700).commit().then(journal => {
 				this.journal2 = journal;
 				journal.book.should.equal('MyBook');
 				journal.memo.should.equal('Test Entry 2');
 				journal._transactions.length.should.equal(2);
-				return done();
+				done();
 			});
 		}).catch(done);
 	});
@@ -70,7 +70,7 @@ describe('Medici', function() {
 					bal.should.equal(0);
 					notes.should.equal(0);
 
-					return done();
+					done();
 				});
 			});
 		}).catch(done);
@@ -82,7 +82,7 @@ describe('Medici', function() {
 			account:'Assets'})
 		.then(function(res) {
 			res.results.length.should.equal(2);
-			return done();
+			done();
 		})
 		.catch(done);
 	});
@@ -95,7 +95,7 @@ describe('Medici', function() {
 				account:'Assets'})
 			.then(function(data) {
 				data.balance.should.equal(-700);
-				return done();
+				done();
 			})
 		)
         .catch(done);
@@ -108,7 +108,7 @@ describe('Medici', function() {
 			accounts.indexOf('Assets:Receivable').should.be.greaterThan(-1);
 			accounts.indexOf('Income').should.be.greaterThan(-1);
 			accounts.indexOf('Income:Rent').should.be.greaterThan(-1);
-			return done();
+			done();
 		})
         .catch(done);
 	});
@@ -119,10 +119,10 @@ describe('Medici', function() {
 			account:['Assets','Income']})
 		.then(function(response) {
 			response.results.length.should.equal(6);
-			for (let res of Array.from(response.results)) {
+			for (let res of response.results) {
 				((res.account_path.indexOf('Assets') >= 0) || (res.account_path.indexOf('Income') >= 0)).should.equal(true);
 			}
-			return done();
+			done();
 		})
         .catch(done);
 	});
@@ -138,14 +138,12 @@ describe('Medici', function() {
 			// verify correct sorting
 			response.results[0].memo.should.equal('Test Entry 2');
 			response.results[1].memo.should.equal('Test Entry 2');
-			return done();
+			done();
 		})
         .catch(done);
 	});
 
 	it('should give you the balance by page', function(done) {
-
-		
 		const book = new medici.book('MyBook');
 		book.balance({
 			account:'Assets',
@@ -164,7 +162,7 @@ describe('Medici', function() {
 					perPage:1,
 					page:3}).then(data => {
 					data.balance.should.equal(-700);
-					return done();
+					done();
 				});
 			});
 		})
@@ -174,7 +172,7 @@ describe('Medici', function() {
 	describe('approved/pending transactions',  function() {
 		it('should not include pending transactions in balance', function(done) {
 			const book = new medici.book('MyBook');
-			
+
 			book.entry('Test Entry').debit('Foo', 500).credit('Bar', 500).setApproved(false).commit().then(journal => {
 				this.pendingJournal = journal;
 				// Balance should still be 0 since they're not approved
@@ -182,7 +180,7 @@ describe('Medici', function() {
 					account:'Foo'})
 				.then(data => {
 					data.balance.should.equal(0);
-					return done();
+					done();
 				});
 			})
             .catch(done);
@@ -193,7 +191,7 @@ describe('Medici', function() {
 				account:['Foo']})
 			.then(function(response) {
 				response.results.length.should.equal(0);
-				return done();
+				done();
 			})
             .catch(done);
 		});
@@ -205,7 +203,7 @@ describe('Medici', function() {
 					account:'Bar'})
 				.then(data => {
 					data.balance.should.equal(500);
-					return done();
+					done();
 				})
                 .catch(done)
 			);
@@ -213,7 +211,7 @@ describe('Medici', function() {
 	});
 });
 
-			
-		
+
+
 
 
