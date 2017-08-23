@@ -1,9 +1,3 @@
-
-var f, semver;
-
-semver = require('semver');
-
-f = require('util').format;
 module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-exec');
