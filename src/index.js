@@ -1,6 +1,6 @@
-const book = require('./book');
+const Book = require('./book');
 const mongoose = require('mongoose');
-const { Schema } = mongoose;
+const {Schema} = mongoose;
 
 // This lets you register your own schema before including Medici. Useful if you want to store additional information
 // along side each transaction
@@ -70,7 +70,7 @@ try {
     }
   });
 
-  journalSchema.methods.void = function(book, reason) {
+  journalSchema.methods.void = function (book, reason) {
     if (this.voided === true) {
       return Promise.reject(new Error('Journal already voided'));
     }
@@ -85,23 +85,19 @@ try {
 
     const voidTransaction = trans_id => {
       return mongoose
-        .model('Medici_Transaction')
-        .findByIdAndUpdate(trans_id, {
-          voided: true,
-          void_reason: this.void_reason
-        })
-        .catch(err => {
-          console.error('Failed to void transaction:', err);
-          throw err;
-        });
+      .model('Medici_Transaction')
+      .findByIdAndUpdate(trans_id, {
+        voided: true,
+        void_reason: this.void_reason
+      })
+      .catch(err => {
+        console.error('Failed to void transaction:', err);
+        throw err;
+      });
     };
 
-    const voids = [];
-    for (let trans_id of this._transactions) {
-      voids.push(voidTransaction(trans_id));
-    }
-
-    return Promise.all(voids).then(transactions => {
+    return Promise.all(this._transactions.map(voidTransaction))
+    .then(transactions => {
       let newMemo;
       if (this.void_reason) {
         newMemo = this.void_reason;
@@ -133,18 +129,29 @@ try {
         '_original_journal'
       ];
 
+      function processMetaField(key, val, meta) {
+        if (key === '_id' || key === '_journal') {
+
+        } else if (valid_fields.indexOf(key) === -1) {
+          return meta[key] = val;
+        }
+      }
+
       for (let trans of transactions) {
         trans = trans.toObject();
         const meta = {};
-        for (let key in trans) {
+
+        Object.keys(trans).forEach(key => {
           const val = trans[key];
-          if (key === '_id' || key === '_journal') {
-            continue;
+          if (key === 'meta') {
+            Object.keys(trans['meta']).forEach(keyMeta => {
+              processMetaField(valid_fields, keyMeta, trans['meta'][keyMeta], meta);
+            });
+          } else {
+            processMetaField(valid_fields, key, val, meta);
           }
-          if (valid_fields.indexOf(key) === -1) {
-            meta[key] = val;
-          }
-        }
+        });
+
         if (trans.credit) {
           entry.debit(trans.account_path, trans.credit, meta);
         }
@@ -157,24 +164,22 @@ try {
     });
   };
 
-  journalSchema.pre('save', function(next) {
+  journalSchema.pre('save', function (next) {
     if (!(this.isModified('approved') && this.approved === true)) {
       return next();
     }
 
     return mongoose
-      .model('Medici_Transaction')
-      .find({ _journal: this._id })
-      .then(function(transactions) {
-        return Promise.all(
-          transactions.map(tx => {
-            tx.approved = true;
-            return tx.save();
-          })
-        ).then(() => next());
-      });
+    .model('Medici_Transaction')
+    .find({_journal: this._id})
+    .then((transactions) => Promise.all(transactions.map(tx => {
+        tx.approved = true;
+        return tx.save();
+      }))
+      .then(() => next())
+    );
   });
   mongoose.model('Medici_Journal', journalSchema);
 }
 
-module.exports = { book };
+module.exports = {book: Book};

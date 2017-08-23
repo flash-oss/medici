@@ -13,11 +13,11 @@ module.exports = class Book {
   }
 
   /**
-	 * Turn query into an object readable by MongoDB.
-	 *
-     * @param query {{account: {acct, subacct, subsubacct}, start_date, month_date, meta}}
-     * @returns {Object}
-     */
+   * Turn query into an object readable by MongoDB.
+   *
+   * @param query {{account: {acct, subacct, subsubacct}, start_date, month_date, meta}}
+   * @returns {Object}
+   */
   parseQuery(query) {
     let account, end_date, start_date;
     const parsed = {};
@@ -29,8 +29,7 @@ module.exports = class Book {
           accounts = acct.split(':');
           const match = {};
           for (i = 0; i < accounts.length; i++) {
-            const a = accounts[i];
-            match[`account_path.${i}`] = a;
+            match[`account_path.${i}`] = accounts[i];
           }
           $or.push(match);
         }
@@ -38,8 +37,7 @@ module.exports = class Book {
       } else {
         accounts = account.split(':');
         for (i = 0; i < accounts.length; i++) {
-          const acct = accounts[i];
-          parsed[`account_path.${i}`] = acct;
+          parsed[`account_path.${i}`] = accounts[i];
         }
       }
       delete query.account;
@@ -59,10 +57,10 @@ module.exports = class Book {
       delete query.start_date;
       delete query.end_date;
     } else if (query.start_date) {
-      parsed['datetime'] = { $gte: new Date(parseInt(query.start_date)) };
+      parsed['datetime'] = {$gte: new Date(parseInt(query.start_date))};
       delete query.start_date;
     } else if (query.end_date) {
-      parsed['datetime'] = { $lte: new Date(parseInt(query.end_date)) };
+      parsed['datetime'] = {$lte: new Date(parseInt(query.end_date))};
       delete query.end_date;
     }
 
@@ -105,7 +103,7 @@ module.exports = class Book {
       delete query.page;
     }
     query = this.parseQuery(query);
-    const match = { $match: query };
+    const match = {$match: query};
 
     const project = {
       $project: {
@@ -130,7 +128,7 @@ module.exports = class Book {
       }
     };
     if (pagination) {
-      const skip = { $skip: (pagination.page - 1) * pagination.perPage };
+      const skip = {$skip: (pagination.page - 1) * pagination.perPage};
       const sort = {
         $sort: {
           datetime: -1,
@@ -138,41 +136,41 @@ module.exports = class Book {
         }
       };
       return this.transactionModel
-        .aggregate(match, project, sort, skip, group)
-        .then(function(result) {
-          result = result.shift();
-          if (!result) {
-            return {
-              balance: 0,
-              notes: 0
-            };
-          }
-
-          const total = result.credit - result.debit;
-
+      .aggregate(match, project, sort, skip, group)
+      .then(function (result) {
+        result = result.shift();
+        if (!result) {
           return {
-            balance: total,
-            notes: result.count
+            balance: 0,
+            notes: 0
           };
-        });
+        }
+
+        const total = result.credit - result.debit;
+
+        return {
+          balance: total,
+          notes: result.count
+        };
+      });
     } else {
       return this.transactionModel
-        .aggregate(match, project, group)
-        .then(function(result) {
-          result = result.shift();
-          if (!result) {
-            return {
-              balance: 0,
-              notes: 0
-            };
-          }
-
-          const total = result.credit - result.debit;
+      .aggregate(match, project, group)
+      .then(function (result) {
+        result = result.shift();
+        if (!result) {
           return {
-            balance: total,
-            notes: result.count
+            balance: 0,
+            notes: 0
           };
-        });
+        }
+
+        const total = result.credit - result.debit;
+        return {
+          balance: total,
+          notes: result.count
+        };
+      });
     }
   }
 
@@ -193,10 +191,11 @@ module.exports = class Book {
     const q = this.transactionModel.find(query);
 
     if (pagination) {
-      return this.transactionModel.count(query).then(count => {
+      return this.transactionModel.count(query)
+      .then(count => {
         q
-          .skip((pagination.page - 1) * pagination.perPage)
-          .limit(pagination.perPage);
+        .skip((pagination.page - 1) * pagination.perPage)
+        .limit(pagination.perPage);
         q.sort({
           datetime: -1,
           timestamp: -1
@@ -207,7 +206,8 @@ module.exports = class Book {
           }
         }
 
-        return q.exec().then(function(results) {
+        return q.exec()
+        .then(function (results) {
           return {
             results,
             total: count
@@ -225,7 +225,8 @@ module.exports = class Book {
         }
       }
 
-      return q.exec().then(function(results) {
+      return q.exec()
+      .then(function (results) {
         return {
           results,
           total: results.length
@@ -236,30 +237,30 @@ module.exports = class Book {
 
   void(journal_id, reason) {
     return this.journalModel
-      .findById(journal_id)
-      .then(journal => journal.void(this, reason));
+    .findById(journal_id)
+    .then(journal => journal.void(this, reason));
   }
 
   listAccounts() {
     return this.transactionModel
-      .find({ book: this.name })
-      .distinct('accounts')
-      .then(function(results) {
-        // Make array
-        const final = [];
-        for (let result of results) {
-          const paths = result.split(':');
-          const prev = [];
-          for (let acct of paths) {
-            prev.push(acct);
-            final.push(prev.join(':'));
-          }
+    .find({book: this.name})
+    .distinct('accounts')
+    .then(function (results) {
+      // Make array
+      const final = [];
+      for (let result of results) {
+        const paths = result.split(':');
+        const prev = [];
+        for (let acct of paths) {
+          prev.push(acct);
+          final.push(prev.join(':'));
         }
-        return Array.from(new Set(final)); // uniques
-      })
-      .catch(err => {
-        console.error(err);
-        throw err;
-      });
+      }
+      return Array.from(new Set(final)); // uniques
+    })
+    .catch(err => {
+      console.error(err);
+      throw err;
+    });
   }
 };

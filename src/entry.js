@@ -5,7 +5,7 @@ module.exports = class Entry {
 
   constructor(book, memo, date, original_journal) {
     this.book = book;
-    const { journalModel } = this.book;
+    const {journalModel} = this.book;
     this.journal = new journalModel();
     this.journal.memo = memo;
 
@@ -52,16 +52,16 @@ module.exports = class Entry {
     };
 
     // Loop through the meta and see if there are valid keys on the schema
-    const keys = Object.keys(this.book.transactionModel.schema.paths);
+    const validKeys = Object.keys(this.book.transactionModel.schema.paths);
     const meta = {};
-    for (let key in extra) {
+    Object.keys(extra || {}).forEach(key => {
       const val = extra[key];
-      if (keys.indexOf(key) >= 0) {
+      if (validKeys.indexOf(key) >= 0) {
         transaction[key] = val;
       } else {
         meta[key] = val;
       }
-    }
+    });
     transaction.meta = meta;
     this.transactions.push(transaction);
 
@@ -90,16 +90,16 @@ module.exports = class Entry {
     };
 
     // Loop through the meta and see if there are valid keys on the schema
-    const keys = Object.keys(this.book.transactionModel.schema.paths);
+    const validKeys = Object.keys(this.book.transactionModel.schema.paths);
     const meta = {};
-    for (let key in extra) {
+    Object.keys(extra || {}).forEach(key => {
       const val = extra[key];
-      if (keys.indexOf(key) >= 0) {
+      if (validKeys.indexOf(key) >= 0) {
         transaction[key] = val;
       } else {
         meta[key] = val;
       }
-    }
+    });
 
     this.transactions.push(transaction);
     transaction.meta = meta;
@@ -108,10 +108,10 @@ module.exports = class Entry {
   }
 
   /**
-     * Save a transaction to the database
-     * @param transaction
-     * @returns {Promise}
-     */
+   * Save a transaction to the database
+   * @param transaction
+   * @returns {Promise}
+   */
   saveTransaction(transaction) {
     const modelClass = this.book.transactionModel;
 
@@ -138,10 +138,10 @@ module.exports = class Entry {
       console.error('Journal is invalid. Total is:', total);
       return Promise.reject(err);
     } else {
-      return Promise.all(
-        this.transactions.map(tx => this.saveTransaction(tx))
-      ).then(() => {
-        return this.journal.save().then(() => this.journal).catch(err => {
+      return Promise.all(this.transactions.map(tx => this.saveTransaction(tx)))
+      .then(() => {
+        return this.journal.save()
+        .then(() => this.journal).catch(err => {
           this.book.transactionModel.remove({
             _journal: this.journal._id
           });
