@@ -1,13 +1,13 @@
-const book = require('./book');
-const mongoose = require('mongoose');
-const { Schema } = mongoose;
+var book = require('./book');
+var mongoose = require('mongoose');
+var { Schema } = mongoose;
 
 // This lets you register your own schema before including Medici. Useful if you want to store additional information
 // along side each transaction
 try {
 	mongoose.model('Medici_Transaction');
 } catch (error) {
-	const transactionSchema = new Schema({
+	var transactionSchema = new Schema({
 		credit:Number,
 		debit:Number,
 		meta:Schema.Types.Mixed,
@@ -42,7 +42,7 @@ try {
 // We really only need journals so we can group by journal entry and void all transactions. Datetime
 // and memo also go to the transaction for easy searching without having to populate the journal
 // model each time.
-let journalSchema;
+var journalSchema;
 try {
 	journalSchema = mongoose.model('Medici_Journal');
 } catch (error) {
@@ -82,7 +82,7 @@ try {
 			this.void_reason = reason;
 		}
 
-		const voidTransaction = trans_id => {
+		var voidTransaction = trans_id => {
 			return mongoose.model('Medici_Transaction').findByIdAndUpdate(trans_id, {
 				voided:true,
 				void_reason:this.void_reason
@@ -93,13 +93,13 @@ try {
             });
 		};
 
-		const voids = [];
-		for (let trans_id of this._transactions) {
+		var voids = [];
+		for (var trans_id of this._transactions) {
 			voids.push(voidTransaction(trans_id));
 		}
 
 		return Promise.all(voids).then(transactions => {
-			let newMemo;
+			var newMemo;
 			if (this.void_reason) {
 				newMemo = this.void_reason;
 			} else {
@@ -115,14 +115,14 @@ try {
 				}
 			}
 			// Ok now create an equal and opposite journal
-			const entry = book.entry(newMemo, null, this._id);
-			const valid_fields = ['credit','debit','account_path','accounts','datetime','book','memo','timestamp','voided','void_reason','_original_journal'];
+			var entry = book.entry(newMemo, null, this._id);
+			var valid_fields = ['credit','debit','account_path','accounts','datetime','book','memo','timestamp','voided','void_reason','_original_journal'];
 
-			for (let trans of transactions) {
+			for (var trans of transactions) {
 				trans = trans.toObject();
-				const meta = {};
-				for (let key in trans) {
-					const val = trans[key];
+				var meta = {};
+				for (var key in trans) {
+					var val = trans[key];
 					if ((key === '_id') || (key === '_journal')) {
 						continue;
 					}

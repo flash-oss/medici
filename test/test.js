@@ -1,14 +1,14 @@
-const medici = require('../');
+var medici = require('../');
 require('should');
 
 describe('Medici', function() {
 	it('Should let you create a basic transaction', function(done) {
-		const book = new medici.book('MyBook');
+		var book = new medici.book('MyBook');
 		book.entry('Test Entry').debit('Assets:Receivable', 500).credit('Income:Rent', 500).commit().then(journal => {
 			journal.memo.should.equal('Test Entry');
 			journal._transactions.length.should.equal(2);
 			this.journal = journal;
-			const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+			var threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
 			return book.entry('Test Entry 2', threeDaysAgo).debit('Assets:Receivable', 700).credit('Income:Rent', 700).commit().then(journal => {
 				this.journal2 = journal;
 				journal.book.should.equal('MyBook');
@@ -22,14 +22,14 @@ describe('Medici', function() {
 	it('Should have updated the balance for assets and income and accurately give balance for subaccounts', function(done) {
 
 		console.log('Starting Balance');
-		const book = new medici.book('MyBook');
+		var book = new medici.book('MyBook');
 		console.log('Getting balance...');
 		book.balance({
 			account:'Assets'})
 		.then(function(data) {
 			console.log('got data');
-			let bal = data.balance;
-			let { notes } = data;
+			var bal = data.balance;
+			var { notes } = data;
 			notes.should.equal(2);
 			bal.should.equal(-1200);
 
@@ -60,7 +60,7 @@ describe('Medici', function() {
 	});
 
 	it('should return full ledger', function(done) {
-		const book = new medici.book('MyBook');
+		var book = new medici.book('MyBook');
 		book.ledger({
 			account:'Assets'})
 		.then(function(res) {
@@ -72,7 +72,7 @@ describe('Medici', function() {
 
 
 	it('should allow you to void a journal entry', function(done) {
-		const book = new medici.book('MyBook');
+		var book = new medici.book('MyBook');
 		book.void(this.journal._id, 'Messed up').then(() =>
 			book.balance({
 				account:'Assets'})
@@ -85,7 +85,7 @@ describe('Medici', function() {
 	});
 
 	it('should list all accounts', function(done) {
-		const book = new medici.book('MyBook');
+		var book = new medici.book('MyBook');
 		book.listAccounts().then(function(accounts) {
 			accounts.indexOf('Assets').should.be.greaterThan(-1);
 			accounts.indexOf('Assets:Receivable').should.be.greaterThan(-1);
@@ -97,12 +97,12 @@ describe('Medici', function() {
 	});
 
 	it('should return ledger with array of accounts', function(done) {
-		const book = new medici.book('MyBook');
+		var book = new medici.book('MyBook');
 		book.ledger({
 			account:['Assets','Income']})
 		.then(function(response) {
 			response.results.length.should.equal(6);
-			for (let res of response.results) {
+			for (var res of response.results) {
 				((res.account_path.indexOf('Assets') >= 0) || (res.account_path.indexOf('Income') >= 0)).should.equal(true);
 			}
 			done();
@@ -111,7 +111,7 @@ describe('Medici', function() {
 	});
 
 	it('should give you a paginated ledger when requested', function(done) {
-		const book = new medici.book('MyBook');
+		var book = new medici.book('MyBook');
 		book.ledger({
 			account:['Assets','Income'],
 			perPage:2,
@@ -127,7 +127,7 @@ describe('Medici', function() {
 	});
 
 	it('should give you the balance by page', function(done) {
-		const book = new medici.book('MyBook');
+		var book = new medici.book('MyBook');
 		book.balance({
 			account:'Assets',
 			perPage:1,
@@ -154,7 +154,7 @@ describe('Medici', function() {
 
 	describe('approved/pending transactions',  function() {
 		it('should not include pending transactions in balance', function(done) {
-			const book = new medici.book('MyBook');
+			var book = new medici.book('MyBook');
 
 			book.entry('Test Entry').debit('Foo', 500).credit('Bar', 500).setApproved(false).commit().then(journal => {
 				this.pendingJournal = journal;
@@ -169,7 +169,7 @@ describe('Medici', function() {
             .catch(done);
 		});
 		it('should not include pending transactions in ledger', function(done) {
-			const book = new medici.book('MyBook');
+			var book = new medici.book('MyBook');
 			book.ledger({
 				account:['Foo']})
 			.then(function(response) {
@@ -179,7 +179,7 @@ describe('Medici', function() {
             .catch(done);
 		});
 		it('should set all transactions to approved when approving the journal', function(done) {
-			const book = new medici.book('MyBook');
+			var book = new medici.book('MyBook');
 			this.pendingJournal.approved = true;
 			this.pendingJournal.save(() =>
 				book.balance({

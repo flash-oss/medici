@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const entry = require('./entry');
+var mongoose = require('mongoose');
+var entry = require('./entry');
 
 module.exports = class Book {
 	constructor(name) {
@@ -19,18 +19,18 @@ module.exports = class Book {
      * @returns {Object}
      */
 	parseQuery(query) {
-		let account, end_date, start_date;
-		const parsed = {};
+		var account, end_date, start_date;
+		var parsed = {};
 		if (account = query.account) {
-			let accounts, i;
+			var accounts, i;
 			if (account instanceof Array) {
 
-				const $or = [];
-				for (let acct of account) {
+				var $or = [];
+				for (var acct of account) {
 					accounts = acct.split(':');
-					const match = {};
+					var match = {};
 					for (i = 0; i < accounts.length; i++) {
-						const a = accounts[i];
+						var a = accounts[i];
 						match[`account_path.${i}`] = a;
 					}
 					$or.push(match);
@@ -39,7 +39,7 @@ module.exports = class Book {
 			} else {
 				accounts = account.split(':');
 				for (i = 0; i < accounts.length; i++) {
-					const acct = accounts[i];
+					var acct = accounts[i];
 					parsed[`account_path.${i}`] = acct;
 				}
 			}
@@ -69,9 +69,9 @@ module.exports = class Book {
 			delete query.end_date;
 		}
 
-		const keys = Object.keys(this.transactionModel.schema.paths);
-		for (let key in query) {
-			let val = query[key];
+		var keys = Object.keys(this.transactionModel.schema.paths);
+		for (var key in query) {
+			var val = query[key];
 			if (keys.indexOf(key) >= 0) {
 				// If it starts with a _ assume it's a reference
 				if ((key.substr(0, 1) === '_') && val instanceof String) {
@@ -98,7 +98,7 @@ module.exports = class Book {
 	}
 
 	balance(query) {
-		let pagination;
+		var pagination;
 
 		if (query.perPage) {
 			pagination = {
@@ -110,10 +110,10 @@ module.exports = class Book {
 			delete query.page;
 		}
 		query = this.parseQuery(query);
-		const match =
+		var match =
 			{$match:query};
 
-		const project = {
+		var project = {
 			$project: {
 				debit:'$debit',
 				credit:'$credit',
@@ -121,7 +121,7 @@ module.exports = class Book {
 				timestamp:'$timestamp'
 			}
 		};
-		const group = {
+		var group = {
 			$group: {
 				_id:'1',
 				credit: {
@@ -136,9 +136,9 @@ module.exports = class Book {
 			}
 		};
 		if (pagination) {
-			const skip =
+			var skip =
 				{$skip:(pagination.page - 1) * pagination.perPage};
-			const sort = {
+			var sort = {
 				$sort: {
 					'datetime':-1,
 					'timestamp':-1
@@ -154,7 +154,7 @@ module.exports = class Book {
                     };
                 }
 
-                const total = result.credit - (result.debit);
+                var total = result.credit - (result.debit);
 
                 return {
                     balance:total,
@@ -173,7 +173,7 @@ module.exports = class Book {
                     };
                 }
 
-                const total = result.credit - (result.debit);
+                var total = result.credit - (result.debit);
                 return {
                     balance:total,
                     notes:result.count
@@ -183,7 +183,7 @@ module.exports = class Book {
 	}
 
 	ledger(query, populate=null) {
-		let pagination;
+		var pagination;
 
 		// Pagination
 		if (query.perPage) {
@@ -196,7 +196,7 @@ module.exports = class Book {
 			delete query.page;
 		}
 		query = this.parseQuery(query);
-		const q = this.transactionModel.find(query);
+		var q = this.transactionModel.find(query);
 
 		if (pagination) {
 			return this.transactionModel.count(query)
@@ -207,7 +207,7 @@ module.exports = class Book {
 					timestamp:-1
 				});
 				if (populate) {
-					for (let pop of Array.from(populate)) {
+					for (var pop of Array.from(populate)) {
 						q.populate(pop);
 					}
 				}
@@ -226,7 +226,7 @@ module.exports = class Book {
 				timestamp:-1
 			});
 			if (populate) {
-				for (let pop of Array.from(populate)) {
+				for (var pop of Array.from(populate)) {
 					q.populate(pop);
 				}
 			}
@@ -251,11 +251,11 @@ module.exports = class Book {
 		.distinct('accounts')
         .then(function(results) {
 			// Make array
-            const final = [];
-            for (let result of results) {
-                const paths = result.split(':');
-                const prev = [];
-                for (let acct of paths) {
+            var final = [];
+            for (var result of results) {
+                var paths = result.split(':');
+                var prev = [];
+                for (var acct of paths) {
                     prev.push(acct);
                     final.push(prev.join(':'));
                 }
