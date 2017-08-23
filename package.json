@@ -4,13 +4,17 @@
   "description": "Simple double-entry accounting for Node + Mongoose",
   "main": "src/index.js",
   "scripts": {
-    "test": "grunt test"
+    "test": "mocha"
   },
+  "files": [
+    "src"
+  ],
   "repository": {
     "type": "git",
     "url": "http://github.com/jraede/medici"
   },
   "keywords": [
+    "double-entry",
     "accounting",
     "account",
     "finance",
@@ -30,12 +34,6 @@
   },
   "homepage": "https://github.com/jraede/medici",
   "devDependencies": {
-    "grunt": "~0.4.2",
-    "grunt-cli": "^1.2.0",
-    "grunt-contrib-coffee": "~0.8.0",
-    "grunt-contrib-watch": "~0.5.3",
-    "grunt-exec": "~0.4.3",
-    "grunt-sed": "~0.1.1",
     "mocha": "^3.5.0",
     "should": "^11.2.1"
   }
