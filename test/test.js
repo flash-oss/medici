@@ -1,24 +1,7 @@
-const mongoose = require('mongoose');
-
-mongoose.connect('mongodb://localhost/medici_test');
-mongoose.set('debug', true);
 const medici = require('../');
 require('should');
 
 describe('Medici', function() {
-	this.timeout(15000);
-	function droptables(done) {
-        mongoose.connection.collections.medici_transactions.drop();
-        mongoose.connection.collections.medici_journals.drop();
-        done();
-	}
-	before(function(done) {
-		droptables(done);
-	});
-	after(function(done) {
-        droptables(done);
-	});
-
 	it('Should let you create a basic transaction', function(done) {
 		const book = new medici.book('MyBook');
 		book.entry('Test Entry').debit('Assets:Receivable', 500).credit('Income:Rent', 500).commit().then(journal => {
