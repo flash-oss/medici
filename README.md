@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/jraede/medici.png?branch=master)](https://travis-ci.org/jraede/medici)
+[![Build Status](https://travis-ci.org/koresar/medici.png?branch=master)](https://travis-ci.org/koresar/medici)
 
 medici
 ======
@@ -25,17 +25,22 @@ Medici is written in CoffeeScript but obviously is compatible with straight Java
 
 Writing a journal entry is very simple. First you need a `book` object:
 
-	var medici = require('medici');
+```js
+const {book} = require('medici');
 
-	// The first argument is the book name, which is used to determine which book the transactions and journals are queried from.
-	var myBook = new medici.book('MyBook'); 
+// The first argument is the book name, which is used to determine which book the transactions and journals are queried from.
+const myBook = new book('MyBook'); 
+```
 
 Now write an entry:
-	
-	// You can specify a Date object as the second argument in the book.entry() method if you want the transaction to be for a different date than today
-	myBook.entry('Received payment').debit('Assets:Cash', 1000).credit('Income', 1000, {
-			client:'Joe Blow'
-		}).write().then(function(journal) { (do something with written journal)});
+
+```js
+// You can specify a Date object as the second argument in the book.entry() method if you want the transaction to be for a different date than today
+myBook.entry('Received payment')
+.debit('Assets:Cash', 1000)
+.credit('Income', 1000, {client: 'Joe Blow'})
+.write().then(function(journal) { });
+```
 
 You can continue to chain debits and credits to the journal object until you are finished. The `entry.debit()` and `entry.credit()` methods both have the same arguments: (account, amount, meta).
 
@@ -45,12 +50,14 @@ You can use the "meta" field which you can use to store any additional informati
 
 To query account balance, just use the `book.balance()` method:
 
-	myBook.balance({
-		account:'Assets:Accounts Receivable',
-		client:'Joe Blow'	
-	}).then(function(balance) {
-		console.log("Joe Blow owes me", balance);
-	});
+```js
+myBook.balance({
+    account:'Assets:Accounts Receivable',
+    client:'Joe Blow'
+}).then((balance) => {
+    console.log("Joe Blow owes me", balance);
+});
+```
 
 Note that the `meta` query parameters are on the same level as the default query parameters (account, _journal, start_date, end_date). Medici parses the query and automatically turns any values that do not match top-level schema properties into meta parameters.
 
@@ -58,67 +65,82 @@ Note that the `meta` query parameters are on the same level as the default query
 
 To retrieve transactions, use the `book.ledger()` method (here I'm using moment.js for dates):
 
-	var startDate = moment().subtract('months', 1).toDate(); // One month ago
-	var endDate = new Date(); //today
+```js
+const startDate = moment().subtract('months', 1).toDate(); // One month ago
+const endDate = new Date(); //today
 
-	myBook.ledger({
-		account:'Income'
-		start_date:startDate
-		end_date:endDate
-	}).then(function(transactions) {
-		// Do something with the returned transaction documents
-	});
+myBook.ledger({
+    account: 'Income',
+    start_date: startDate,
+    end_date: endDate
+}).then((transactions) => {
+    // Do something with the returned transaction documents
+});
+```
 
 ## Voiding Journal Entries
 
 Sometimes you will make an entry that turns out to be inaccurate or that otherwise needs to be voided. Keeping with traditional double-entry accounting, instead of simply deleting that journal entry, Medici instead will mark the entry as "voided", and then add an equal, opposite journal entry to offset the transactions in the original. This gives you a clear picture of all actions taken with your book.
 
 To void a journal entry, you can either call the `void(void_reason)` method on a Medici_Journal document, or use the `book.void(journal_id, void_reason)` method if you know the journal document's ID.
-	
-	myBook.void("123456", "I made a mistake").then(function() {
-		// Do something after voiding
-	})
+    
+```js
+myBook.void("123456", "I made a mistake").then(() => {
+    // Do something after voiding
+})
+```
 
 If you do not specify a void reason, the system will set the memo of the new journal to the original journal's memo prepended with "[VOID]".
 
-	
 
 ## Document Schema
 
 Journals are schemed in Mongoose as follows:
 
-	datetime:Date
-	memo:
-		type:String
-		default:''
-	_transactions:[
-			type:Schema.Types.ObjectId
-			ref:'Medici_Transaction'
-	]
-	book:String
-	voided:
-		type:Boolean
-		default:false
-	void_reason:String
+```js
+JournalSchema = {
+    datetime: Date,
+    memo: {
+        type: String,
+        default: ''
+    },
+    _transactions: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Medici_Transaction'
+    }],
+    book: String,
+    voided: {
+        type: Boolean,
+        default: false
+    },
+    void_reason: String
+}
+```
 
 Transactions are schemed as follows:
 
-	credit:Number
-	debit:Number
-	meta:Schema.Types.Mixed
-	datetime:Date
-	account_path:[String]
-	accounts:String
-	book:String
-	memo:String
-	_journal:
-		type:Schema.Types.ObjectId
-		ref:'Medici_Journal'
-	timestamp:Date
-	voided:
-		type:Boolean
-		default:false
-	void_reason:String
+```js
+TransactionSchema = {
+    credit: Number,
+    debit: Number,
+    meta: Schema.Types.Mixed,
+    datetime: Date,
+    account_path: [String],
+    accounts: String,
+    book: String,
+    memo: String,
+    _journal: {
+        type: Schema.Types.ObjectId,
+        ref:'Medici_Journal'
+    },
+    timestamp: Date,
+    voided: {
+        type: Boolean,
+        default: false
+    },
+    void_reason: String
+}
+```
 
 Note that the `book`, `datetime`, `memo`, `voided`, and `void_reason` attributes are duplicates of their counterparts on the Journal document. These attributes will pretty much be needed on every transaction search, so they are added to the Transaction document to avoid having to populate the associated Journal every time.
 
@@ -130,25 +152,43 @@ If you need to have related documents for Transactions and want to use Mongoose'
 
 For example, if you want transactions to have a related "person" document, you can define the transaction schema like so:
 
-	_person:
-		type:Schema.Types.ObjectId
-		ref:'Person'
-	credit:Number
-	debit:Number
-	meta:Schema.Types.Mixed
-	datetime:Date
-	account_path:[String]
-	accounts:String
-	book:String
-	memo:String
-	_journal:
-		type:Schema.Types.ObjectId
-		ref:'Medici_Journal'
-	timestamp:Date
-	voided:
-		type:Boolean
-		default:false
-	void_reason:String
+```js
+MyTransactionSchema = {
+    _person: {
+        type:Schema.Types.ObjectId,
+        ref:'Person'
+    },
+    credit: Number,
+    debit: Number,
+    meta: Schema.Types.Mixed,
+    datetime: Date,
+    account_path: [String],
+    accounts: String,
+    book: String,
+    memo: String,
+    _journal: {
+        type: Schema.Types.ObjectId,
+        ref: 'Medici_Journal'
+    },
+    timestamp: Date,
+    voided: {
+        type: Boolean,
+        default: false
+    },
+    void_reason: String
+}
+```
 
 Then when you query transactions using the `book.ledger()` method, you can specify the related documents to populate as the second argument. E.g., `book.ledger({account:'Assets:Accounts Receivable'}, ['_person']).then()...`
 
+## Changelog
+
+* **v1.0.0** _See [this PR](https://github.com/koresar/medici/pull/5) for more details_
+  * **BREAKING**: Dropped support of node.js v0.10, v0.12, v4, and io.js. Node.js >= v6 is supported only. This allowed to drop several production dependencies. Also, few bugs were automatically fixed.
+  * **BREAKING**: Upgraded `mongoose` to v4. This allows `medici` to be used with wider mongodb versions.
+  * Dropped production dependencies: `moment`, `q`, `underscore`.
+  * Dropped dev dependencies: `grunt`, `grunt-exec`, `grunt-contrib-coffee`, `grunt-sed`, `grunt-contrib-watch`, `semver`.
+  * No `.coffee` any more. Using node.js v6 compatible JavaScript only.
+  * There are no API changes.
+  * Fixed a [bug](https://github.com/koresar/medici/issues/4). Transaction meta data was not voided correctly. 
+  * This module maintainer is now [koresar](https://github.com/koresar) instead of the original author [jraede](http://github.com/jraede).

@@ -2,42 +2,38 @@
   "name": "medici",
   "version": "0.12.1",
   "description": "Simple double-entry accounting for Node + Mongoose",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "test": "grunt test"
+    "test": "mocha"
   },
+  "files": [
+    "src"
+  ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/jraede/medici"
+    "url": "http://github.com/koresar/medici"
   },
   "keywords": [
+    "double-entry",
     "accounting",
     "account",
-    "finance"
+    "finance",
+    "mongodb",
+    "mongoose"
   ],
   "author": {
     "name": "Jason Raede"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jraede/medici/issues"
+    "url": "https://github.com/koresar/medici/issues"
   },
   "dependencies": {
-    "underscore": "~1.5.2",
-    "mongoose": "~3.8.0",
-    "q": "*",
-    "moment": "~2.5.1"
+    "mongoose": "^4.11.7"
   },
-  "readme": "medici\n======\n\nDouble-entry accounting system for nodejs + mongoose\n",
-  "readmeFilename": "README.md",
-  "homepage": "https://github.com/jraede/medici",
+  "homepage": "https://github.com/koresar/medici",
   "devDependencies": {
-    "should": "~2.1.1",
-    "grunt": "~0.4.2",
-    "grunt-exec": "~0.4.3",
-    "grunt-contrib-coffee": "~0.8.0",
-    "grunt-sed": "~0.1.1",
-    "grunt-contrib-watch": "~0.5.3",
-    "semver": "~2.2.1"
+    "mocha": "^3.5.0",
+    "should": "^11.2.1"
   }
 }
