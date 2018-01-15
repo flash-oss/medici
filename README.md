@@ -17,10 +17,6 @@ Each transaction in Medici is for one account. Accounts are divided into up to t
 
 In theory, the account names are entirely arbitrary, but you will likely want to use traditional accounting sections and subsections like assets, expenses, income, accounts receivable, accounts payable, etc. But, in the end, how you structure the accounts is entirely up to you.
 
-## Coding Standards
-
-Medici is written in CoffeeScript but obviously is compatible with straight JavaScript as well. All database queries return promise objects instead of using the traditional node `function(err, result)`callback.
-
 ## Writing journal entries
 
 Writing a journal entry is very simple. First you need a `book` object:
