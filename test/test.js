@@ -1,3 +1,4 @@
+require('./_setup');
 const {book: Book} = require('../');
 require('should');
 
@@ -44,6 +45,22 @@ describe('Medici', function () {
     })
     .then(() => done())
     .catch(done);
+  });
+
+  it('should throw INVALID_JOURNAL if an entry total is !=0 and <0', function (done) {
+    const book = new Book('MyBook');
+    const entry = book.entry("This is a test entry");
+    entry.debit("Assets:Cash", 99.9, {});
+    entry.credit("Income", 99.8, {});
+    entry.commit().then(() => done(new Error('Must have been rejected'))).catch(() => done());
+  });
+
+  it('should throw INVALID_JOURNAL if an entry total is !=0 and >0', function (done) {
+    const book = new Book('MyBook');
+    const entry = book.entry("This is a test entry");
+    entry.debit("Assets:Cash", 99.8, {});
+    entry.credit("Income", 99.9, {});
+    entry.commit().then(() => done(new Error('Must have been rejected'))).catch(() => done());
   });
 
   it('Should have updated the balance for assets and income and accurately give balance for subaccounts', function (done) {

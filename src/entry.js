@@ -133,7 +133,7 @@ module.exports = class Entry {
     }
 
     // Hello JavaScript. Your math rounding skill is mesmerising.
-    if (total < 1e-10) total = 0;
+    if (total > -1e-10 && total < 1e-10) total = 0;
 
     if (total > 0 || total < 0) {
       const err = new Error('INVALID_JOURNAL');
