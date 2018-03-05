@@ -32,10 +32,10 @@ Now write an entry:
 
 ```js
 // You can specify a Date object as the second argument in the book.entry() method if you want the transaction to be for a different date than today
-myBook.entry('Received payment')
+const journal = await myBook.entry('Received payment')
 .debit('Assets:Cash', 1000)
 .credit('Income', 1000, {client: 'Joe Blow'})
-.write().then(function(journal) { });
+.commit();
 ```
 
 You can continue to chain debits and credits to the journal object until you are finished. The `entry.debit()` and `entry.credit()` methods both have the same arguments: (account, amount, meta).
