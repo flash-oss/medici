@@ -9,7 +9,7 @@ Double-entry accounting system for nodejs + mongoose
 
 To use Medici you will need a working knowledge of JavaScript, Node.js, and Mongoose.
 
-Medici divides itself into "books", each of which store *journal entries* and their child *transactions*. The cardinal rule of double-entry accounting is that "everything must balance out to zero", and that rule is applied to every journal entry written to the book. If the transactions for a journal entry do not balance out to zero, the system will throw a new error with the message `INVALID JOURNAL`.
+Medici divides itself into "books", each of which store *journal entries* and their child *transactions*. The cardinal rule of double-entry accounting is that "for every debit entry, there must be a corresponding credit entry" which means "everything must balance out to zero", and that rule is applied to every journal entry written to the book. If the transactions for a journal entry do not balance out to zero, the system will throw a new error with the message `INVALID JOURNAL`.
 
 Books simply represent the physical book in which you would record your transactions - on a technical level, the "book" attribute simply is added as a key-value pair to both the `Medici_Transactions` and `Medici_Journals` collection to allow you to have multiple books if you want to.
 
