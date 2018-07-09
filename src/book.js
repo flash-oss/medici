@@ -136,7 +136,7 @@ module.exports = class Book {
         }
       };
       return this.transactionModel
-      .aggregate(match, project, sort, skip, group)
+      .aggregate([match, project, sort, skip, group])
       .then(function (result) {
         result = result.shift();
         if (!result) {
@@ -155,7 +155,7 @@ module.exports = class Book {
       });
     } else {
       return this.transactionModel
-      .aggregate(match, project, group)
+      .aggregate([match, project, group])
       .then(function (result) {
         result = result.shift();
         if (!result) {

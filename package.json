@@ -4,7 +4,7 @@
   "description": "Simple double-entry accounting for Node + Mongoose",
   "main": "src/index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha && npm i mongoose@4 && mocha && npm i mongoose@5"
   },
   "files": [
     "src"
@@ -29,11 +29,12 @@
     "url": "https://github.com/koresar/medici/issues"
   },
   "dependencies": {
-    "mongoose": "^4.11.7"
+    "mongoose": "^5.2.2"
   },
   "homepage": "https://github.com/koresar/medici",
   "devDependencies": {
-    "mocha": "^3.5.0",
+    "mocha": "^5.2.0",
+    "prettier": "^1.13.7",
     "should": "^11.2.1"
   }
 }

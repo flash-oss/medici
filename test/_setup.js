@@ -5,7 +5,7 @@ mongoose.set('debug', true);
 
 before(function(done) {
   mongoose
-    .connect('mongodb://localhost/medici_test', { useMongoClient: true })
+    .connect('mongodb://localhost/medici_test')
     .then(() => {
       mongoose.connection.collections.medici_transactions.drop();
       mongoose.connection.collections.medici_journals.drop();
