@@ -183,10 +183,11 @@ Then when you query transactions using the `book.ledger()` method, you can speci
 
 ## Changelog
 
-- **v1.1.0**
+- **v2.0.0**
 
-  - Support two mongoose versions simultaneously - v4 and v5.
+  - Upgrade to use mongoose v5. To use with mongoose v4 just `npm i medici@1`.
   - Support node.js v10.
+  - No API changes.
 
 - **v1.0.0** _See [this PR](https://github.com/koresar/medici/pull/5) for more details_
   - **BREAKING**: Dropped support of node.js v0.10, v0.12, v4, and io.js. Node.js >= v6 is supported only. This allowed to drop several production dependencies. Also, few bugs were automatically fixed.
