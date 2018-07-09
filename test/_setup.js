@@ -1,11 +1,11 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 mongoose.Promise = global.Promise;
 
-mongoose.set('debug', true);
+mongoose.set("debug", true);
 
 before(function(done) {
   mongoose
-    .connect('mongodb://localhost/medici_test')
+    .connect("mongodb://localhost/medici_test")
     .then(() => {
       mongoose.connection.collections.medici_transactions.drop();
       mongoose.connection.collections.medici_journals.drop();
@@ -19,7 +19,7 @@ after(function(done) {
     if (err) {
       console.log(err);
     } else {
-      console.log('Successfully dropped db');
+      console.log("Successfully dropped db");
     }
     mongoose.connection.close(done);
   });

@@ -5,7 +5,7 @@ module.exports = class Entry {
 
   constructor(book, memo, date, original_journal) {
     this.book = book;
-    const {journalModel} = this.book;
+    const { journalModel } = this.book;
     this.journal = new journalModel();
     this.journal.memo = memo;
 
@@ -30,17 +30,17 @@ module.exports = class Entry {
 
   credit(account_path, amount, extra = null) {
     amount = parseFloat(amount);
-    if (typeof account_path === 'string') {
-      account_path = account_path.split(':');
+    if (typeof account_path === "string") {
+      account_path = account_path.split(":");
     }
 
     if (account_path.length > 3) {
-      throw 'Account path is too deep (maximum 3)';
+      throw "Account path is too deep (maximum 3)";
     }
 
     const transaction = {
       account_path,
-      accounts: account_path.join(':'),
+      accounts: account_path.join(":"),
       credit: amount,
       debit: 0.0,
       book: this.book.name,
@@ -70,16 +70,16 @@ module.exports = class Entry {
 
   debit(account_path, amount, extra = null) {
     amount = parseFloat(amount);
-    if (typeof account_path === 'string') {
-      account_path = account_path.split(':');
+    if (typeof account_path === "string") {
+      account_path = account_path.split(":");
     }
     if (account_path.length > 3) {
-      throw 'Account path is too deep (maximum 3)';
+      throw "Account path is too deep (maximum 3)";
     }
 
     const transaction = {
       account_path,
-      accounts: account_path.join(':'),
+      accounts: account_path.join(":"),
       credit: 0.0,
       debit: amount,
       _journal: this.journal._id,
@@ -136,20 +136,23 @@ module.exports = class Entry {
     if (total > -1e-10 && total < 1e-10) total = 0;
 
     if (total > 0 || total < 0) {
-      const err = new Error('INVALID_JOURNAL');
+      const err = new Error("INVALID_JOURNAL");
       err.code = 400;
-      console.error('Journal is invalid. Total is:', total);
+      console.error("Journal is invalid. Total is:", total);
       return Promise.reject(err);
     } else {
-      return Promise.all(this.transactions.map(tx => this.saveTransaction(tx)))
-      .then(() => {
-        return this.journal.save()
-        .then(() => this.journal).catch(err => {
-          this.book.transactionModel.remove({
-            _journal: this.journal._id
+      return Promise.all(
+        this.transactions.map(tx => this.saveTransaction(tx))
+      ).then(() => {
+        return this.journal
+          .save()
+          .then(() => this.journal)
+          .catch(err => {
+            this.book.transactionModel.remove({
+              _journal: this.journal._id
+            });
+            throw new Error(`Failure to save journal: ${err.message}`);
           });
-          throw new Error(`Failure to save journal: ${err.message}`);
-        });
       });
     }
   }

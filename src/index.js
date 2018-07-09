@@ -1,11 +1,11 @@
-const Book = require('./book');
-const mongoose = require('mongoose');
-const {Schema} = mongoose;
+const Book = require("./book");
+const mongoose = require("mongoose");
+const { Schema } = mongoose;
 
 // This lets you register your own schema before including Medici. Useful if you want to store additional information
 // along side each transaction
 try {
-  mongoose.model('Medici_Transaction');
+  mongoose.model("Medici_Transaction");
 } catch (error) {
   const transactionSchema = new Schema({
     credit: Number,
@@ -18,7 +18,7 @@ try {
     memo: String,
     _journal: {
       type: Schema.Types.ObjectId,
-      ref: 'Medici_Journal'
+      ref: "Medici_Journal"
     },
     timestamp: {
       type: Date,
@@ -36,7 +36,7 @@ try {
       default: true
     }
   });
-  mongoose.model('Medici_Transaction', transactionSchema);
+  mongoose.model("Medici_Transaction", transactionSchema);
 }
 
 // We really only need journals so we can group by journal entry and void all transactions. Datetime
@@ -44,18 +44,18 @@ try {
 // model each time.
 let journalSchema;
 try {
-  journalSchema = mongoose.model('Medici_Journal');
+  journalSchema = mongoose.model("Medici_Journal");
 } catch (error) {
   journalSchema = new Schema({
     datetime: Date,
     memo: {
       type: String,
-      default: ''
+      default: ""
     },
     _transactions: [
       {
         type: Schema.Types.ObjectId,
-        ref: 'Medici_Transaction'
+        ref: "Medici_Transaction"
       }
     ],
     book: String,
@@ -70,116 +70,118 @@ try {
     }
   });
 
-  journalSchema.methods.void = function (book, reason) {
+  journalSchema.methods.void = function(book, reason) {
     if (this.voided === true) {
-      return Promise.reject(new Error('Journal already voided'));
+      return Promise.reject(new Error("Journal already voided"));
     }
 
     // Set this to void with reason and also set all associated transactions
     this.voided = true;
     if (!reason) {
-      this.void_reason = '';
+      this.void_reason = "";
     } else {
       this.void_reason = reason;
     }
 
     const voidTransaction = trans_id => {
       return mongoose
-      .model('Medici_Transaction')
-      .findByIdAndUpdate(trans_id, {
-        voided: true,
-        void_reason: this.void_reason
-      })
-      .catch(err => {
-        console.error('Failed to void transaction:', err);
-        throw err;
-      });
+        .model("Medici_Transaction")
+        .findByIdAndUpdate(trans_id, {
+          voided: true,
+          void_reason: this.void_reason
+        })
+        .catch(err => {
+          console.error("Failed to void transaction:", err);
+          throw err;
+        });
     };
 
-    return Promise.all(this._transactions.map(voidTransaction))
-    .then(transactions => {
-      let newMemo;
-      if (this.void_reason) {
-        newMemo = this.void_reason;
-      } else {
-        // It's either VOID, UNVOID, or REVOID
-        if (this.memo.substr(0, 6) === '[VOID]') {
-          newMemo = this.memo.replace('[VOID]', '[UNVOID]');
-        } else if (this.memo.substr(0, 8) === '[UNVOID]') {
-          newMemo = this.memo.replace('[UNVOID]', '[REVOID]');
-        } else if (this.memo.substr(0, 8) === '[REVOID]') {
-          newMemo = this.memo.replace('[REVOID]', '[UNVOID]');
+    return Promise.all(this._transactions.map(voidTransaction)).then(
+      transactions => {
+        let newMemo;
+        if (this.void_reason) {
+          newMemo = this.void_reason;
         } else {
-          newMemo = `[VOID] ${this.memo}`;
-        }
-      }
-      // Ok now create an equal and opposite journal
-      const entry = book.entry(newMemo, null, this._id);
-      const valid_fields = [
-        'credit',
-        'debit',
-        'account_path',
-        'accounts',
-        'datetime',
-        'book',
-        'memo',
-        'timestamp',
-        'voided',
-        'void_reason',
-        '_original_journal'
-      ];
-
-      function processMetaField(key, val, meta) {
-        if (key === '_id' || key === '_journal') {
-
-        } else if (valid_fields.indexOf(key) === -1) {
-          return meta[key] = val;
-        }
-      }
-
-      for (let trans of transactions) {
-        trans = trans.toObject();
-        const meta = {};
-
-        Object.keys(trans).forEach(key => {
-          const val = trans[key];
-          if (key === 'meta') {
-            Object.keys(trans['meta']).forEach(keyMeta => {
-              processMetaField(keyMeta, trans['meta'][keyMeta], meta);
-            });
+          // It's either VOID, UNVOID, or REVOID
+          if (this.memo.substr(0, 6) === "[VOID]") {
+            newMemo = this.memo.replace("[VOID]", "[UNVOID]");
+          } else if (this.memo.substr(0, 8) === "[UNVOID]") {
+            newMemo = this.memo.replace("[UNVOID]", "[REVOID]");
+          } else if (this.memo.substr(0, 8) === "[REVOID]") {
+            newMemo = this.memo.replace("[REVOID]", "[UNVOID]");
           } else {
-            processMetaField(key, val, meta);
+            newMemo = `[VOID] ${this.memo}`;
           }
-        });
+        }
+        // Ok now create an equal and opposite journal
+        const entry = book.entry(newMemo, null, this._id);
+        const valid_fields = [
+          "credit",
+          "debit",
+          "account_path",
+          "accounts",
+          "datetime",
+          "book",
+          "memo",
+          "timestamp",
+          "voided",
+          "void_reason",
+          "_original_journal"
+        ];
 
-        if (trans.credit) {
-          entry.debit(trans.account_path, trans.credit, meta);
+        function processMetaField(key, val, meta) {
+          if (key === "_id" || key === "_journal") {
+          } else if (valid_fields.indexOf(key) === -1) {
+            return (meta[key] = val);
+          }
         }
-        if (trans.debit) {
-          entry.credit(trans.account_path, trans.debit, meta);
+
+        for (let trans of transactions) {
+          trans = trans.toObject();
+          const meta = {};
+
+          Object.keys(trans).forEach(key => {
+            const val = trans[key];
+            if (key === "meta") {
+              Object.keys(trans["meta"]).forEach(keyMeta => {
+                processMetaField(keyMeta, trans["meta"][keyMeta], meta);
+              });
+            } else {
+              processMetaField(key, val, meta);
+            }
+          });
+
+          if (trans.credit) {
+            entry.debit(trans.account_path, trans.credit, meta);
+          }
+          if (trans.debit) {
+            entry.credit(trans.account_path, trans.debit, meta);
+          }
         }
+
+        return entry.commit();
       }
-
-      return entry.commit();
-    });
+    );
   };
 
-  journalSchema.pre('save', function (next) {
-    if (!(this.isModified('approved') && this.approved === true)) {
+  journalSchema.pre("save", function(next) {
+    if (!(this.isModified("approved") && this.approved === true)) {
       return next();
     }
 
     return mongoose
-    .model('Medici_Transaction')
-    .find({_journal: this._id})
-    .then((transactions) => Promise.all(transactions.map(tx => {
-        tx.approved = true;
-        return tx.save();
-      }))
-      .then(() => next())
-    );
+      .model("Medici_Transaction")
+      .find({ _journal: this._id })
+      .then(transactions =>
+        Promise.all(
+          transactions.map(tx => {
+            tx.approved = true;
+            return tx.save();
+          })
+        ).then(() => next())
+      );
   });
-  mongoose.model('Medici_Journal', journalSchema);
+  mongoose.model("Medici_Journal", journalSchema);
 }
 
-module.exports = {book: Book};
+module.exports = { book: Book };
