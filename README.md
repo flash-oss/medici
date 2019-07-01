@@ -183,6 +183,11 @@ Then when you query transactions using the `book.ledger()` method, you can speci
 
 ## Changelog
 
+- **v3.0.0**
+
+  - Add 4 mandatory indexes, otherwise queries get very slow when transactions collection grows.
+  - No API changes.
+
 - **v2.0.0**
 
   - Upgrade to use mongoose v5. To use with mongoose v4 just `npm i medici@1`.
