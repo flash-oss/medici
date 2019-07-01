@@ -36,6 +36,10 @@ try {
       default: true
     }
   });
+  transactionSchema.index({ "_journal": 1 });
+  transactionSchema.index({ "account_path.0": 1, "book": 1, "approved": 1 });
+  transactionSchema.index({ "account_path.0": 1, "account_path.1": 1, "book": 1, "approved": 1 });
+  transactionSchema.index({ "account_path.0": 1, "account_path.1": 1, "account_path.2": 1, "book": 1, "approved": 1 });
   mongoose.model("Medici_Transaction", transactionSchema);
 }
 
