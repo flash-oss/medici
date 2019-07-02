@@ -181,6 +181,95 @@ MyTransactionSchema = {
 
 Then when you query transactions using the `book.ledger()` method, you can specify the related documents to populate as the second argument. E.g., `book.ledger({account:'Assets:Accounts Receivable'}, ['_person']).then()...`
 
+## Performance
+
+Medici is slow when number of records reach 30k. Starting from v3.0 the [following](https://github.com/koresar/medici/commit/274528ef5d1dae0beedca4a98dbf706808be53bd) indexes are auto generated on the `medici_transaction` collection:
+
+```
+    "_journal": 1
+```
+
+```
+    "account_path.0": 1,
+    "book": 1,
+    "approved": 1
+```
+
+```
+    "account_path.0": 1,
+    "account_path.1": 1,
+    "book": 1,
+    "approved": 1
+```
+
+```
+    "account_path.0": 1,
+    "account_path.1": 1,
+    "account_path.2": 1,
+    "book": 1,
+    "approved": 1
+```
+ 
+ However, if you are doing lots of queries using the `meta` data (which is a typical scenario) you probably would want to add the following index(es):
+ 
+ ```
+     "meta.myCustomProperty": 1,
+     "book": 1,
+     "approved": 1,
+     "datetime": -1,
+     "timestamp": -1
+ ```
+ 
+ and/or
+ 
+ ```
+     "meta.myCustomProperty": 1,
+     "account_path.0": 1,
+     "book": 1,
+     "approved": 1
+ ```
+ 
+ and/or
+ 
+ ```
+     "meta.myCustomProperty": 1,
+     "account_path.0": 1,
+     "account_path.1": 1,
+     "book": 1,
+     "approved": 1
+ ```
+  
+ and/or
+ 
+ ```
+     "meta.myCustomProperty": 1,
+     "account_path.0": 1,
+     "account_path.1": 1,
+     "account_path.2": 1,
+     "book": 1,
+     "approved": 1
+ ```
+ 
+ Here is how to add an index manually via MongoDB CLI or other tool:
+ 
+ ```
+ db = db.getSiblingDB("my_db_name") 
+ db.getCollection("medici_transactions").createIndex({ 
+     "meta.myCustomProperty": 1,
+     "book": 1,
+     "approved": 1,
+     "datetime": -1,
+     "timestamp": -1
+ }, {background: true})
+ ```
+ 
+ #### Index memory consumption example
+ 
+ For `medici_transactions` collection with 50000 documents:
+ 
+ * the mandatory `_id` index takes about 600 KB,
+ * each of the above mentioned indexes take from 300 to 600 KB.
+
 ## Changelog
 
 - **v3.0.0**
