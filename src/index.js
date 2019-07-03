@@ -37,6 +37,7 @@ try {
     }
   });
   transactionSchema.index({ "_journal": 1 });
+  transactionSchema.index({ "accounts": 1, "book": 1, "approved": 1, "datetime": -1, "timestamp": -1 });
   transactionSchema.index({ "account_path.0": 1, "book": 1, "approved": 1 });
   transactionSchema.index({ "account_path.0": 1, "account_path.1": 1, "book": 1, "approved": 1 });
   transactionSchema.index({ "account_path.0": 1, "account_path.1": 1, "account_path.2": 1, "book": 1, "approved": 1 });

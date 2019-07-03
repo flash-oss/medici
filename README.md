@@ -190,6 +190,14 @@ Medici is slow when number of records reach 30k. Starting from v3.0 the [followi
 ```
 
 ```
+    "accounts": 1,
+    "book": 1,
+    "approved": 1,
+    "datetime": -1,
+    "timestamp": -1
+```
+
+```
     "account_path.0": 1,
     "book": 1,
     "approved": 1
