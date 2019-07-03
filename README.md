@@ -276,7 +276,8 @@ Medici is slow when number of records reach 30k. Starting from v3.0 the [followi
  For `medici_transactions` collection with 50000 documents:
  
  * the mandatory `_id` index takes about 600 KB,
- * each of the above mentioned indexes take from 300 to 600 KB.
+ * each of the medici default indexes take from 300 to 600 KB.
+ * your custom indexes containing `meta.*` properties would take 600 to 1200 KB.
 
 ## Changelog
 
