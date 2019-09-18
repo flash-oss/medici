@@ -4,6 +4,10 @@
 
 Double-entry accounting system for nodejs + mongoose
 
+```bash
+npm i medici
+```
+
 ## Basics
 
 To use Medici you will need a working knowledge of JavaScript, Node.js, and Mongoose.
