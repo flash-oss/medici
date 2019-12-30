@@ -133,11 +133,17 @@ module.exports = class Entry {
     }
 
     // Hello JavaScript. Your math rounding skill is mesmerising.
-    if (total > -1e-10 && total < 1e-10) total = 0;
+    if (total > -1e-7 && total < 1e-7) total = 0;
+    // Medici is about money counting. It should probably use more precise floating point number structure.
+    // However, for now we use JS built-in Number. Hence Medici limitations are coming from Number.MAX_SAFE_INTEGER === 9007199254740991
+    // Here are the limitations:
+    // * You can safely add values up to 1 billion and down to 0.000001.
+    // * Anything more than 1 billion or less than 0.000001 is not guaranteed and will throw the below error.
 
-    if (total > 0 || total < 0) {
-      const err = new Error("INVALID_JOURNAL");
+    if (total !== 0) {
+      const err = new Error("INVALID_JOURNAL: can't commit non zero total");
       err.code = 400;
+      err.total = total;
       console.error("Journal is invalid. Total is:", total);
       return Promise.reject(err);
     } else {
