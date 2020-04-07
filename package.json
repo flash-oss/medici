@@ -34,7 +34,7 @@
   "homepage": "https://github.com/koresar/medici",
   "devDependencies": {
     "mocha": "^5.2.0",
-    "prettier": "^1.18.2",
+    "prettier": "^1.19.1",
     "should": "^11.2.1"
   }
 }

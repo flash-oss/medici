@@ -135,42 +135,38 @@ module.exports = class Book {
           timestamp: -1
         }
       };
-      return this.transactionModel
-        .aggregate([match, project, sort, skip, group])
-        .then(function(result) {
-          result = result.shift();
-          if (!result) {
-            return {
-              balance: 0,
-              notes: 0
-            };
-          }
-
-          const total = result.credit - result.debit;
-
+      return this.transactionModel.aggregate([match, project, sort, skip, group]).then(function(result) {
+        result = result.shift();
+        if (!result) {
           return {
-            balance: total,
-            notes: result.count
+            balance: 0,
+            notes: 0
           };
-        });
+        }
+
+        const total = result.credit - result.debit;
+
+        return {
+          balance: total,
+          notes: result.count
+        };
+      });
     } else {
-      return this.transactionModel
-        .aggregate([match, project, group])
-        .then(function(result) {
-          result = result.shift();
-          if (!result) {
-            return {
-              balance: 0,
-              notes: 0
-            };
-          }
-
-          const total = result.credit - result.debit;
+      return this.transactionModel.aggregate([match, project, group]).then(function(result) {
+        result = result.shift();
+        if (!result) {
           return {
-            balance: total,
-            notes: result.count
+            balance: 0,
+            notes: 0
           };
-        });
+        }
+
+        const total = result.credit - result.debit;
+        return {
+          balance: total,
+          notes: result.count
+        };
+      });
     }
   }
 
@@ -192,9 +188,7 @@ module.exports = class Book {
 
     if (pagination) {
       return this.transactionModel.count(query).then(count => {
-        q.skip((pagination.page - 1) * pagination.perPage).limit(
-          pagination.perPage
-        );
+        q.skip((pagination.page - 1) * pagination.perPage).limit(pagination.perPage);
         q.sort({
           datetime: -1,
           timestamp: -1
@@ -233,9 +227,7 @@ module.exports = class Book {
   }
 
   void(journal_id, reason) {
-    return this.journalModel
-      .findById(journal_id)
-      .then(journal => journal.void(this, reason));
+    return this.journalModel.findById(journal_id).then(journal => journal.void(this, reason));
   }
 
   listAccounts() {

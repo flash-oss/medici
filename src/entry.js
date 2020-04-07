@@ -147,9 +147,7 @@ module.exports = class Entry {
       console.error("Journal is invalid. Total is:", total);
       return Promise.reject(err);
     } else {
-      return Promise.all(
-        this.transactions.map(tx => this.saveTransaction(tx))
-      ).then(() => {
+      return Promise.all(this.transactions.map(tx => this.saveTransaction(tx))).then(() => {
         return this.journal
           .save()
           .then(() => this.journal)
