@@ -90,7 +90,7 @@ module.exports = class Book {
     return parsed;
   }
 
-  balance(query) {
+  async balance(query) {
     let pagination;
 
     if (query.perPage) {
@@ -135,42 +135,37 @@ module.exports = class Book {
           timestamp: -1
         }
       };
-      return this.transactionModel.aggregate([match, project, sort, skip, group]).then(function(result) {
-        result = result.shift();
-        if (!result) {
-          return {
-            balance: 0,
-            notes: 0
-          };
-        }
-
-        const total = result.credit - result.debit;
-
+      let result = await this.transactionModel.aggregate([match, project, sort, skip, group]);
+      result = result.shift();
+      if (!result) {
         return {
-          balance: total,
-          notes: result.count
+          balance: 0,
+          notes: 0
         };
-      });
+      }
+      const total = result.credit - result.debit;
+      return {
+        balance: total,
+        notes: result.count
+      };
     } else {
-      return this.transactionModel.aggregate([match, project, group]).then(function(result) {
-        result = result.shift();
-        if (!result) {
-          return {
-            balance: 0,
-            notes: 0
-          };
-        }
-
-        const total = result.credit - result.debit;
+      let result2 = await this.transactionModel.aggregate([match, project, group]);
+      result2 = result2.shift();
+      if (!result2) {
         return {
-          balance: total,
-          notes: result.count
+          balance: 0,
+          notes: 0
         };
-      });
+      }
+      const total = result2.credit - result2.debit;
+      return {
+        balance: total,
+        notes: result2.count
+      };
     }
   }
 
-  ledger(query, populate = null) {
+  async ledger(query, populate = null) {
     let pagination;
 
     // Pagination
@@ -187,25 +182,22 @@ module.exports = class Book {
     const q = this.transactionModel.find(query);
 
     if (pagination) {
-      return this.transactionModel.count(query).then(count => {
-        q.skip((pagination.page - 1) * pagination.perPage).limit(pagination.perPage);
-        q.sort({
-          datetime: -1,
-          timestamp: -1
-        });
-        if (populate) {
-          for (let pop of Array.from(populate)) {
-            q.populate(pop);
-          }
-        }
-
-        return q.exec().then(function(results) {
-          return {
-            results,
-            total: count
-          };
-        });
+      let count = await this.transactionModel.countDocuments(query);
+      q.skip((pagination.page - 1) * pagination.perPage).limit(pagination.perPage);
+      q.sort({
+        datetime: -1,
+        timestamp: -1
       });
+      if (populate) {
+        for (let pop of Array.from(populate)) {
+          q.populate(pop);
+        }
+      }
+      let results = await q.exec();
+      return {
+        results,
+        total: count
+      };
     } else {
       q.sort({
         datetime: -1,
@@ -217,39 +209,35 @@ module.exports = class Book {
         }
       }
 
-      return q.exec().then(function(results) {
-        return {
-          results,
-          total: results.length
-        };
-      });
+      let results1 = await q.exec();
+      return {
+        results: results1,
+        total: results1.length
+      };
     }
   }
 
-  void(journal_id, reason) {
-    return this.journalModel.findById(journal_id).then(journal => journal.void(this, reason));
+  async void(journal_id, reason) {
+    let journal = await this.journalModel.findById(journal_id);
+    return await journal.void(this, reason);
   }
 
-  listAccounts() {
-    return this.transactionModel
-      .find({ book: this.name })
-      .distinct("accounts")
-      .then(function(results) {
-        // Make array
-        const final = [];
-        for (let result of results) {
-          const paths = result.split(":");
-          const prev = [];
-          for (let acct of paths) {
-            prev.push(acct);
-            final.push(prev.join(":"));
-          }
+  async listAccounts() {
+    try {
+      let results = await this.transactionModel.find({ book: this.name }).distinct("accounts");
+      const final = new Set();
+      for (let result of results) {
+        const paths = result.split(":");
+        const prev = [];
+        for (let acct of paths) {
+          prev.push(acct);
+          final.add(prev.join(":"));
         }
-        return Array.from(new Set(final)); // uniques
-      })
-      .catch(err => {
-        console.error(err);
-        throw err;
-      });
+      }
+      return Array.from(final); // uniques
+    } catch (err) {
+      console.error("Medici error:", err);
+      throw err;
+    }
   }
 };

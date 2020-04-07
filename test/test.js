@@ -1,4 +1,26 @@
-require("./_setup");
+const mongoose = require("mongoose");
+mongoose.set("debug", true);
+
+before(async () => {
+  await mongoose.connect("mongodb://localhost/medici_test", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true,
+    useFindAndModify: false
+  });
+  await mongoose.connection.collections.medici_transactions.drop().catch(() => {});
+  await mongoose.connection.collections.medici_journals.drop().catch(() => {});
+});
+
+after(async () => {
+  try {
+    await mongoose.connection.db.dropDatabase();
+  } catch (err) {
+    console.error("Couldn't drop medici_test DB", err);
+  }
+  await mongoose.connection.close();
+});
+
 const { book: Book } = require("../");
 require("should");
 

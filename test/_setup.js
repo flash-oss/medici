@@ -3,24 +3,22 @@ mongoose.Promise = global.Promise;
 
 mongoose.set("debug", true);
 
-before(function(done) {
-  mongoose
-    .connect("mongodb://localhost/medici_test")
-    .then(() => {
-      mongoose.connection.collections.medici_transactions.drop();
-      mongoose.connection.collections.medici_journals.drop();
-      done();
-    })
-    .catch(done);
+before(async () => {
+  await mongoose.connect("mongodb://localhost/medici_test", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true,
+    useFindAndModify: false
+  });
+  mongoose.connection.collections.medici_transactions.drop();
+  mongoose.connection.collections.medici_journals.drop();
 });
 
-after(function(done) {
-  mongoose.connection.db.dropDatabase(function(err) {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log("Successfully dropped db");
-    }
-    mongoose.connection.close(done);
-  });
+after(async () => {
+  try {
+    await mongoose.connection.db.dropDatabase();
+  } catch (err) {
+    console.error("Couldn't drop medici_test DB", err);
+  }
+  await mongoose.connection.close();
 });

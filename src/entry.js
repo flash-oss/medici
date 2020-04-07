@@ -19,7 +19,7 @@ module.exports = class Entry {
     this.journal.datetime = date;
     this.journal.book = this.book.name;
     this.transactions = [];
-    this.transactionModels = [];
+    // this.transactionModels = [];
     this.journal.approved = true;
   }
 
@@ -120,12 +120,12 @@ module.exports = class Entry {
     return model.save();
   }
 
-  commit() {
+  async commit() {
     // First of all, set approved on transactions to approved on journal
     for (let tx of this.transactions) {
       tx.approved = this.journal.approved;
     }
-    this.transactionsSaved = 0;
+    // this.transactionsSaved = 0;
     let total = 0.0;
     for (let tx of this.transactions) {
       total += tx.credit;
@@ -145,19 +145,20 @@ module.exports = class Entry {
       err.code = 400;
       err.total = total;
       console.error("Journal is invalid. Total is:", total);
-      return Promise.reject(err);
-    } else {
-      return Promise.all(this.transactions.map(tx => this.saveTransaction(tx))).then(() => {
-        return this.journal
-          .save()
-          .then(() => this.journal)
-          .catch(err => {
-            this.book.transactionModel.remove({
-              _journal: this.journal._id
-            });
-            throw new Error(`Failure to save journal: ${err.message}`);
-          });
-      });
+      throw err;
+    }
+
+    try {
+      await Promise.all(this.transactions.map(tx => this.saveTransaction(tx)));
+      return await this.journal.save();
+    } catch (err) {
+      console.error(err);
+      this.book.transactionModel
+        .deleteMany({
+          _journal: this.journal._id
+        })
+        .catch(e => console.error(`Can't delete transactions for journal ${this.journal._id}`, e));
+      throw new Error(`Failure to save journal: ${err.message}`);
     }
   }
 };
