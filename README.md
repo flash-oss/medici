@@ -277,6 +277,7 @@ Medici is slow when number of records reach 30k. Starting from v3.0 the [followi
 - **v4.0.0**
 
   - Node.js 8 is required now.
+  - Drop support of Mongoose v4. Only v5 is supported now. (But v4 should just work, even though not tested.)
   - No API changes.
 
 - **v3.0.0**

@@ -4,7 +4,7 @@
   "description": "Simple double-entry accounting for Node + Mongoose",
   "main": "src/index.js",
   "scripts": {
-    "test": "mocha && npm i mongoose@4 && mocha && npm i mongoose@5"
+    "test": "mocha"
   },
   "files": [
     "src"
