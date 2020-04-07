@@ -36,9 +36,9 @@ Now write an entry:
 ```js
 // You can specify a Date object as the second argument in the book.entry() method if you want the transaction to be for a different date than today
 const journal = await myBook.entry('Received payment')
-.debit('Assets:Cash', 1000)
-.credit('Income', 1000, {client: 'Joe Blow'})
-.commit();
+  .debit('Assets:Cash', 1000)
+  .credit('Income', 1000, {client: 'Joe Blow'})
+  .commit();
 ```
 
 You can continue to chain debits and credits to the journal object until you are finished. The `entry.debit()` and `entry.credit()` methods both have the same arguments: (account, amount, meta).
@@ -50,14 +50,11 @@ You can use the "meta" field which you can use to store any additional informati
 To query account balance, just use the `book.balance()` method:
 
 ```js
-myBook
-  .balance({
-    account: "Assets:Accounts Receivable",
-    client: "Joe Blow"
-  })
-  .then(balance => {
-    console.log("Joe Blow owes me", balance);
-  });
+const balance = await myBook.balance({
+  account: "Assets:Accounts Receivable",
+  client: "Joe Blow"
+});
+console.log("Joe Blow owes me", balance);
 ```
 
 Note that the `meta` query parameters are on the same level as the default query parameters (account, \_journal, start_date, end_date). Medici parses the query and automatically turns any values that do not match top-level schema properties into meta parameters.
@@ -67,20 +64,14 @@ Note that the `meta` query parameters are on the same level as the default query
 To retrieve transactions, use the `book.ledger()` method (here I'm using moment.js for dates):
 
 ```js
-const startDate = moment()
-  .subtract("months", 1)
-  .toDate(); // One month ago
-const endDate = new Date(); //today
+const startDate = moment().subtract("months", 1).toDate(); // One month ago
+const endDate = new Date(); // today
 
-myBook
-  .ledger({
-    account: "Income",
-    start_date: startDate,
-    end_date: endDate
-  })
-  .then(transactions => {
-    // Do something with the returned transaction documents
-  });
+const transactions = await myBook.ledger({
+  account: "Income",
+  start_date: startDate,
+  end_date: endDate
+});
 ```
 
 ## Voiding Journal Entries
@@ -90,9 +81,7 @@ Sometimes you will make an entry that turns out to be inaccurate or that otherwi
 To void a journal entry, you can either call the `void(void_reason)` method on a Medici_Journal document, or use the `book.void(journal_id, void_reason)` method if you know the journal document's ID.
 
 ```js
-myBook.void("123456", "I made a mistake").then(() => {
-  // Do something after voiding
-});
+await myBook.void("123456", "I made a mistake");
 ```
 
 If you do not specify a void reason, the system will set the memo of the new journal to the original journal's memo prepended with "[VOID]".
@@ -284,6 +273,11 @@ Medici is slow when number of records reach 30k. Starting from v3.0 the [followi
  * your custom indexes containing `meta.*` properties would take 600 to 1200 KB.
 
 ## Changelog
+
+- **v4.0.0**
+
+  - Node.js 8 is required now.
+  - No API changes.
 
 - **v3.0.0**
 
