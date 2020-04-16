@@ -176,7 +176,7 @@ Then when you query transactions using the `book.ledger()` method, you can speci
 
 ## Performance
 
-Medici is slow when number of records reach 30k. Starting from v3.0 the [following](https://github.com/koresar/medici/commit/274528ef5d1dae0beedca4a98dbf706808be53bd) indexes are auto generated on the `medici_transaction` collection:
+Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [following](https://github.com/koresar/medici/commit/274528ef5d1dae0beedca4a98dbf706808be53bd) indexes are auto generated on the `medici_transaction` collection:
 
 ```
     "_journal": 1
