@@ -50,7 +50,7 @@ You can use the "meta" field which you can use to store any additional informati
 To query account balance, just use the `book.balance()` method:
 
 ```js
-const balance = await myBook.balance({
+const { balance } = await myBook.balance({
   account: "Assets:Accounts Receivable",
   client: "Joe Blow"
 });
