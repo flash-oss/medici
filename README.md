@@ -81,7 +81,7 @@ Sometimes you will make an entry that turns out to be inaccurate or that otherwi
 To void a journal entry, you can either call the `void(void_reason)` method on a Medici_Journal document, or use the `book.void(journal_id, void_reason)` method if you know the journal document's ID.
 
 ```js
-await myBook.void("123456", "I made a mistake");
+await myBook.void("5eadfd84d7d587fb794eaacb", "I made a mistake");
 ```
 
 If you do not specify a void reason, the system will set the memo of the new journal to the original journal's memo prepended with "[VOID]".
