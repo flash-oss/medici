@@ -34,8 +34,7 @@
   "homepage": "https://github.com/koresar/medici",
   "devDependencies": {
     "mocha": "^8.0.1",
-    "prettier": "^1.19.1",
-    "should": "^11.2.1"
+    "prettier": "^1.19.1"
   },
   "mocha": {
     "require": "test/_setup.js",

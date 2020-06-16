@@ -1,4 +1,5 @@
 const { Book } = require("../");
+const assert = require("assert");
 
 describe("pagination", () => {
   it("should give you a paginated ledger when requested", async () => {
@@ -8,10 +9,10 @@ describe("pagination", () => {
       perPage: 2,
       page: 3
     });
-    response.results.length.should.equal(2);
-    response.total.should.equal(6);
-    response.results[0].memo.should.equal("Test Entry 2");
-    response.results[1].memo.should.equal("Test Entry 2");
+    assert.strictEqual(response.results.length, 2);
+    assert.strictEqual(response.total, 6);
+    assert.strictEqual(response.results[0].memo, "Test Entry 2");
+    assert.strictEqual(response.results[1].memo, "Test Entry 2");
   });
 
   it("should give you the balance by page", async () => {
@@ -21,20 +22,20 @@ describe("pagination", () => {
       perPage: 1,
       page: 1
     });
-    data.balance.should.equal(-700);
+    assert.strictEqual(data.balance, -700);
 
     const data1 = await book.balance({
       account: "Assets",
       perPage: 1,
       page: 2
     });
-    data1.balance.should.equal(-1200);
+    assert.strictEqual(data1.balance, -1200);
 
     const data2 = await book.balance({
       account: "Assets",
       perPage: 1,
       page: 3
     });
-    data2.balance.should.equal(-700);
+    assert.strictEqual(data2.balance, -700);
   });
 });

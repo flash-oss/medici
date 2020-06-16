@@ -1,4 +1,5 @@
 const { Book } = require("../");
+const assert = require("assert");
 
 describe("approved/pending transactions", function() {
   let sharedPnedingJournal = null;
@@ -15,7 +16,7 @@ describe("approved/pending transactions", function() {
     const data = await book.balance({
       account: "Foo"
     });
-    data.balance.should.equal(0);
+    assert.strictEqual(data.balance, 0);
   });
 
   it("should not include pending transactions in ledger", async () => {
@@ -23,7 +24,7 @@ describe("approved/pending transactions", function() {
     let response = await book.ledger({
       account: ["Foo"]
     });
-    response.results.length.should.equal(0);
+    assert.strictEqual(response.results.length, 0);
   });
 
   it("should set all transactions to approved when approving the journal", async () => {
@@ -33,6 +34,6 @@ describe("approved/pending transactions", function() {
     const data = await book.balance({
       account: "Bar"
     });
-    data.balance.should.equal(500);
+    assert.strictEqual(data.balance, 500);
   });
 });
