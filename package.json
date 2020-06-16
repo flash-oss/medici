@@ -29,12 +29,17 @@
     "url": "https://github.com/koresar/medici/issues"
   },
   "dependencies": {
-    "mongoose": "^5.8.3"
+    "mongoose": "^5.9.19"
   },
   "homepage": "https://github.com/koresar/medici",
   "devDependencies": {
-    "mocha": "^5.2.0",
+    "mocha": "^8.0.1",
     "prettier": "^1.19.1",
     "should": "^11.2.1"
+  },
+  "mocha": {
+    "require": "test/_setup.js",
+    "recursive": true,
+    "spec": "{,!(node_modules)/**/}test/**/*.js"
   }
 }

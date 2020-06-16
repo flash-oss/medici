@@ -138,13 +138,12 @@ module.exports = class Entry {
     // However, for now we use JS built-in Number. Hence Medici limitations are coming from Number.MAX_SAFE_INTEGER === 9007199254740991
     // Here are the limitations:
     // * You can safely add values up to 1 billion and down to 0.000001.
-    // * Anything more than 1 billion or less than 0.000001 is not guaranteed and will throw the below error.
+    // * Anything more than 1 billion or less than 0.000001 is not guaranteed and might throw the below error.
 
     if (total !== 0) {
       const err = new Error("INVALID_JOURNAL: can't commit non zero total");
       err.code = 400;
       err.total = total;
-      console.error("Journal is invalid. Total is:", total);
       throw err;
     }
 
@@ -152,12 +151,13 @@ module.exports = class Entry {
       await Promise.all(this.transactions.map(tx => this.saveTransaction(tx)));
       return await this.journal.save();
     } catch (err) {
-      console.error(err);
       this.book.transactionModel
         .deleteMany({
           _journal: this.journal._id
         })
-        .catch(e => console.error(`Can't delete transactions for journal ${this.journal._id}`, e));
+        .catch(e =>
+          console.error(`Can't delete txs for journal ${this.journal._id}. Medici ledger consistency got harmed.`, e)
+        );
       throw new Error(`Failure to save journal: ${err.message}`);
     }
   }

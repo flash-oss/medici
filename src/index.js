@@ -85,16 +85,10 @@ try {
     this.void_reason = reason || "";
 
     const voidTransaction = trans_id => {
-      return mongoose
-        .model("Medici_Transaction")
-        .findByIdAndUpdate(trans_id, {
-          voided: true,
-          void_reason: this.void_reason
-        })
-        .catch(err => {
-          console.error("Failed to void transaction:", err);
-          throw err;
-        });
+      return mongoose.model("Medici_Transaction").findByIdAndUpdate(trans_id, {
+        voided: true,
+        void_reason: this.void_reason
+      });
     };
 
     let transactions = await Promise.all(this._transactions.map(voidTransaction));
@@ -177,4 +171,4 @@ try {
   mongoose.model("Medici_Journal", journalSchema);
 }
 
-module.exports = { book: Book };
+module.exports = { Book, book: Book };

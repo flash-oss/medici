@@ -223,21 +223,16 @@ module.exports = class Book {
   }
 
   async listAccounts() {
-    try {
-      let results = await this.transactionModel.find({ book: this.name }).distinct("accounts");
-      const final = new Set();
-      for (let result of results) {
-        const paths = result.split(":");
-        const prev = [];
-        for (let acct of paths) {
-          prev.push(acct);
-          final.add(prev.join(":"));
-        }
+    let results = await this.transactionModel.find({ book: this.name }).distinct("accounts");
+    const final = new Set();
+    for (let result of results) {
+      const paths = result.split(":");
+      const prev = [];
+      for (let acct of paths) {
+        prev.push(acct);
+        final.add(prev.join(":"));
       }
-      return Array.from(final); // uniques
-    } catch (err) {
-      console.error("Medici error:", err);
-      throw err;
     }
+    return Array.from(final); // uniques
   }
 };
