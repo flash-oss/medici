@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/koresar/medici.png?branch=master)](https://travis-ci.org/koresar/medici)
+[![Build Status](https://travis-ci.org/flash-oss/medici.png?branch=master)](https://travis-ci.org/flash-oss/medici)
 
 # medici
 
@@ -176,7 +176,7 @@ Then when you query transactions using the `book.ledger()` method, you can speci
 
 ## Performance
 
-Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [following](https://github.com/koresar/medici/commit/274528ef5d1dae0beedca4a98dbf706808be53bd) indexes are auto generated on the `medici_transaction` collection:
+Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [following](https://github.com/flash-oss/medici/commit/274528ef5d1dae0beedca4a98dbf706808be53bd) indexes are auto generated on the `medici_transaction` collection:
 
 ```
     "_journal": 1
@@ -291,12 +291,12 @@ Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [fol
   - Support node.js v10.
   - No API changes.
 
-- **v1.0.0** _See [this PR](https://github.com/koresar/medici/pull/5) for more details_
+- **v1.0.0** _See [this PR](https://github.com/flash-oss/medici/pull/5) for more details_
   - **BREAKING**: Dropped support of node.js v0.10, v0.12, v4, and io.js. Node.js >= v6 is supported only. This allowed to drop several production dependencies. Also, few bugs were automatically fixed.
   - **BREAKING**: Upgraded `mongoose` to v4. This allows `medici` to be used with wider mongodb versions.
   - Dropped production dependencies: `moment`, `q`, `underscore`.
   - Dropped dev dependencies: `grunt`, `grunt-exec`, `grunt-contrib-coffee`, `grunt-sed`, `grunt-contrib-watch`, `semver`.
   - No `.coffee` any more. Using node.js v6 compatible JavaScript only.
   - There are no API changes.
-  - Fixed a [bug](https://github.com/koresar/medici/issues/4). Transaction meta data was not voided correctly.
-  - This module maintainer is now [koresar](https://github.com/koresar) instead of the original author [jraede](http://github.com/jraede).
+  - Fixed a [bug](https://github.com/flash-oss/medici/issues/4). Transaction meta data was not voided correctly.
+  - This module maintainer is now [flash-oss](https://github.com/flash-oss) instead of the original author [jraede](http://github.com/jraede).

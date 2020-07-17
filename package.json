@@ -11,7 +11,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/koresar/medici"
+    "url": "http://github.com/flash-oss/medici"
   },
   "keywords": [
     "double-entry",
@@ -26,12 +26,12 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/koresar/medici/issues"
+    "url": "https://github.com/flash-oss/medici/issues"
   },
   "dependencies": {
     "mongoose": "^5.9.19"
   },
-  "homepage": "https://github.com/koresar/medici",
+  "homepage": "https://github.com/flash-oss/medici",
   "devDependencies": {
     "mocha": "^8.0.1",
     "prettier": "^1.19.1"
