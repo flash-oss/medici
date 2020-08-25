@@ -9,6 +9,7 @@ jobs:
         os: [ubuntu-latest]
         node: ['10', '12', '14']
         mongodb-version: [3.6, 4.0, 4.2]
+        redis-version: [4, 5, 6]
     steps:
       - uses: actions/checkout@v1
 
@@ -22,9 +23,13 @@ jobs:
         with:
           mongodb-version: ${{ matrix.mongodb-version }}
 
-      - name: npm ci and test
-        run: |
-          npm ci
-          npm test
+      - name: Start Redis v${{ matrix.redis-version }}
+        uses: supercharge/redis-github-action@1.1.0
+        with:
+          redis-version: ${{ matrix.redis-version }}
+
+      - run: npm install
+
+      - run: npm test
         env:
           CI: true
