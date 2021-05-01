@@ -29,11 +29,11 @@
     "url": "https://github.com/flash-oss/medici/issues"
   },
   "dependencies": {
-    "mongoose": "^5.9.19"
+    "mongoose": "^5.12.7"
   },
   "homepage": "https://github.com/flash-oss/medici",
   "devDependencies": {
-    "mocha": "^8.0.1",
+    "mocha": "^8.3.2",
     "prettier": "^1.19.1"
   },
   "mocha": {
