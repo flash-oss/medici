@@ -48,8 +48,8 @@ module.exports = class Book {
     }
 
     if (query.start_date && query.end_date) {
-      start_date = new Date(parseInt(query.start_date));
-      end_date = new Date(parseInt(query.end_date));
+      start_date = new Date(query.start_date);
+      end_date = new Date(query.end_date);
       parsed["datetime"] = {
         $gte: start_date,
         $lte: end_date

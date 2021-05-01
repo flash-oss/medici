@@ -67,7 +67,7 @@ To retrieve transactions, use the `book.ledger()` method (here I'm using moment.
 const startDate = moment().subtract("months", 1).toDate(); // One month ago
 const endDate = new Date(); // today
 
-const transactions = await myBook.ledger({
+const { results, total } = await myBook.ledger({
   account: "Income",
   start_date: startDate,
   end_date: endDate

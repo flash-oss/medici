@@ -24,4 +24,30 @@ describe("accounts", function() {
     assert.ok(accounts.includes("X:Y:INR"));
     assert.ok(accounts.includes("X:Y:CHF"));
   });
+
+  it("should retrieve transactions by time range", async () => {
+    const book = new Book("MyBook_time_range");
+    await book
+      .entry("Test Entry")
+      .debit("Assets:Receivable", 500, { clientId: "12345" })
+      .credit("Income:Rent", 500)
+      .commit();
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    await book
+      .entry("Test Entry 2", threeDaysAgo)
+      .debit("Assets:Receivable", 700)
+      .credit("Income:Rent", 700)
+      .commit();
+
+    const fourDaysAgo = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000);
+    const endDate = new Date(); // today
+
+    const { total } = await book.ledger({
+      account: "Income",
+      start_date: fourDaysAgo,
+      end_date: endDate
+    });
+
+    assert.strictEqual(total, 2);
+  });
 });

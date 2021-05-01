@@ -1,8 +1,6 @@
 const mongoose = require("mongoose");
 // mongoose.set("debug", true); // Uncomment to see which operations Mongoose is doing
 
-require("should");
-
 exports.mochaHooks = {
   async beforeAll() {
     await mongoose.connect("mongodb://localhost/medici_test", {
