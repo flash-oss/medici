@@ -1,4 +1,4 @@
-const { Book } = require("../");
+import { Book } from "../src/Book";
 const assert = require("assert");
 
 describe("general", function() {
