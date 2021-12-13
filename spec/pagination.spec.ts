@@ -1,5 +1,5 @@
-const { Book } = require("../");
-const assert = require("assert");
+import { Book } from "../src/Book";
+import { assert } from "chai";
 
 describe("pagination", () => {
   it("should give you a paginated ledger when requested", async () => {

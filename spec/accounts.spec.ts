@@ -1,5 +1,5 @@
-const { Book } = require("../");
-const assert = require("assert");
+import { Book } from "../src/Book";
+import { assert } from "chai";
 
 describe("accounts", function() {
   it("should allow more than 4 subaccounts of third level", async function() {

@@ -14,7 +14,7 @@ To use Medici you will need a working knowledge of JavaScript, Node.js, and Mong
 
 Medici divides itself into "books", each of which store _journal entries_ and their child _transactions_. The cardinal rule of double-entry accounting is that "for every debit entry, there must be a corresponding credit entry" which means "everything must balance out to zero", and that rule is applied to every journal entry written to the book. If the transactions for a journal entry do not balance out to zero, the system will throw a new error with the message `INVALID JOURNAL`.
 
-Books simply represent the physical book in which you would record your transactions - on a technical level, the "book" attribute simply is added as a key-value pair to both the `Medici_Transactions` and `Medici_Journals` collection to allow you to have multiple books if you want to.
+Books simply represent the physical book in which you would record your transactions - on a technical level, the "book" attribute simply is added as a key-value pair to both the `transactionss` and `Medici_Journals` collection to allow you to have multiple books if you want to.
 
 Each transaction in Medici is for one account. Additionally, sub accounts can be created, and are separated by a colon. Transactions to the Assets:Cash account will appear in a query for transactions in the Assets account, but will not appear in a query for transactions in the Assets:Property account. This allows you to query, for example, all expenses, or just "office overhead" expenses (Expenses:Office Overhead).
 
@@ -100,7 +100,7 @@ JournalSchema = {
   _transactions: [
     {
       type: Schema.Types.ObjectId,
-      ref: "Medici_Transaction"
+      ref: "transactions"
     }
   ],
   book: String,
@@ -141,7 +141,7 @@ Note that the `book`, `datetime`, `memo`, `voided`, and `void_reason` attributes
 
 ### Customizing the Transaction document schema
 
-If you need to have related documents for Transactions and want to use Mongoose's `populate` method, or if you need to add additional fields to the schema that the `meta` won't satisfy, you can define your own schema for `Medici_Transaction` and register it before you load the Medici module. If the `Medici_Transaction` schema is already registered with Mongoose, Medici will use the registered schema instead of the default schema. When you specify meta values when querying or writing transactions, the system will check the Transaction schema to see if those values correspond to actual top-level fields, and if so will set those instead of the corresponding `meta` field.
+If you need to have related documents for Transactions and want to use Mongoose's `populate` method, or if you need to add additional fields to the schema that the `meta` won't satisfy, you can define your own schema for `transactions` and register it before you load the Medici module. If the `transactions` schema is already registered with Mongoose, Medici will use the registered schema instead of the default schema. When you specify meta values when querying or writing transactions, the system will check the Transaction schema to see if those values correspond to actual top-level fields, and if so will set those instead of the corresponding `meta` field.
 
 For example, if you want transactions to have a related "person" document, you can define the transaction schema like so:
 
@@ -176,7 +176,7 @@ Then when you query transactions using the `book.ledger()` method, you can speci
 
 ## Performance
 
-Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [following](https://github.com/flash-oss/medici/commit/274528ef5d1dae0beedca4a98dbf706808be53bd) indexes are auto generated on the `medici_transaction` collection:
+Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [following](https://github.com/flash-oss/medici/commit/274528ef5d1dae0beedca4a98dbf706808be53bd) indexes are auto generated on the `transactions` collection:
 
 ```
     "_journal": 1
@@ -255,7 +255,7 @@ Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [fol
  
  ```
  db = db.getSiblingDB("my_db_name") 
- db.getCollection("medici_transactions").createIndex({ 
+ db.getCollection("transactionss").createIndex({ 
      "meta.myCustomProperty": 1,
      "book": 1,
      "approved": 1,
@@ -266,7 +266,7 @@ Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [fol
  
  #### Index memory consumption example
  
- For `medici_transactions` collection with 50000 documents:
+ For `transactionss` collection with 50000 documents:
  
  * the mandatory `_id` index takes about 600 KB,
  * each of the medici default indexes take from 300 to 600 KB.

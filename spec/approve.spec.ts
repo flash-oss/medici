@@ -1,13 +1,13 @@
-const { Book } = require("../");
-const assert = require("assert");
+import { Book } from "../src/Book";
+import { assert } from "chai";
 
 describe("approved/pending transactions", function() {
-  let sharedPnedingJournal = null;
+  let sharedPendingJournal = null;
 
   it("should not include pending transactions in balance", async () => {
     const book = new Book("MyBook");
 
-    sharedPnedingJournal = await book
+    sharedPendingJournal = await book
       .entry("Test Entry")
       .debit("Foo", 500)
       .credit("Bar", 500)
@@ -29,8 +29,8 @@ describe("approved/pending transactions", function() {
 
   it("should set all transactions to approved when approving the journal", async () => {
     const book = new Book("MyBook");
-    sharedPnedingJournal.approved = true;
-    await sharedPnedingJournal.save();
+    sharedPendingJournal.approved = true;
+    await sharedPendingJournal.save();
     const data = await book.balance({
       account: "Bar"
     });

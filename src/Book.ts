@@ -1,15 +1,23 @@
-const mongoose = require("mongoose");
-const entry = require("./entry");
+import * as mongoose from "mongoose";
+import { ObjectId } from "mongodb";
+import Entry from "./Entry";
+import { journalModel } from "./models/journals";
+import { ITransaction, transactionModel } from "./models/transactions";
 
-module.exports = class Book {
-  constructor(name) {
+export class Book {
+
+  name: string;
+  private transactionModel: typeof transactionModel;
+  private journalModel: typeof journalModel;
+
+  constructor(name: string) {
     this.name = name;
-    this.transactionModel = mongoose.model("Medici_Transaction");
-    this.journalModel = mongoose.model("Medici_Journal");
+    this.transactionModel = transactionModel;
+    this.journalModel = journalModel;
   }
 
-  entry(memo, date = null, original_journal = null) {
-    return entry.write(this, memo, date, original_journal);
+  entry(memo: string, date = null as unknown as Date , original_journal = null as any) {
+    return Entry.write(this, memo, date, original_journal);
   }
 
   /**
@@ -18,16 +26,16 @@ module.exports = class Book {
    * @param query {{account: {acct, subacct, subsubacct}, start_date, month_date, meta}}
    * @returns {Object}
    */
-  parseQuery(query) {
+  parseQuery(query: { [key: string]: any }) {
     let account, end_date, start_date;
-    const parsed = {};
+    const parsed: { [key: string]: any } = {};
     if ((account = query.account)) {
       let accounts, i;
       if (account instanceof Array) {
         const $or = [];
-        for (let acct of account) {
+        for (const acct of account) {
           accounts = acct.split(":");
-          const match = {};
+          const match: { [key: string]: any } = {};
           for (i = 0; i < accounts.length; i++) {
             match[`account_path.${i}`] = accounts[i];
           }
@@ -65,18 +73,18 @@ module.exports = class Book {
     }
 
     const keys = Object.keys(this.transactionModel.schema.paths);
-    for (let key in query) {
+    for (const key in query) {
       let val = query[key];
       if (keys.indexOf(key) >= 0) {
         // If it starts with a _ assume it's a reference
         if (key.substr(0, 1) === "_" && val instanceof String) {
-          val = mongoose.Types.ObjectId(val);
+          val = new ObjectId(val as string);
         }
         parsed[key] = val;
       } else {
         // Assume *_id is an OID
-        if (key.indexOf("_id") > 0) {
-          val = mongoose.Types.ObjectId(val);
+        if (key.indexOf("_id") !== -1) {
+          val = new ObjectId(val);
         }
 
         parsed[`meta.${key}`] = val;
@@ -90,7 +98,7 @@ module.exports = class Book {
     return parsed;
   }
 
-  async balance(query) {
+  async balance(query: { [key: string]: any }) {
     let pagination;
 
     if (query.perPage) {
@@ -135,8 +143,7 @@ module.exports = class Book {
           timestamp: -1
         }
       };
-      let result = await this.transactionModel.aggregate([match, project, sort, skip, group]);
-      result = result.shift();
+      const result = (await this.transactionModel.aggregate([match, project, sort, skip, group]))[0];
       if (!result) {
         return {
           balance: 0,
@@ -149,8 +156,7 @@ module.exports = class Book {
         notes: result.count
       };
     } else {
-      let result2 = await this.transactionModel.aggregate([match, project, group]);
-      result2 = result2.shift();
+      const result2 = (await this.transactionModel.aggregate([match, project, group]))[0];
       if (!result2) {
         return {
           balance: 0,
@@ -165,7 +171,7 @@ module.exports = class Book {
     }
   }
 
-  async ledger(query, populate = null) {
+  async ledger(query: { [key: string]: any }, populate = null): Promise<{results: ITransaction[], total: number}> {
     let pagination;
 
     // Pagination
@@ -182,18 +188,18 @@ module.exports = class Book {
     const q = this.transactionModel.find(query);
 
     if (pagination) {
-      let count = await this.transactionModel.countDocuments(query);
+      const count = await this.transactionModel.countDocuments(query);
       q.skip((pagination.page - 1) * pagination.perPage).limit(pagination.perPage);
       q.sort({
         datetime: -1,
         timestamp: -1
       });
       if (populate) {
-        for (let pop of Array.from(populate)) {
+        for (const pop of Array.from(populate)) {
           q.populate(pop);
         }
       }
-      let results = await q.exec();
+      const results = await q.exec();
       return {
         results,
         total: count
@@ -204,12 +210,12 @@ module.exports = class Book {
         timestamp: -1
       });
       if (populate) {
-        for (let pop of Array.from(populate)) {
+        for (const pop of Array.from(populate)) {
           q.populate(pop);
         }
       }
 
-      let results1 = await q.exec();
+      const results1 = await q.exec();
       return {
         results: results1,
         total: results1.length
@@ -217,22 +223,25 @@ module.exports = class Book {
     }
   }
 
-  async void(journal_id, reason) {
-    let journal = await this.journalModel.findById(journal_id);
+  async void(journal_id: string, reason: string) {
+    const journal = (await this.journalModel.findById(journal_id))!;
+    // @ts-ignore
     return await journal.void(this, reason);
   }
 
   async listAccounts() {
-    let results = await this.transactionModel.find({ book: this.name }).distinct("accounts");
+    const results = await this.transactionModel.find({ book: this.name }).distinct("accounts");
     const final = new Set();
-    for (let result of results) {
+    for (const result of results) {
       const paths = result.split(":");
       const prev = [];
-      for (let acct of paths) {
+      for (const acct of paths) {
         prev.push(acct);
         final.add(prev.join(":"));
       }
     }
     return Array.from(final); // uniques
   }
-};
+}
+
+export default Book;
