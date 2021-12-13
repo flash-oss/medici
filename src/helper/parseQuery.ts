@@ -1,11 +1,11 @@
 import { ObjectId } from "mongodb";
-import { FilterQuery } from "mongoose";
 import { Book } from "../Book";
 import { isValidTransactionKey, ITransaction } from "../models/transactions";
+import type { FilterQuery, ObjectId as TObjectId } from "mongoose";
 
 export interface IParseQuery {
   account?: string | string[];
-  _journal?: any;
+  _journal?: TObjectId;
   start_date?: Date | string | number;
   end_date?: Date | string | number;
   perPage?: number;

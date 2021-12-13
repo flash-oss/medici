@@ -1,7 +1,7 @@
-import { Schema, model, Model } from "mongoose";
+import { Schema, model, Model, ObjectId as TObjectId } from "mongoose";
 
-export interface ITransaction<T = any, J = any> {
-  _id?: T;
+export interface ITransaction {
+  _id?: TObjectId;
   credit: number;
   debit: number;
   meta: { [key: string]: any };
@@ -10,12 +10,12 @@ export interface ITransaction<T = any, J = any> {
   accounts: string;
   book: string;
   memo: string;
-  _journal: J;
+  _journal: TObjectId;
   timestamp: Date;
   voided: boolean;
   void_reason?: string;
   approved: boolean;
-  _original_journal: J | undefined;
+  _original_journal?: TObjectId;
 }
 
 const transactionSchema = new Schema<ITransaction>({
@@ -70,7 +70,7 @@ transactionSchema.index({
   approved: 1,
 });
 
-export let transactionModel: Model<ITransaction<any, any>, {}, {}, {}>;
+export let transactionModel: Model<ITransaction, {}, {}, {}>;
 
 try {
   transactionModel = model("Medici_Transaction");
@@ -80,7 +80,9 @@ try {
 
 const transactionSchemaKeys = Object.keys(transactionModel.schema.paths);
 
-export function isValidTransactionKey(value: any): value is keyof ITransaction {
+export function isValidTransactionKey(
+  value: unknown
+): value is keyof ITransaction {
   return (
     typeof value === "string" && transactionSchemaKeys.indexOf(value) !== -1
   );

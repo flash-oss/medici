@@ -7,17 +7,18 @@ import {
 import { TransactionError } from "./TransactionError";
 import { IJournal, journalModel } from "./models/journals";
 import type { IOptions } from "./IOptions";
+import { ObjectId as TObjectId } from "mongoose";
 
 export class Entry {
   book: Book;
-  journal: IJournal & { _original_journal?: any };
+  journal: IJournal & { _original_journal?: TObjectId };
   transactions: ITransaction[] = [];
 
   static write(
     book: Book,
     memo: string,
     date = null as Date | null,
-    original_journal = null as any
+    original_journal = null as TObjectId | null
   ): Entry {
     return new this(book, memo, date, original_journal);
   }
@@ -26,7 +27,7 @@ export class Entry {
     book: Book,
     memo: string,
     date: Date | null,
-    original_journal: any
+    original_journal: TObjectId | null
   ) {
     this.book = book;
     this.journal = new journalModel();

@@ -1,4 +1,10 @@
-import { ObjectId, Schema, Document, Model, model } from "mongoose";
+import {
+  ObjectId as TObjectId,
+  Schema,
+  Document,
+  Model,
+  model,
+} from "mongoose";
 import {
   isValidTransactionKey,
   ITransaction,
@@ -7,11 +13,11 @@ import {
 import { Book } from "../Book";
 import type { IOptions } from "../IOptions";
 
-export interface IJournal<T = any> {
-  _id: T;
+export interface IJournal {
+  _id: TObjectId;
   datetime: Date;
   memo: string;
-  _transactions: ITransaction<T, T>[];
+  _transactions: ITransaction[];
   book: string;
   voided: boolean;
   void_reason: string;
@@ -68,7 +74,7 @@ journalSchema.methods.void = async function (
 
   const transactions = (await Promise.all(
     this._transactions.map(voidTransaction)
-  )) as (Document & ITransaction<ObjectId, ObjectId>)[];
+  )) as (Document & ITransaction)[];
   let newMemo;
   if (this.void_reason) {
     newMemo = this.void_reason;
@@ -86,19 +92,20 @@ journalSchema.methods.void = async function (
   }
   const entry = book.entry(newMemo, null, this._id);
 
-  function processMetaField(key: string, val: any, meta: any) {
+  function processMetaField(
+    key: string,
+    val: any,
+    meta: { [key: string]: any }
+  ) {
     return isValidTransactionKey(key) ? undefined : (meta[key] = val);
   }
 
   for (const trans of transactions) {
-    const transObject = trans.toObject() as unknown as ITransaction<
-      ObjectId,
-      ObjectId
-    >;
+    const transObject = trans.toObject() as unknown as ITransaction;
     const meta = {};
 
     Object.keys(transObject).forEach((key) => {
-      const val = transObject[key as keyof ITransaction<ObjectId, ObjectId>];
+      const val = transObject[key as keyof ITransaction];
       if (key === "meta") {
         Object.keys(transObject["meta"]).forEach((keyMeta) => {
           processMetaField(keyMeta, transObject["meta"][keyMeta], meta);
@@ -129,7 +136,7 @@ journalSchema.pre("save", async function (next) {
     { _journal: this._id, approved: false },
     undefined,
     { session }
-  )) as (Document & ITransaction<ObjectId, ObjectId>)[];
+  )) as (Document & ITransaction)[];
   await Promise.all(
     transactions.map((tx) => {
       tx.approved = true;

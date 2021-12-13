@@ -3,6 +3,7 @@ import { IParseQuery, parseQuery } from "./helper/parseQuery";
 import { journalModel } from "./models/journals";
 import { ITransaction, transactionModel } from "./models/transactions";
 import type { IOptions } from "./IOptions";
+import type { ObjectId as TObjectId } from "mongoose";
 
 export class Book {
   name: string;
@@ -14,7 +15,7 @@ export class Book {
   entry(
     memo: string,
     date = null as Date | null,
-    original_journal = null as any
+    original_journal = null as TObjectId | null
   ) {
     return Entry.write(this, memo, date, original_journal);
   }
@@ -31,8 +32,7 @@ export class Book {
       delete query.perPage;
       delete query.page;
     }
-    query = parseQuery(query, { name: this.name });
-    const match = { $match: query };
+    const match = { $match: parseQuery(query, { name: this.name }) };
 
     const project = {
       $project: {
@@ -102,13 +102,13 @@ export class Book {
       delete query.perPage;
       delete query.page;
     }
-    query = parseQuery(query, { name: this.name });
-    const q = transactionModel.find(query, undefined, options);
+    const filterQuery = parseQuery(query, { name: this.name });
+    const q = transactionModel.find(filterQuery, undefined, options);
 
     let count = 0;
     if (typeof skip !== "undefined") {
       count = await transactionModel
-        .countDocuments(query)
+        .countDocuments(filterQuery)
         .session(options.session || null);
       q.skip(skip).limit(limit);
     }
