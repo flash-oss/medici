@@ -101,7 +101,7 @@ JournalSchema = {
   _transactions: [
     {
       type: Schema.Types.ObjectId,
-      ref: "Medici_Transactions",
+      ref: "Medici_Transaction",
     },
   ],
   book: String,
