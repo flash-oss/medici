@@ -51,7 +51,7 @@ export class Book {
       }
     };
     let result;
-    if (skip) {
+    if (typeof skip !== "undefined") {
       const sort = {
         $sort: {
           datetime: -1,
@@ -87,8 +87,8 @@ export class Book {
     query = parseQuery(query, { name: this.name });
     const q = transactionModel.find(query, undefined, options);
 
-    let count: number = 0;
-    if (skip) {
+    let count = 0;
+    if (typeof skip !== "undefined") {
       count = await transactionModel.countDocuments(query).session(options.session || null);
       q.skip(skip).limit(limit);
     }
