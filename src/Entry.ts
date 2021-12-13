@@ -50,25 +50,38 @@ export class Entry {
     return this;
   }
 
-  credit(
+  private transact(
+    type: -1 | 1,
     account_path: string | string[],
-    amount: number,
+    amount: number | string,
     extra = null as { [key: string]: any } | null
   ): Entry {
-    const credit = typeof amount === "string" ? parseFloat(amount) : amount;
     if (typeof account_path === "string") {
       account_path = account_path.split(":");
     }
 
     if (account_path.length > 3) {
-      throw "Account path is too deep (maximum 3)";
+      throw new Error("Account path is too deep (maximum 3)");
     }
+
+    const credit =
+      type === 1
+        ? typeof amount === "string"
+          ? parseFloat(amount)
+          : amount
+        : 0.0;
+    const debit =
+      type === -1
+        ? typeof amount === "string"
+          ? parseFloat(amount)
+          : amount
+        : 0.0;
 
     const transaction: Partial<ITransaction> = {
       account_path,
       accounts: account_path.join(":"),
       credit,
-      debit: 0.0,
+      debit,
       book: this.book.name,
       memo: this.journal.memo,
       _journal: this.journal._id,
@@ -96,49 +109,20 @@ export class Entry {
     return this;
   }
 
+  credit(
+    account_path: string | string[],
+    amount: number | string,
+    extra = null as { [key: string]: any } | null
+  ): Entry {
+    return this.transact(1, account_path, amount, extra);
+  }
+
   debit(
     account_path: string | string[],
     amount: number | string,
     extra = null as { [key: string]: any } | null
   ): Entry {
-    const debit = typeof amount === "string" ? parseFloat(amount) : amount;
-    if (typeof account_path === "string") {
-      account_path = account_path.split(":");
-    }
-    if (account_path.length > 3) {
-      throw "Account path is too deep (maximum 3)";
-    }
-
-    const transaction: Partial<ITransaction> = {
-      account_path,
-      accounts: account_path.join(":"),
-      credit: 0.0,
-      debit,
-      _journal: this.journal._id,
-      book: this.book.name,
-      memo: this.journal.memo,
-      datetime: this.journal.datetime,
-      _original_journal: this.journal._original_journal,
-    };
-
-    // Loop through the meta and see if there are valid keys on the schema
-    const meta: { [key: string]: any } = {};
-    if (extra) {
-      Object.keys(extra).forEach((key) => {
-        const val = extra[key];
-        if (isValidTransactionKey(key)) {
-          // @ts-ignore dts-bundle-generator throws TS2322
-          transaction[key] = val;
-        } else {
-          meta[key] = val;
-        }
-      });
-    }
-
-    transaction.meta = meta;
-    this.transactions.push(transaction as ITransaction);
-
-    return this;
+    return this.transact(-1, account_path, amount, extra);
   }
 
   /**
