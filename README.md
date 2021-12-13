@@ -14,7 +14,7 @@ To use Medici you will need a working knowledge of JavaScript, Node.js, and Mong
 
 Medici divides itself into "books", each of which store _journal entries_ and their child _transactions_. The cardinal rule of double-entry accounting is that "for every debit entry, there must be a corresponding credit entry" which means "everything must balance out to zero", and that rule is applied to every journal entry written to the book. If the transactions for a journal entry do not balance out to zero, the system will throw a new error with the message `INVALID JOURNAL`.
 
-Books simply represent the physical book in which you would record your transactions - on a technical level, the "book" attribute simply is added as a key-value pair to both the `transactionss` and `Medici_Journals` collection to allow you to have multiple books if you want to.
+Books simply represent the physical book in which you would record your transactions - on a technical level, the "book" attribute simply is added as a key-value pair to both the `Medici_Transactions` and `Medici_Journals` collection to allow you to have multiple books if you want to.
 
 Each transaction in Medici is for one account. Additionally, sub accounts can be created, and are separated by a colon. Transactions to the Assets:Cash account will appear in a query for transactions in the Assets account, but will not appear in a query for transactions in the Assets:Property account. This allows you to query, for example, all expenses, or just "office overhead" expenses (Expenses:Office Overhead).
 
@@ -35,9 +35,10 @@ Now write an entry:
 
 ```js
 // You can specify a Date object as the second argument in the book.entry() method if you want the transaction to be for a different date than today
-const journal = await myBook.entry('Received payment')
-  .debit('Assets:Cash', 1000)
-  .credit('Income', 1000, {client: 'Joe Blow'})
+const journal = await myBook
+  .entry("Received payment")
+  .debit("Assets:Cash", 1000)
+  .credit("Income", 1000, { client: "Joe Blow" })
   .commit();
 ```
 
@@ -52,7 +53,7 @@ To query account balance, just use the `book.balance()` method:
 ```js
 const { balance } = await myBook.balance({
   account: "Assets:Accounts Receivable",
-  client: "Joe Blow"
+  client: "Joe Blow",
 });
 console.log("Joe Blow owes me", balance);
 ```
@@ -70,7 +71,7 @@ const endDate = new Date(); // today
 const { results, total } = await myBook.ledger({
   account: "Income",
   start_date: startDate,
-  end_date: endDate
+  end_date: endDate,
 });
 ```
 
@@ -95,20 +96,20 @@ JournalSchema = {
   datetime: Date,
   memo: {
     type: String,
-    default: ""
+    default: "",
   },
   _transactions: [
     {
       type: Schema.Types.ObjectId,
-      ref: "transactions"
-    }
+      ref: "Medici_Transactions",
+    },
   ],
   book: String,
   voided: {
     type: Boolean,
-    default: false
+    default: false,
   },
-  void_reason: String
+  void_reason: String,
 };
 ```
 
@@ -126,14 +127,14 @@ TransactionSchema = {
   memo: String,
   _journal: {
     type: Schema.Types.ObjectId,
-    ref: "Medici_Journal"
+    ref: "Medici_Journal",
   },
   timestamp: Date,
   voided: {
     type: Boolean,
-    default: false
+    default: false,
   },
-  void_reason: String
+  void_reason: String,
 };
 ```
 
@@ -149,7 +150,7 @@ For example, if you want transactions to have a related "person" document, you c
 MyTransactionSchema = {
   _person: {
     type: Schema.Types.ObjectId,
-    ref: "Person"
+    ref: "Person",
   },
   credit: Number,
   debit: Number,
@@ -161,14 +162,14 @@ MyTransactionSchema = {
   memo: String,
   _journal: {
     type: Schema.Types.ObjectId,
-    ref: "Medici_Journal"
+    ref: "Medici_Journal",
   },
   timestamp: Date,
   voided: {
     type: Boolean,
-    default: false
+    default: false,
   },
-  void_reason: String
+  void_reason: String,
 };
 ```
 
@@ -210,67 +211,67 @@ Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [fol
     "book": 1,
     "approved": 1
 ```
- 
- However, if you are doing lots of queries using the `meta` data (which is a typical scenario) you probably would want to add the following index(es):
- 
- ```
-     "meta.myCustomProperty": 1,
-     "book": 1,
-     "approved": 1,
-     "datetime": -1,
-     "timestamp": -1
- ```
- 
- and/or
- 
- ```
-     "meta.myCustomProperty": 1,
-     "account_path.0": 1,
-     "book": 1,
-     "approved": 1
- ```
- 
- and/or
- 
- ```
-     "meta.myCustomProperty": 1,
-     "account_path.0": 1,
-     "account_path.1": 1,
-     "book": 1,
-     "approved": 1
- ```
-  
- and/or
- 
- ```
-     "meta.myCustomProperty": 1,
-     "account_path.0": 1,
-     "account_path.1": 1,
-     "account_path.2": 1,
-     "book": 1,
-     "approved": 1
- ```
- 
- Here is how to add an index manually via MongoDB CLI or other tool:
- 
- ```
- db = db.getSiblingDB("my_db_name") 
- db.getCollection("transactionss").createIndex({ 
-     "meta.myCustomProperty": 1,
-     "book": 1,
-     "approved": 1,
-     "datetime": -1,
-     "timestamp": -1
- }, {background: true})
- ```
- 
- #### Index memory consumption example
- 
- For `transactionss` collection with 50000 documents:
- 
- * the mandatory `_id` index takes about 600 KB,
- * each of the medici default indexes take from 300 to 600 KB.
- * your custom indexes containing `meta.*` properties would take 600 to 1200 KB.
+
+However, if you are doing lots of queries using the `meta` data (which is a typical scenario) you probably would want to add the following index(es):
+
+```
+    "meta.myCustomProperty": 1,
+    "book": 1,
+    "approved": 1,
+    "datetime": -1,
+    "timestamp": -1
+```
+
+and/or
+
+```
+    "meta.myCustomProperty": 1,
+    "account_path.0": 1,
+    "book": 1,
+    "approved": 1
+```
+
+and/or
+
+```
+    "meta.myCustomProperty": 1,
+    "account_path.0": 1,
+    "account_path.1": 1,
+    "book": 1,
+    "approved": 1
+```
+
+and/or
+
+```
+    "meta.myCustomProperty": 1,
+    "account_path.0": 1,
+    "account_path.1": 1,
+    "account_path.2": 1,
+    "book": 1,
+    "approved": 1
+```
+
+Here is how to add an index manually via MongoDB CLI or other tool:
+
+```
+db = db.getSiblingDB("my_db_name")
+db.getCollection("transactionss").createIndex({
+    "meta.myCustomProperty": 1,
+    "book": 1,
+    "approved": 1,
+    "datetime": -1,
+    "timestamp": -1
+}, {background: true})
+```
+
+#### Index memory consumption example
+
+For `transactionss` collection with 50000 documents:
+
+- the mandatory `_id` index takes about 600 KB,
+- each of the medici default indexes take from 300 to 600 KB.
+- your custom indexes containing `meta.*` properties would take 600 to 1200 KB.
 
 ## Changelog
 
