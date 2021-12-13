@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, Model } from "mongoose";
 
 export interface ITransaction<T = any, J = any> {
   _id?: T;
@@ -70,9 +70,15 @@ transactionSchema.index({
   approved: 1,
 });
 
-export const transactionModel = model("Medici_Transaction", transactionSchema);
+export let transactionModel: Model<ITransaction<any, any>, {}, {}, {}>;
 
-const transactionSchemaKeys = Object.keys(transactionSchema.paths);
+try {
+  transactionModel = model("Medici_Transaction");
+} catch {
+  transactionModel = model("Medici_Transaction", transactionSchema);
+}
+
+const transactionSchemaKeys = Object.keys(transactionModel.schema.paths);
 
 export function isValidTransactionKey(value: any): value is keyof ITransaction {
   return (

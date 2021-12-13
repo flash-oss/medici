@@ -1,5 +1,4 @@
-import { ObjectId, Schema, Document } from "mongoose";
-import * as mongoose from "mongoose";
+import { ObjectId, Schema, Document, Model, model } from "mongoose";
 import {
   isValidTransactionKey,
   ITransaction,
@@ -140,10 +139,14 @@ journalSchema.pre("save", async function (next) {
   return next();
 });
 
-export type TJournalModel = mongoose.Model<IJournal> & {
+export type TJournalModel = Model<IJournal> & {
   void: (book: string, reason: string) => Promise<any>;
 };
-export const journalModel: TJournalModel = mongoose.model(
-  "Medici_Journal",
-  journalSchema
-) as TJournalModel;
+
+export let journalModel: TJournalModel;
+
+try {
+  journalModel = model("Medici_Journal") as TJournalModel;
+} catch {
+  journalModel = model("Medici_Journal", journalSchema) as TJournalModel;
+}
