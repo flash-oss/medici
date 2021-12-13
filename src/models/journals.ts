@@ -88,9 +88,7 @@ journalSchema.methods.void = async function (
   const entry = book.entry(newMemo, null, this._id);
 
   function processMetaField(key: string, val: any, meta: any) {
-    if (!isValidTransactionKey(key)) {
-      return (meta[key] = val);
-    }
+    return isValidTransactionKey(key) ? undefined : (meta[key] = val);
   }
 
   for (const trans of transactions) {
