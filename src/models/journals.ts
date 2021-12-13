@@ -1,6 +1,10 @@
 import { ObjectId, Schema, Document } from "mongoose";
 import * as mongoose from "mongoose";
-import { ITransaction, transactionModel } from "./transactions";
+import {
+  isValidTransactionKey,
+  ITransaction,
+  transactionModel,
+} from "./transactions";
 import { Book } from "../Book";
 import type { IOptions } from "../IOptions";
 
@@ -82,23 +86,9 @@ journalSchema.methods.void = async function (
     }
   }
   const entry = book.entry(newMemo, null, this._id);
-  const valid_fields = [
-    "credit",
-    "debit",
-    "account_path",
-    "accounts",
-    "datetime",
-    "book",
-    "memo",
-    "timestamp",
-    "voided",
-    "void_reason",
-    "_original_journal",
-  ];
 
   function processMetaField(key: string, val: any, meta: any) {
-    if (key === "_id" || key === "_journal") {
-    } else if (valid_fields.indexOf(key) === -1) {
+    if (!isValidTransactionKey(key)) {
       return (meta[key] = val);
     }
   }
