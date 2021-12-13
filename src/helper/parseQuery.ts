@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
+import { FilterQuery, isValidObjectId, ObjectId as TObjectId } from "mongoose";
 import { Book } from "../Book";
 import { isValidTransactionKey, ITransaction } from "../models/transactions";
-import type { FilterQuery, ObjectId as TObjectId } from "mongoose";
 
 export interface IParseQuery {
   account?: string | string[];
@@ -10,10 +10,12 @@ export interface IParseQuery {
   end_date?: Date | string | number;
   perPage?: number;
   page?: number;
+  approved?: boolean;
   [key: string]: any;
 }
 
 const numberRE = /^[0-9]+$/;
+const referenceRE = /^_|_id$$/;
 
 /**
  * Turn query into an object readable by MongoDB.
@@ -25,11 +27,15 @@ export function parseQuery(
   query: IParseQuery,
   book: Pick<Book, "name">
 ): FilterQuery<ITransaction> {
-  let account;
+  let account, i, il;
 
-  const parsed: FilterQuery<ITransaction> = {};
+  const filterQuery: FilterQuery<ITransaction> = {
+    book: book.name,
+    approved: query.approved !== false,
+  };
+
   if ((account = query.account)) {
-    let accounts, i, il;
+    let accounts;
     if (Array.isArray(account)) {
       const $or = [];
       for (const acct of account) {
@@ -40,76 +46,64 @@ export function parseQuery(
         }
         $or.push(match);
       }
-      parsed["$or"] = $or;
+      filterQuery["$or"] = $or;
     } else {
       accounts = account.split(":");
       for (i = 0, il = accounts.length; i < il; i++) {
-        parsed[`account_path.${i}`] = accounts[i];
+        filterQuery[`account_path.${i}`] = accounts[i];
       }
     }
     delete query.account;
   }
 
   if (query._journal) {
-    parsed["_journal"] = query._journal;
+    filterQuery["_journal"] = query._journal;
+    delete query._journal;
   }
 
   if (query.start_date || query.end_date) {
-    parsed["datetime"] = {};
+    filterQuery["datetime"] = {};
 
     if (query.start_date) {
       if (query.start_date instanceof Date) {
-        parsed.datetime.$gte = query.start_date;
+        filterQuery.datetime.$gte = query.start_date;
       } else if (typeof query.start_date === "number") {
-        parsed.datetime.$gte = new Date(query.start_date);
+        filterQuery.datetime.$gte = new Date(query.start_date);
       } else if (
         typeof query.start_date === "string" &&
         numberRE.test(query.start_date)
       ) {
-        parsed.datetime.$gte = new Date(parseInt(query.start_date));
+        filterQuery.datetime.$gte = new Date(parseInt(query.start_date));
       } else {
-        parsed.datetime.$gte = new Date(query.start_date);
+        filterQuery.datetime.$gte = new Date(query.start_date);
       }
       delete query.start_date;
     }
     if (query.end_date) {
       if (query.end_date instanceof Date) {
-        parsed.datetime.$lte = query.end_date;
+        filterQuery.datetime.$lte = query.end_date;
       } else if (typeof query.end_date === "number") {
-        parsed.datetime.$lte = new Date(query.end_date);
+        filterQuery.datetime.$lte = new Date(query.end_date);
       } else if (
         typeof query.end_date === "string" &&
         numberRE.test(query.end_date)
       ) {
-        parsed.datetime.$lte = new Date(parseInt(query.end_date));
+        filterQuery.datetime.$lte = new Date(parseInt(query.end_date));
       } else {
-        parsed.datetime.$lte = new Date(query.end_date);
+        filterQuery.datetime.$lte = new Date(query.end_date);
       }
       delete query.end_date;
     }
   }
 
-  for (const key in query) {
-    let val = query[key];
-    if (isValidTransactionKey(key)) {
-      // If it starts with a _ assume it's a reference
-      if (key.substring(0, 1) === "_" && val instanceof String) {
-        val = new ObjectId(val as string);
-      }
-      parsed[key] = val;
-    } else {
-      // Assume *_id is an OID
-      if (key.indexOf("_id") !== -1) {
-        val = new ObjectId(val);
-      }
+  const keys = Object.keys(query);
 
-      parsed[`meta.${key}`] = val;
-    }
+  for (i = 0, il = keys.length; i < il; i++) {
+    filterQuery[isValidTransactionKey(keys[i]) ? keys[i] : `meta.${keys[i]}`] =
+      referenceRE.test(keys[i]) && isValidObjectId(query[keys[i]])
+        ? new ObjectId(query[keys[i]])
+        : query[keys[i]];
   }
 
-  parsed.book = book.name;
-
-  parsed.approved = true;
-
-  return parsed;
+  return filterQuery;
 }

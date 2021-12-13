@@ -1,18 +1,14 @@
 {
-	"display": "Node 16",
-	"compilerOptions": {
-		"lib": [
-			"es2021"
-		],
-		"module": "commonjs",
-		"target": "es2021",
-		"outDir": "build",
-		"strict": true,
-		"skipLibCheck": true,
-		"sourceMap": true,
-		"forceConsistentCasingInFileNames": true
-	},
-	"exclude": [
-		"spec"
-	]
+  "display": "Node 16",
+  "compilerOptions": {
+    "lib": ["es2021"],
+    "module": "commonjs",
+    "target": "es2021",
+    "outDir": "build",
+    "strict": true,
+    "skipLibCheck": true,
+    "sourceMap": false,
+    "forceConsistentCasingInFileNames": true
+  },
+  "exclude": ["spec"]
 }
