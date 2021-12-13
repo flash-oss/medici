@@ -76,7 +76,7 @@ export class Book {
       };
   }
 
-  async ledger(query: { [key: string]: any }, options = {} as IOptions): Promise<{ results: ITransaction[], total: number }> {
+  async ledger(query: { [key: string]: any }, populate = null as string[] | null, options = {} as IOptions): Promise<{ results: ITransaction[], total: number }> {
     let pagination;
 
     // Pagination
@@ -101,6 +101,11 @@ export class Book {
       datetime: -1,
       timestamp: -1
     });
+    if (populate) {
+      for (let i = 0, il = populate.length; i < il; i++){
+        q.populate(populate[i]);
+      }
+    }
     const results = await q.exec();
     return {
       results,
