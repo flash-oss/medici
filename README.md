@@ -142,7 +142,7 @@ Note that the `book`, `datetime`, `memo`, `voided`, and `void_reason` attributes
 
 ### Customizing the Transaction document schema
 
-If you need to have related documents for Transactions and want to use Mongoose's `populate` method, or if you need to add additional fields to the schema that the `meta` won't satisfy, you can define your own schema for `Medici_Transactions` and register it before you load the Medici module. If the `Medici_Transactions` schema is already registered with Mongoose, Medici will use the registered schema instead of the default schema. When you specify meta values when querying or writing transactions, the system will check the Transaction schema to see if those values correspond to actual top-level fields, and if so will set those instead of the corresponding `meta` field.
+If you need to have related documents for Transactions and want to use Mongoose's `populate` method, or if you need to add additional fields to the schema that the `meta` won't satisfy, you can define your own schema for `Medici_Transaction` and register it before you load the Medici module. If the `Medici_Transaction` schema is already registered with Mongoose, Medici will use the registered schema instead of the default schema. When you specify meta values when querying or writing transactions, the system will check the Transaction schema to see if those values correspond to actual top-level fields, and if so will set those instead of the corresponding `meta` field.
 
 For example, if you want transactions to have a related "person" document, you can define the transaction schema like so:
 
@@ -177,7 +177,7 @@ Then when you query transactions using the `book.ledger()` method, you can speci
 
 ## Performance
 
-Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [following](https://github.com/flash-oss/medici/commit/274528ef5d1dae0beedca4a98dbf706808be53bd) indexes are auto generated on the `Medici_Transactions` collection:
+Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [following](https://github.com/flash-oss/medici/commit/274528ef5d1dae0beedca4a98dbf706808be53bd) indexes are auto generated on the `medici_transaction` collection:
 
 ```
     "_journal": 1
