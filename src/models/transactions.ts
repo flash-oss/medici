@@ -4,7 +4,7 @@ export interface ITransaction<T = any, J = any> {
   _id?: T;
   credit: number;
   debit: number;
-  meta: any;
+  meta: { [key: string]: any };
   datetime: Date;
   account_path: string[];
   accounts: string;
@@ -13,7 +13,7 @@ export interface ITransaction<T = any, J = any> {
   _journal: J;
   timestamp: Date;
   voided: boolean;
-  void_reason: string;
+  void_reason?: string;
   approved: boolean;
   _original_journal: J | undefined;
 }

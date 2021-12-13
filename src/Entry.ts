@@ -77,33 +77,34 @@ export class Entry {
           : amount
         : 0.0;
 
-    const transaction: Partial<ITransaction> = {
+    const transaction: ITransaction = {
+      _id: undefined,
+      _journal: this.journal._id,
+      _original_journal: this.journal._original_journal,
       account_path,
       accounts: account_path.join(":"),
-      credit,
-      debit,
+      approved: false,
       book: this.book.name,
-      memo: this.journal.memo,
-      _journal: this.journal._id,
+      credit,
       datetime: this.journal.datetime,
-      _original_journal: this.journal._original_journal,
+      debit,
+      memo: this.journal.memo,
+      meta: {},
       timestamp: new Date(),
+      void_reason: undefined,
+      voided: false,
     };
 
-    // Loop through the meta and see if there are valid keys on the schema
-    const meta: { [key: string]: any } = {};
     if (extra) {
       Object.keys(extra).forEach((key) => {
-        const val = extra[key];
         if (isValidTransactionKey(key)) {
           // @ts-ignore dts-bundle-generator throws TS2322
-          transaction[key] = val;
+          transaction[key] = extra[key];
         } else {
-          meta[key] = val;
+          transaction.meta[key] = extra[key];
         }
       });
     }
-    transaction.meta = meta;
     this.transactions.push(transaction as ITransaction);
 
     return this;
