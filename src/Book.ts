@@ -5,18 +5,24 @@ import { ITransaction, transactionModel } from "./models/transactions";
 import type { IOptions } from "./IOptions";
 
 export class Book {
-
   name: string;
 
   constructor(name: string) {
     this.name = name;
   }
 
-  entry(memo: string, date = null as Date | null, original_journal = null as any) {
+  entry(
+    memo: string,
+    date = null as Date | null,
+    original_journal = null as any
+  ) {
     return Entry.write(this, memo, date, original_journal);
   }
 
-  async balance(query: IParseQuery, options = {} as IOptions): Promise<{ balance: number; notes: number; }> {
+  async balance(
+    query: IParseQuery,
+    options = {} as IOptions
+  ): Promise<{ balance: number; notes: number }> {
     let skip;
 
     if (query.perPage) {
@@ -33,46 +39,58 @@ export class Book {
         debit: "$debit",
         credit: "$credit",
         datetime: "$datetime",
-        timestamp: "$timestamp"
-      }
+        timestamp: "$timestamp",
+      },
     };
     const group = {
       $group: {
         _id: "1",
         credit: {
-          $sum: "$credit"
+          $sum: "$credit",
         },
         debit: {
-          $sum: "$debit"
+          $sum: "$debit",
         },
         count: {
-          $sum: 1
-        }
-      }
+          $sum: 1,
+        },
+      },
     };
     let result;
     if (typeof skip !== "undefined") {
       const sort = {
         $sort: {
           datetime: -1,
-          timestamp: -1
-        }
+          timestamp: -1,
+        },
       };
-      result = (await transactionModel.aggregate([match, project, sort, skip, group], options))[0];
+      result = (
+        await transactionModel.aggregate(
+          [match, project, sort, skip, group],
+          options
+        )
+      )[0];
     } else {
-      result = (await transactionModel.aggregate([match, project, group], options))[0];
+      result = (
+        await transactionModel.aggregate([match, project, group], options)
+      )[0];
     }
     return !result
       ? {
-        balance: 0,
-        notes: 0
-      } : {
-        balance: result.credit - result.debit,
-        notes: result.count
-      };
+          balance: 0,
+          notes: 0,
+        }
+      : {
+          balance: result.credit - result.debit,
+          notes: result.count,
+        };
   }
 
-  async ledger(query: IParseQuery, populate = null as string[] | null, options = {} as IOptions): Promise<{ results: ITransaction[], total: number }> {
+  async ledger(
+    query: IParseQuery,
+    populate = null as string[] | null,
+    options = {} as IOptions
+  ): Promise<{ results: ITransaction[]; total: number }> {
     let skip;
     let limit = 0;
 
@@ -89,12 +107,14 @@ export class Book {
 
     let count = 0;
     if (typeof skip !== "undefined") {
-      count = await transactionModel.countDocuments(query).session(options.session || null);
+      count = await transactionModel
+        .countDocuments(query)
+        .session(options.session || null);
       q.skip(skip).limit(limit);
     }
     q.sort({
       datetime: -1,
-      timestamp: -1
+      timestamp: -1,
     });
     if (populate) {
       for (let i = 0, il = populate.length; i < il; i++) {
@@ -109,7 +129,7 @@ export class Book {
   }
 
   async void(journal_id: string, reason: string, options = {} as IOptions) {
-    const journal = (await journalModel.findById(journal_id, undefined, options));
+    const journal = await journalModel.findById(journal_id, undefined, options);
     // @ts-ignore
     return await journal.void(this, reason);
   }

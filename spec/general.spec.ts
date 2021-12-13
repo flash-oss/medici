@@ -1,10 +1,10 @@
 import { Book } from "../src/Book";
 const assert = require("assert");
 
-describe("general", function() {
+describe("general", function () {
   let sharedJournal = null;
 
-  it("should let you create a basic transaction", async function() {
+  it("should let you create a basic transaction", async function () {
     const book = new Book("MyBook");
     let journal = await book
       .entry("Test Entry")
@@ -25,7 +25,7 @@ describe("general", function() {
     assert.strictEqual(journal1._transactions.length, 2);
   });
 
-  it("should deal with JavaScript rounding weirdness", async function() {
+  it("should deal with JavaScript rounding weirdness", async function () {
     const book = new Book("MyBook");
     await book
       .entry("Rounding Test")
@@ -43,7 +43,9 @@ describe("general", function() {
     const entry = book.entry("This is a test entry");
     entry.debit("Assets:Cash", 99.9, {});
     entry.credit("Income", 99.8, {});
-    await assert.rejects(entry.commit(), { message: "INVALID_JOURNAL: can't commit non zero total" });
+    await assert.rejects(entry.commit(), {
+      message: "INVALID_JOURNAL: can't commit non zero total",
+    });
   });
 
   it("should throw INVALID_JOURNAL if an entry total is !=0 and >0", async () => {
@@ -51,14 +53,16 @@ describe("general", function() {
     const entry = book.entry("This is a test entry");
     entry.debit("Assets:Cash", 99.8, {});
     entry.credit("Income", 99.9, {});
-    await assert.rejects(entry.commit(), { message: "INVALID_JOURNAL: can't commit non zero total" });
+    await assert.rejects(entry.commit(), {
+      message: "INVALID_JOURNAL: can't commit non zero total",
+    });
   });
 
   it("should have updated the balance for assets and income and accurately give balance for subaccounts", async () => {
     const book = new Book("MyBook");
 
     const data = await book.balance({
-      account: "Assets"
+      account: "Assets",
     });
     let bal = data.balance;
     let { notes } = data;
@@ -72,7 +76,7 @@ describe("general", function() {
     assert.strictEqual(notes, 2);
 
     const data2 = await book.balance({
-      account: "Assets:Other"
+      account: "Assets:Other",
     });
     bal = data2.balance;
     ({ notes } = data2);
@@ -83,7 +87,7 @@ describe("general", function() {
   it("should return full ledger", async () => {
     const book = new Book("MyBook");
     const res = await book.ledger({
-      account: "Assets"
+      account: "Assets",
     });
     assert.strictEqual(res.results.length, 2);
   });
@@ -92,19 +96,19 @@ describe("general", function() {
     const book = new Book("MyBook");
     const data = await book.balance({
       account: "Assets",
-      clientId: "12345"
+      clientId: "12345",
     });
     assert.strictEqual(data.balance, -500);
 
     await book.void(sharedJournal._id, "Messed up");
     const data1 = await book.balance({
-      account: "Assets"
+      account: "Assets",
     });
     assert.strictEqual(data1.balance, -700);
 
     const data2 = await book.balance({
       account: "Assets",
-      clientId: "12345"
+      clientId: "12345",
     });
     assert.strictEqual(data2.balance, 0);
   });
@@ -121,11 +125,14 @@ describe("general", function() {
   it("should return ledger with array of accounts", async () => {
     const book = new Book("MyBook");
     const response = await book.ledger({
-      account: ["Assets", "Income"]
+      account: ["Assets", "Income"],
     });
     assert.strictEqual(response.results.length, 6);
     for (let res of response.results) {
-      assert.ok(res.account_path.includes("Assets") || res.account_path.includes("Income"));
+      assert.ok(
+        res.account_path.includes("Assets") ||
+          res.account_path.includes("Income")
+      );
     }
   });
 });

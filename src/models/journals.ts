@@ -8,7 +8,7 @@ export interface IJournal<T = any> {
   _id: T;
   datetime: Date;
   memo: string;
-  _transactions: ITransaction<T, T>[],
+  _transactions: ITransaction<T, T>[];
   book: string;
   voided: boolean;
   void_reason: string;
@@ -19,27 +19,31 @@ const journalSchema = new Schema<IJournal>({
   datetime: Date,
   memo: {
     type: String,
-    default: ""
+    default: "",
   },
   _transactions: [
     {
       type: Schema.Types.ObjectId,
-      ref: "Medici_Transaction"
-    }
+      ref: "Medici_Transaction",
+    },
   ],
   book: String,
   voided: {
     type: Boolean,
-    default: false
+    default: false,
   },
   void_reason: String,
   approved: {
     type: Boolean,
-    default: true
-  }
+    default: true,
+  },
 });
 
-journalSchema.methods.void = async function (book: Book, reason: string, options = {} as IOptions) {
+journalSchema.methods.void = async function (
+  book: Book,
+  reason: string,
+  options = {} as IOptions
+) {
   if (this.voided === true) {
     throw new Error("Journal already voided");
   }
@@ -49,14 +53,19 @@ journalSchema.methods.void = async function (book: Book, reason: string, options
   this.void_reason = reason || "";
 
   const voidTransaction = (trans_id: string) => {
-    return transactionModel
-      .findByIdAndUpdate(trans_id, {
+    return transactionModel.findByIdAndUpdate(
+      trans_id,
+      {
         voided: true,
-        void_reason: this.void_reason
-      }, { ...options, new: true });
+        void_reason: this.void_reason,
+      },
+      { ...options, new: true }
+    );
   };
 
-  const transactions = await Promise.all(this._transactions.map(voidTransaction)) as (Document & ITransaction<ObjectId, ObjectId>)[];
+  const transactions = (await Promise.all(
+    this._transactions.map(voidTransaction)
+  )) as (Document & ITransaction<ObjectId, ObjectId>)[];
   let newMemo;
   if (this.void_reason) {
     newMemo = this.void_reason;
@@ -84,7 +93,7 @@ journalSchema.methods.void = async function (book: Book, reason: string, options
     "timestamp",
     "voided",
     "void_reason",
-    "_original_journal"
+    "_original_journal",
   ];
 
   function processMetaField(key: string, val: any, meta: any) {
@@ -95,13 +104,16 @@ journalSchema.methods.void = async function (book: Book, reason: string, options
   }
 
   for (const trans of transactions) {
-    const transObject = trans.toObject() as unknown as ITransaction<ObjectId, ObjectId>;
+    const transObject = trans.toObject() as unknown as ITransaction<
+      ObjectId,
+      ObjectId
+    >;
     const meta = {};
 
     Object.keys(transObject).forEach((key) => {
       const val = transObject[key as keyof ITransaction<ObjectId, ObjectId>];
       if (key === "meta") {
-        Object.keys(transObject["meta"]).forEach(keyMeta => {
+        Object.keys(transObject["meta"]).forEach((keyMeta) => {
           processMetaField(keyMeta, transObject["meta"][keyMeta], meta);
         });
       } else {
@@ -126,10 +138,13 @@ journalSchema.pre("save", async function (next) {
 
   const session = this.$session();
 
-  const transactions = await transactionModel
-    .find({ _journal: this._id, approved: false }, undefined, { session }) as (Document & ITransaction<ObjectId, ObjectId>)[];
+  const transactions = (await transactionModel.find(
+    { _journal: this._id, approved: false },
+    undefined,
+    { session }
+  )) as (Document & ITransaction<ObjectId, ObjectId>)[];
   await Promise.all(
-    transactions.map(tx => {
+    transactions.map((tx) => {
       tx.approved = true;
       return tx.save({ session });
     })
@@ -137,5 +152,10 @@ journalSchema.pre("save", async function (next) {
   return next();
 });
 
-export type TJournalModel = mongoose.Model<IJournal> & { void: (book: string, reason: string) => Promise<any>; };
-export const journalModel: TJournalModel = mongoose.model("Medici_Journal", journalSchema) as TJournalModel;
+export type TJournalModel = mongoose.Model<IJournal> & {
+  void: (book: string, reason: string) => Promise<any>;
+};
+export const journalModel: TJournalModel = mongoose.model(
+  "Medici_Journal",
+  journalSchema
+) as TJournalModel;

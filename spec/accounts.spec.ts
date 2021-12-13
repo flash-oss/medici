@@ -1,8 +1,8 @@
 import { Book } from "../src/Book";
 import { assert } from "chai";
 
-describe("accounts", function() {
-  it("should allow more than 4 subaccounts of third level", async function() {
+describe("accounts", function () {
+  it("should allow more than 4 subaccounts of third level", async function () {
     const book = new Book("MyBook");
     await book
       .entry("depth test")
@@ -45,7 +45,7 @@ describe("accounts", function() {
     const { total } = await book.ledger({
       account: "Income",
       start_date: fourDaysAgo,
-      end_date: endDate
+      end_date: endDate,
     });
 
     assert.strictEqual(total, 2);

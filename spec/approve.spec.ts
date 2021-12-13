@@ -1,7 +1,7 @@
 import { Book } from "../src/Book";
 import { assert } from "chai";
 
-describe("approved/pending transactions", function() {
+describe("approved/pending transactions", function () {
   let sharedPendingJournal = null;
 
   it("should not include pending transactions in balance", async () => {
@@ -14,7 +14,7 @@ describe("approved/pending transactions", function() {
       .setApproved(false)
       .commit();
     const data = await book.balance({
-      account: "Foo"
+      account: "Foo",
     });
     assert.strictEqual(data.balance, 0);
   });
@@ -22,7 +22,7 @@ describe("approved/pending transactions", function() {
   it("should not include pending transactions in ledger", async () => {
     const book = new Book("MyBook");
     let response = await book.ledger({
-      account: ["Foo"]
+      account: ["Foo"],
     });
     assert.strictEqual(response.results.length, 0);
   });
@@ -32,7 +32,7 @@ describe("approved/pending transactions", function() {
     sharedPendingJournal.approved = true;
     await sharedPendingJournal.save();
     const data = await book.balance({
-      account: "Bar"
+      account: "Bar",
     });
     assert.strictEqual(data.balance, 500);
   });

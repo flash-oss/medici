@@ -29,29 +29,46 @@ const transactionSchema = new Schema<ITransaction>({
   memo: String,
   _journal: {
     type: Schema.Types.ObjectId,
-    ref: "Medici_Journal"
+    ref: "Medici_Journal",
   },
   timestamp: {
     type: Date,
-    default: () => (new Date())
+    default: () => new Date(),
   },
   voided: {
     type: Boolean,
-    default: false
+    default: false,
   },
   void_reason: String,
   // The journal that this is voiding, if any
   _original_journal: Schema.Types.ObjectId,
   approved: {
     type: Boolean,
-    default: true
-  }
+    default: true,
+  },
 });
 transactionSchema.index({ _journal: 1 });
-transactionSchema.index({ accounts: 1, book: 1, approved: 1, datetime: -1, timestamp: -1 });
+transactionSchema.index({
+  accounts: 1,
+  book: 1,
+  approved: 1,
+  datetime: -1,
+  timestamp: -1,
+});
 transactionSchema.index({ "account_path.0": 1, book: 1, approved: 1 });
-transactionSchema.index({ "account_path.0": 1, "account_path.1": 1, book: 1, approved: 1 });
-transactionSchema.index({ "account_path.0": 1, "account_path.1": 1, "account_path.2": 1, book: 1, approved: 1 });
+transactionSchema.index({
+  "account_path.0": 1,
+  "account_path.1": 1,
+  book: 1,
+  approved: 1,
+});
+transactionSchema.index({
+  "account_path.0": 1,
+  "account_path.1": 1,
+  "account_path.2": 1,
+  book: 1,
+  approved: 1,
+});
 
 export const transactionModel = model("Medici_Transaction", transactionSchema);
 
@@ -59,7 +76,6 @@ const transactionSchemaKeys = Object.keys(transactionSchema.paths);
 
 export function isValidTransactionKey(value: any): value is keyof ITransaction {
   return (
-    typeof value === "string" &&
-    transactionSchemaKeys.indexOf(value) !== -1
-  )
+    typeof value === "string" && transactionSchemaKeys.indexOf(value) !== -1
+  );
 }
