@@ -6,7 +6,7 @@ let mongoConfigUrl;
 
 let replSet: MongoMemoryReplSet;
 
-before(function (done: Mocha.Done) {
+before(async function () {
 	this.timeout(40000);
 	replSet = new MongoMemoryReplSet({
 		binary: {
@@ -22,25 +22,13 @@ before(function (done: Mocha.Done) {
 		},
 	});
 	replSet.start();
-	replSet.waitUntilRunning()
-		.then(() => {
-			const connectionString = replSet.getUri();
-			console.log(`Connecting to MongoDb`);
-			mongoose.connect(
-				connectionString
-			).then(() => {
-				console.log("Connected");
-				done();
-			});
-			mongoConfigUrl = connectionString;
-		})
+	await replSet.waitUntilRunning();
+	const connectionString = replSet.getUri();
+	await mongoose.connect(connectionString);
+	mongoConfigUrl = connectionString;
 });
 
 after(() => {
 	mongoose.disconnect();
-	console.log("Disconnected from MongoDb");
 	replSet.stop();
-	console.log("Stopped MongoDb");
 });
-
-export const getMongoConfigUrl = () => mongoConfigUrl;

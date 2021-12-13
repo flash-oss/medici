@@ -274,6 +274,10 @@ Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [fol
 
 ## Changelog
 
+- **v5.0.0**
+
+  - Node.js 12 is required now.
+
 - **v4.0.0**
 
   - Node.js 8 is required now.
