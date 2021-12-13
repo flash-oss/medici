@@ -141,15 +141,12 @@ export class Entry {
   }
 
   async commit(options = {} as IOptions) {
-    // First of all, set approved on transactions to approved on journal
-    for (const tx of this.transactions) {
-      tx.approved = this.journal.approved;
-    }
-    // this.transactionsSaved = 0;
     let total = 0.0;
-    for (const tx of this.transactions) {
-      total += tx.credit;
-      total -= tx.debit;
+    for (let i = 0, il = this.transactions.length; i < il; i++) {
+      // set approved on transactions to approved-value on journal
+      this.transactions[i].approved = this.journal.approved;
+      // sum the value of the transaction
+      total += this.transactions[i].credit - this.transactions[i].debit;
     }
 
     // Hello JavaScript. Your math rounding skill is mesmerising.
