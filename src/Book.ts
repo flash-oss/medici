@@ -94,7 +94,7 @@ export class Book {
 
     let count: number = 0;
     if (pagination) {
-      count = await transactionModel.countDocuments(query).session(options.session);
+      count = await transactionModel.countDocuments(query).session(options.session || null);
       q.skip((pagination.page - 1) * pagination.perPage).limit(pagination.perPage);
     }
     q.sort({
