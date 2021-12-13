@@ -105,11 +105,12 @@ export class Book {
     const filterQuery = parseQuery(query, { name: this.name });
     const q = transactionModel.find(filterQuery, undefined, options);
 
-    let count = 0;
+    let count = Promise.resolve(0);
     if (typeof skip !== "undefined") {
-      count = await transactionModel
+      count = transactionModel
         .countDocuments(filterQuery)
-        .session(options.session || null);
+        .session(options.session || null)
+        .exec();
       q.skip(skip).limit(limit);
     }
     q.sort({
@@ -124,7 +125,7 @@ export class Book {
     const results = await q.exec();
     return {
       results,
-      total: count || results.length,
+      total: (await count) || results.length,
     };
   }
 
