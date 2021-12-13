@@ -3,3 +3,4 @@ build
 types
 coverage
 .nyc_output
+.npmrc
