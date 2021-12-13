@@ -1,0 +1,34 @@
+{
+	"root": true,
+	"parser": "@typescript-eslint/parser",
+	"parserOptions": {
+		"project": "./tsconfig.json"
+	},
+	"plugins": [
+		"import",
+		"promise",
+		"@typescript-eslint",
+		"security",
+		"security-node",
+		"sonarjs"
+	],
+	"rules": {
+		"no-empty": [
+			"warn",
+			{
+				"allowEmptyCatch": true
+			}
+		],
+		"@typescript-eslint/ban-ts-comment": 0
+	},
+	"extends": [
+		"eslint:recommended",
+		"plugin:promise/recommended",
+		"plugin:@typescript-eslint/recommended",
+		"plugin:security/recommended",
+		"plugin:security-node/recommended",
+		"plugin:sonarjs/recommended",
+		"plugin:import/errors",
+		"plugin:import/warnings"
+	]
+}

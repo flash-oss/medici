@@ -1,0 +1,16 @@
+{
+	"extends": "@istanbuljs/nyc-config-typescript",
+	"all": true,
+	"exclude": [
+		"build",
+		"coverage",
+		"dist",
+		"spec",
+		"src/shared"
+	],
+	"reporter": [
+		"text",
+		"lcov",
+		"text-summary"
+	]
+}
