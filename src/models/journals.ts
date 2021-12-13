@@ -11,7 +11,7 @@ export interface IJournal {
   _id: Types.ObjectId;
   datetime: Date;
   memo: string;
-  _transactions: ITransaction[];
+  _transactions: Types.ObjectId[] | ITransaction[];
   book: string;
   voided: boolean;
   void_reason: string;

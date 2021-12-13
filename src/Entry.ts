@@ -107,6 +107,7 @@ export class Entry {
       });
     }
     this.transactions.push(transaction as ITransaction);
+    (this.journal._transactions as Types.ObjectId[]).push(transaction._id);
 
     return this;
   }
@@ -125,20 +126,6 @@ export class Entry {
     extra = null as { [key: string]: any } | null
   ): Entry {
     return this.transact(-1, account_path, amount, extra);
-  }
-
-  /**
-   * Save a transaction to the database
-   * @param transaction
-   * @returns {Promise}
-   */
-  private saveTransaction(
-    transaction: ITransaction,
-    options: IOptions
-  ): Promise<any> {
-    const model = new transactionModel(transaction);
-    this.journal._transactions.push(model._id);
-    return model.save(options);
   }
 
   async commit(options = {} as IOptions) {
@@ -167,7 +154,7 @@ export class Entry {
 
     try {
       await Promise.all(
-        this.transactions.map((tx) => this.saveTransaction(tx, options))
+        this.transactions.map((tx) => new transactionModel(tx).save(options))
       );
       // @ts-ignore
       return await this.journal.save(options);
