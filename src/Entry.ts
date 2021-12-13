@@ -1,21 +1,20 @@
 import { Book } from "./Book";
-import { IJournal } from "./models/journals";
-import { isValidTransactionKey, ITransaction } from "./models/transactions";
+import { isValidTransactionKey, ITransaction, transactionModel } from "./models/transactions";
 import { TransactionError } from "./TransactionError";
+import { IJournal, journalModel } from "./models/journals";
+import type { IOptions } from "./IOptions";
 
 export class Entry {
   book: Book;
   journal: IJournal & { _original_journal?: any };
   transactions: ITransaction[] = [];
 
-  static write(book: Book, memo: string, date = null as unknown as Date, original_journal = null as any) {
+  static write(book: Book, memo: string, date = null as Date | null, original_journal = null as any) {
     return new this(book, memo, date, original_journal);
   }
 
-  constructor(book: Book, memo: string, date: Date, original_journal: any) {
+  constructor(book: Book, memo: string, date: Date | null, original_journal: any) {
     this.book = book;
-    // @ts-ignore
-    const { journalModel } = this.book;
     this.journal = new journalModel();
     this.journal.memo = memo;
 
@@ -29,7 +28,6 @@ export class Entry {
     this.journal.datetime = date;
     this.journal.book = this.book.name;
     this.transactions = [];
-    // this.transactionModels = [];
     this.journal.approved = true;
   }
 
@@ -38,7 +36,7 @@ export class Entry {
     return this;
   }
 
-  credit(account_path: string | string[], amount: number, extra = null as {[key:string]: any;} | null) {
+  credit(account_path: string | string[], amount: number, extra = null as { [key: string]: any; } | null) {
     const credit = typeof amount === "string" ? parseFloat(amount) : amount;
     if (typeof account_path === "string") {
       account_path = account_path.split(":");
@@ -80,7 +78,7 @@ export class Entry {
     return this;
   }
 
-  debit(account_path: string | string[], amount: number | string, extra = null as {[key:string]: any;} | null) {
+  debit(account_path: string | string[], amount: number | string, extra = null as { [key: string]: any; } | null) {
     const debit = typeof amount === "string" ? parseFloat(amount) : amount;
     if (typeof account_path === "string") {
       account_path = account_path.split(":");
@@ -126,16 +124,13 @@ export class Entry {
    * @param transaction
    * @returns {Promise}
    */
-  saveTransaction(transaction: ITransaction) {
-    // @ts-ignore
-    const modelClass = this.book.transactionModel;
-
-    const model = new modelClass(transaction);
+  saveTransaction(transaction: ITransaction, options = {} as IOptions): Promise<any> {
+    const model = new transactionModel(transaction);
     this.journal._transactions.push(model._id);
-    return model.save();
+    return model.save(options);
   }
 
-  async commit() {
+  async commit(options = {} as IOptions) {
     // First of all, set approved on transactions to approved on journal
     for (const tx of this.transactions) {
       tx.approved = this.journal.approved;
@@ -160,18 +155,19 @@ export class Entry {
     }
 
     try {
-      await Promise.all(this.transactions.map(tx => this.saveTransaction(tx)));
+      await Promise.all(this.transactions.map(tx => this.saveTransaction(tx, options)));
       // @ts-ignore
-      return await this.journal.save();
+      return await this.journal.save(options);
     } catch (err) {
-      // @ts-ignore
-      this.book.transactionModel
-        .deleteMany({
-          _journal: this.journal._id
-        })
-        .catch(e =>
-          console.error(`Can't delete txs for journal ${this.journal._id}. Medici ledger consistency got harmed.`, e)
-        );
+      if (!options.session) {
+        transactionModel
+          .deleteMany({
+            _journal: this.journal._id
+          })
+          .catch(e =>
+            console.error(`Can't delete txs for journal ${this.journal._id}. Medici ledger consistency got harmed.`, e)
+          );
+      }
       throw new Error(`Failure to save journal: ${(err as Error).message}`);
     }
   }

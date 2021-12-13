@@ -1,6 +1,8 @@
 import { ObjectId, Schema, Document } from "mongoose";
 import * as mongoose from "mongoose";
-import { ITransaction } from "./transactions";
+import { ITransaction, transactionModel } from "./transactions";
+import { Book } from "../Book";
+import type { IOptions } from "../IOptions";
 
 export interface IJournal<T = any> {
   _id: T;
@@ -22,7 +24,7 @@ const journalSchema = new Schema<IJournal>({
   _transactions: [
     {
       type: Schema.Types.ObjectId,
-      ref: "transactions"
+      ref: "Medici_Transaction"
     }
   ],
   book: String,
@@ -37,7 +39,7 @@ const journalSchema = new Schema<IJournal>({
   }
 });
 
-journalSchema.methods.void = async function (book, reason) {
+journalSchema.methods.void = async function (book: Book, reason: string, options = {} as IOptions) {
   if (this.voided === true) {
     throw new Error("Journal already voided");
   }
@@ -47,11 +49,11 @@ journalSchema.methods.void = async function (book, reason) {
   this.void_reason = reason || "";
 
   const voidTransaction = (trans_id: string) => {
-    return mongoose
-      .model("transactions").findByIdAndUpdate(trans_id, {
+    return transactionModel
+      .findByIdAndUpdate(trans_id, {
         voided: true,
         void_reason: this.void_reason
-      });
+      }, { ...options, new: true });
   };
 
   const transactions = await Promise.all(this._transactions.map(voidTransaction)) as (Document & ITransaction<ObjectId, ObjectId>)[];
@@ -114,7 +116,7 @@ journalSchema.methods.void = async function (book, reason) {
       entry.credit(transObject.account_path, transObject.debit, meta);
     }
   }
-  return entry.commit();
+  return entry.commit(options);
 };
 
 journalSchema.pre("save", async function (next) {
@@ -122,15 +124,18 @@ journalSchema.pre("save", async function (next) {
     return next();
   }
 
-  const transactions = await mongoose.model("transactions").find({ _journal: this._id }) as (Document & ITransaction<ObjectId, ObjectId>)[];
+  const session = this.$session();
+
+  const transactions = await transactionModel
+    .find({ _journal: this._id, approved: false }, undefined, { session }) as (Document & ITransaction<ObjectId, ObjectId>)[];
   await Promise.all(
     transactions.map(tx => {
       tx.approved = true;
-      return tx.save();
+      return tx.save({ session });
     })
   );
   return next();
 });
 
 export type TJournalModel = mongoose.Model<IJournal> & { void: (book: string, reason: string) => Promise<any>; };
-export const journalModel: TJournalModel = mongoose.model("journals", journalSchema) as TJournalModel;
+export const journalModel: TJournalModel = mongoose.model("Medici_Journal", journalSchema) as TJournalModel;

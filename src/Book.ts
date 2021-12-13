@@ -1,25 +1,22 @@
-import Entry from "./Entry";
+import { Entry } from "./Entry";
 import { parseQuery } from "./helper/parseQuery";
 import { journalModel } from "./models/journals";
 import { ITransaction, transactionModel } from "./models/transactions";
+import type { IOptions } from "./IOptions";
 
 export class Book {
 
   name: string;
-  private transactionModel: typeof transactionModel;
-  private journalModel: typeof journalModel;
 
   constructor(name: string) {
     this.name = name;
-    this.transactionModel = transactionModel;
-    this.journalModel = journalModel;
   }
 
-  entry(memo: string, date = null as unknown as Date , original_journal = null as any) {
+  entry(memo: string, date = null as Date | null, original_journal = null as any) {
     return Entry.write(this, memo, date, original_journal);
   }
 
-  async balance(query: { [key: string]: any }) {
+  async balance(query: { [key: string]: any }, options = {} as IOptions): Promise<{ balance: number; notes: number; }> {
     let pagination;
 
     if (query.perPage) {
@@ -31,7 +28,7 @@ export class Book {
       delete query.perPage;
       delete query.page;
     }
-    query = parseQuery(query, this);
+    query = parseQuery(query, { name: this.name });
     const match = { $match: query };
 
     const project = {
@@ -56,6 +53,7 @@ export class Book {
         }
       }
     };
+    let result;
     if (pagination) {
       const skip = { $skip: (pagination.page - 1) * pagination.perPage };
       const sort = {
@@ -64,35 +62,21 @@ export class Book {
           timestamp: -1
         }
       };
-      const result = (await this.transactionModel.aggregate([match, project, sort, skip, group]))[0];
-      if (!result) {
-        return {
-          balance: 0,
-          notes: 0
-        };
-      }
-      const total = result.credit - result.debit;
-      return {
-        balance: total,
+      result = (await transactionModel.aggregate([match, project, sort, skip, group], options))[0];
+    } else {
+      result = (await transactionModel.aggregate([match, project, group], options))[0];
+    }
+    return !result
+      ? {
+        balance: 0,
+        notes: 0
+      } : {
+        balance: result.credit - result.debit,
         notes: result.count
       };
-    } else {
-      const result2 = (await this.transactionModel.aggregate([match, project, group]))[0];
-      if (!result2) {
-        return {
-          balance: 0,
-          notes: 0
-        };
-      }
-      const total = result2.credit - result2.debit;
-      return {
-        balance: total,
-        notes: result2.count
-      };
-    }
   }
 
-  async ledger(query: { [key: string]: any }, populate = null): Promise<{results: ITransaction[], total: number}> {
+  async ledger(query: { [key: string]: any }, options = {} as IOptions): Promise<{ results: ITransaction[], total: number }> {
     let pagination;
 
     // Pagination
@@ -105,57 +89,40 @@ export class Book {
       delete query.perPage;
       delete query.page;
     }
-    query = parseQuery(query, this);
-    const q = this.transactionModel.find(query);
+    query = parseQuery(query, { name: this.name });
+    const q = transactionModel.find(query, undefined, options);
 
+    let count: number = 0;
     if (pagination) {
-      const count = await this.transactionModel.countDocuments(query);
+      count = await transactionModel.countDocuments(query).session(options.session);
       q.skip((pagination.page - 1) * pagination.perPage).limit(pagination.perPage);
-      q.sort({
-        datetime: -1,
-        timestamp: -1
-      });
-      if (populate) {
-        for (const pop of Array.from(populate)) {
-          q.populate(pop);
-        }
-      }
-      const results = await q.exec();
-      return {
-        results,
-        total: count
-      };
-    } else {
-      q.sort({
-        datetime: -1,
-        timestamp: -1
-      });
-      if (populate) {
-        for (const pop of Array.from(populate)) {
-          q.populate(pop);
-        }
-      }
-
-      const results1 = await q.exec();
-      return {
-        results: results1,
-        total: results1.length
-      };
     }
+    q.sort({
+      datetime: -1,
+      timestamp: -1
+    });
+    const results = await q.exec();
+    return {
+      results,
+      total: count || results.length,
+    };
   }
 
-  async void(journal_id: string, reason: string) {
-    const journal = (await this.journalModel.findById(journal_id))!;
+  async void(journal_id: string, reason: string, options = {} as IOptions) {
+    const journal = (await journalModel.findById(journal_id, undefined, options));
     // @ts-ignore
     return await journal.void(this, reason);
   }
 
-  async listAccounts() {
-    const results = await this.transactionModel.find({ book: this.name }).distinct("accounts");
+  async listAccounts(options = {} as IOptions) {
+    const results = await transactionModel
+      .find({ book: this.name }, undefined, options)
+      .distinct("accounts")
+      .exec();
     const final = new Set();
     for (const result of results) {
-      const paths = result.split(":");
       const prev = [];
+      const paths = result.split(":");
       for (const acct of paths) {
         prev.push(acct);
         final.add(prev.join(":"));

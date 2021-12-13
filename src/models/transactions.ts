@@ -1,4 +1,4 @@
-import { Schema, model, ObjectId } from "mongoose";
+import { Schema, model } from "mongoose";
 
 export interface ITransaction<T = any, J = any> {
   _id?: T;
@@ -53,7 +53,7 @@ transactionSchema.index({ "account_path.0": 1, book: 1, approved: 1 });
 transactionSchema.index({ "account_path.0": 1, "account_path.1": 1, book: 1, approved: 1 });
 transactionSchema.index({ "account_path.0": 1, "account_path.1": 1, "account_path.2": 1, book: 1, approved: 1 });
 
-export const transactionModel = model("transactions", transactionSchema);
+export const transactionModel = model("Medici_Transaction", transactionSchema);
 
 const transactionSchemaKeys = Object.keys(transactionSchema.paths);
 
