@@ -132,9 +132,9 @@ export class Entry {
    * @param transaction
    * @returns {Promise}
    */
-  saveTransaction(
+  private saveTransaction(
     transaction: ITransaction,
-    options = {} as IOptions
+    options: IOptions
   ): Promise<any> {
     const model = new transactionModel(transaction);
     this.journal._transactions.push(model._id);
