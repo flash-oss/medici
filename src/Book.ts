@@ -1,5 +1,5 @@
 import { Entry } from "./Entry";
-import { parseQuery } from "./helper/parseQuery";
+import { IParseQuery, parseQuery } from "./helper/parseQuery";
 import { journalModel } from "./models/journals";
 import { ITransaction, transactionModel } from "./models/transactions";
 import type { IOptions } from "./IOptions";
@@ -16,14 +16,11 @@ export class Book {
     return Entry.write(this, memo, date, original_journal);
   }
 
-  async balance(query: { [key: string]: any }, options = {} as IOptions): Promise<{ balance: number; notes: number; }> {
-    let pagination;
+  async balance(query: IParseQuery, options = {} as IOptions): Promise<{ balance: number; notes: number; }> {
+    let skip;
 
     if (query.perPage) {
-      pagination = {
-        perPage: query.perPage,
-        page: query.page ? query.page : 1
-      };
+      skip = { $skip: (query.page ? query.page - 1 : 0) * query.perPage };
 
       delete query.perPage;
       delete query.page;
@@ -54,8 +51,7 @@ export class Book {
       }
     };
     let result;
-    if (pagination) {
-      const skip = { $skip: (pagination.page - 1) * pagination.perPage };
+    if (skip) {
       const sort = {
         $sort: {
           datetime: -1,
@@ -76,15 +72,14 @@ export class Book {
       };
   }
 
-  async ledger(query: { [key: string]: any }, populate = null as string[] | null, options = {} as IOptions): Promise<{ results: ITransaction[], total: number }> {
-    let pagination;
+  async ledger(query: IParseQuery, populate = null as string[] | null, options = {} as IOptions): Promise<{ results: ITransaction[], total: number }> {
+    let skip;
+    let limit = 0;
 
     // Pagination
     if (query.perPage) {
-      pagination = {
-        perPage: query.perPage,
-        page: query.page ? query.page : 1
-      };
+      skip = (query.page ? query.page - 1 : 0) * query.perPage;
+      limit = query.perPage;
 
       delete query.perPage;
       delete query.page;
@@ -93,16 +88,16 @@ export class Book {
     const q = transactionModel.find(query, undefined, options);
 
     let count: number = 0;
-    if (pagination) {
+    if (skip) {
       count = await transactionModel.countDocuments(query).session(options.session || null);
-      q.skip((pagination.page - 1) * pagination.perPage).limit(pagination.perPage);
+      q.skip(skip).limit(limit);
     }
     q.sort({
       datetime: -1,
       timestamp: -1
     });
     if (populate) {
-      for (let i = 0, il = populate.length; i < il; i++){
+      for (let i = 0, il = populate.length; i < il; i++) {
         q.populate(populate[i]);
       }
     }
@@ -119,21 +114,21 @@ export class Book {
     return await journal.void(this, reason);
   }
 
-  async listAccounts(options = {} as IOptions) {
+  async listAccounts(options = {} as IOptions): Promise<string[]> {
     const results = await transactionModel
       .find({ book: this.name }, undefined, options)
       .distinct("accounts")
       .exec();
-    const final = new Set();
+    const uniqueAccounts: Set<string> = new Set();
     for (const result of results) {
       const prev = [];
       const paths = result.split(":");
       for (const acct of paths) {
         prev.push(acct);
-        final.add(prev.join(":"));
+        uniqueAccounts.add(prev.join(":"));
       }
     }
-    return Array.from(final); // uniques
+    return Array.from(uniqueAccounts);
   }
 }
 

@@ -9,7 +9,7 @@ export class Entry {
   journal: IJournal & { _original_journal?: any };
   transactions: ITransaction[] = [];
 
-  static write(book: Book, memo: string, date = null as Date | null, original_journal = null as any) {
+  static write(book: Book, memo: string, date = null as Date | null, original_journal = null as any): Entry {
     return new this(book, memo, date, original_journal);
   }
 
@@ -31,12 +31,12 @@ export class Entry {
     this.journal.approved = true;
   }
 
-  setApproved(value: boolean) {
+  setApproved(value: boolean): Entry {
     this.journal.approved = value;
     return this;
   }
 
-  credit(account_path: string | string[], amount: number, extra = null as { [key: string]: any; } | null) {
+  credit(account_path: string | string[], amount: number, extra = null as { [key: string]: any; } | null): Entry {
     const credit = typeof amount === "string" ? parseFloat(amount) : amount;
     if (typeof account_path === "string") {
       account_path = account_path.split(":");
@@ -78,7 +78,7 @@ export class Entry {
     return this;
   }
 
-  debit(account_path: string | string[], amount: number | string, extra = null as { [key: string]: any; } | null) {
+  debit(account_path: string | string[], amount: number | string, extra = null as { [key: string]: any; } | null): Entry {
     const debit = typeof amount === "string" ? parseFloat(amount) : amount;
     if (typeof account_path === "string") {
       account_path = account_path.split(":");

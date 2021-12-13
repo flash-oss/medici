@@ -1,12 +1,15 @@
 import { ObjectId } from "mongodb";
+import { FilterQuery } from "mongoose";
 import { Book } from "../Book";
-import { isValidTransactionKey } from "../models/transactions";
+import { isValidTransactionKey, ITransaction } from "../models/transactions";
 
-interface IParseQuery {
+export interface IParseQuery {
 	account?: string | string[];
 	_journal?: any;
 	start_date?: string;
 	end_date?: string;
+	perPage?: number;
+	page?: number;
 	[key: string]: any;
 }
 
@@ -16,9 +19,9 @@ interface IParseQuery {
  * @param query {{account: {acct, subacct, subsubacct}, start_date, month_date, meta}}
  * @returns {Object}
  */
-export function parseQuery(query: IParseQuery, book: Pick<Book, "name">): { [key: string]: any; } {
+export function parseQuery(query: IParseQuery, book: Pick<Book, "name">): FilterQuery<ITransaction> {
 	let account, end_date, start_date;
-	const parsed: { [key: string]: any } = {};
+	const parsed: FilterQuery<ITransaction> = {};
 	if ((account = query.account)) {
 		let accounts, i;
 		if (account instanceof Array) {
