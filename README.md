@@ -256,7 +256,7 @@ Here is how to add an index manually via MongoDB CLI or other tool:
 
 ```
 db = db.getSiblingDB("my_db_name")
-db.getCollection("transactionss").createIndex({
+db.getCollection("medici_transactions").createIndex({
     "meta.myCustomProperty": 1,
     "book": 1,
     "approved": 1,
@@ -267,7 +267,7 @@ db.getCollection("transactionss").createIndex({
 
 #### Index memory consumption example
 
-For `transactionss` collection with 50000 documents:
+For `medici_transactions` collection with 50000 documents:
 
 - the mandatory `_id` index takes about 600 KB,
 - each of the medici default indexes take from 300 to 600 KB.
