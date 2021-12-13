@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { Book } from "./Book";
 import {
   isValidTransactionKey,
@@ -7,18 +8,17 @@ import {
 import { TransactionError } from "./TransactionError";
 import { IJournal, journalModel } from "./models/journals";
 import type { IOptions } from "./IOptions";
-import { ObjectId as TObjectId } from "mongoose";
 
 export class Entry {
   book: Book;
-  journal: IJournal & { _original_journal?: TObjectId };
+  journal: IJournal & { _original_journal?: Types.ObjectId };
   transactions: ITransaction[] = [];
 
   static write(
     book: Book,
     memo: string,
     date = null as Date | null,
-    original_journal = null as TObjectId | null
+    original_journal = null as Types.ObjectId | null
   ): Entry {
     return new this(book, memo, date, original_journal);
   }
@@ -27,7 +27,7 @@ export class Entry {
     book: Book,
     memo: string,
     date: Date | null,
-    original_journal: TObjectId | null
+    original_journal: Types.ObjectId | null
   ) {
     this.book = book;
     this.journal = new journalModel();
@@ -79,7 +79,7 @@ export class Entry {
         : 0.0;
 
     const transaction: ITransaction = {
-      _id: undefined,
+      _id: new Types.ObjectId(),
       _journal: this.journal._id,
       _original_journal: this.journal._original_journal,
       account_path,

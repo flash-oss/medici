@@ -1,11 +1,10 @@
-import { ObjectId } from "mongodb";
-import { FilterQuery, isValidObjectId, ObjectId as TObjectId } from "mongoose";
+import { FilterQuery, isValidObjectId, Types } from "mongoose";
 import { Book } from "../Book";
 import { isValidTransactionKey, ITransaction } from "../models/transactions";
 
 export interface IParseQuery {
   account?: string | string[];
-  _journal?: TObjectId;
+  _journal?: Types.ObjectId;
   start_date?: Date | string | number;
   end_date?: Date | string | number;
   perPage?: number;
@@ -101,7 +100,7 @@ export function parseQuery(
   for (i = 0, il = keys.length; i < il; i++) {
     filterQuery[isValidTransactionKey(keys[i]) ? keys[i] : `meta.${keys[i]}`] =
       referenceRE.test(keys[i]) && isValidObjectId(query[keys[i]])
-        ? new ObjectId(query[keys[i]])
+        ? new Types.ObjectId(query[keys[i]])
         : query[keys[i]];
   }
 

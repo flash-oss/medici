@@ -3,7 +3,7 @@ import { IParseQuery, parseQuery } from "./helper/parseQuery";
 import { journalModel } from "./models/journals";
 import { ITransaction, transactionModel } from "./models/transactions";
 import type { IOptions } from "./IOptions";
-import type { ObjectId as TObjectId } from "mongoose";
+import type { Types } from "mongoose";
 
 export class Book {
   name: string;
@@ -15,7 +15,7 @@ export class Book {
   entry(
     memo: string,
     date = null as Date | null,
-    original_journal = null as TObjectId | null
+    original_journal = null as Types.ObjectId | null
   ) {
     return Entry.write(this, memo, date, original_journal);
   }

@@ -1,7 +1,7 @@
-import { Schema, model, Model, ObjectId as TObjectId } from "mongoose";
+import { Schema, model, Model, Types } from "mongoose";
 
 export interface ITransaction {
-  _id?: TObjectId;
+  _id?: Types.ObjectId;
   credit: number;
   debit: number;
   meta: { [key: string]: any };
@@ -10,43 +10,46 @@ export interface ITransaction {
   accounts: string;
   book: string;
   memo: string;
-  _journal: TObjectId;
+  _journal: Types.ObjectId;
   timestamp: Date;
   voided: boolean;
   void_reason?: string;
   approved: boolean;
-  _original_journal?: TObjectId;
+  _original_journal?: Types.ObjectId;
 }
 
-const transactionSchema = new Schema<ITransaction>({
-  credit: Number,
-  debit: Number,
-  meta: Schema.Types.Mixed,
-  datetime: Date,
-  account_path: [String],
-  accounts: String,
-  book: String,
-  memo: String,
-  _journal: {
-    type: Schema.Types.ObjectId,
-    ref: "Medici_Journal",
+const transactionSchema = new Schema<ITransaction>(
+  {
+    credit: Number,
+    debit: Number,
+    meta: Schema.Types.Mixed,
+    datetime: Date,
+    account_path: [String],
+    accounts: String,
+    book: String,
+    memo: String,
+    _journal: {
+      type: Schema.Types.ObjectId,
+      ref: "Medici_Journal",
+    },
+    timestamp: {
+      type: Date,
+      default: () => new Date(),
+    },
+    voided: {
+      type: Boolean,
+      default: false,
+    },
+    void_reason: String,
+    // The journal that this is voiding, if any
+    _original_journal: Schema.Types.ObjectId,
+    approved: {
+      type: Boolean,
+      default: true,
+    },
   },
-  timestamp: {
-    type: Date,
-    default: () => new Date(),
-  },
-  voided: {
-    type: Boolean,
-    default: false,
-  },
-  void_reason: String,
-  // The journal that this is voiding, if any
-  _original_journal: Schema.Types.ObjectId,
-  approved: {
-    type: Boolean,
-    default: true,
-  },
-});
+  { id: false, versionKey: false, timestamps: false }
+);
 transactionSchema.index({ _journal: 1 });
 transactionSchema.index({
   accounts: 1,

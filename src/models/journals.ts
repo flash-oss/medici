@@ -1,10 +1,4 @@
-import {
-  ObjectId as TObjectId,
-  Schema,
-  Document,
-  Model,
-  model,
-} from "mongoose";
+import { Schema, Document, Model, model, Types } from "mongoose";
 import {
   isValidTransactionKey,
   ITransaction,
@@ -14,7 +8,7 @@ import { Book } from "../Book";
 import type { IOptions } from "../IOptions";
 
 export interface IJournal {
-  _id: TObjectId;
+  _id: Types.ObjectId;
   datetime: Date;
   memo: string;
   _transactions: ITransaction[];
@@ -24,29 +18,32 @@ export interface IJournal {
   approved: boolean;
 }
 
-const journalSchema = new Schema<IJournal>({
-  datetime: Date,
-  memo: {
-    type: String,
-    default: "",
-  },
-  _transactions: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "Medici_Transaction",
+const journalSchema = new Schema<IJournal>(
+  {
+    datetime: Date,
+    memo: {
+      type: String,
+      default: "",
     },
-  ],
-  book: String,
-  voided: {
-    type: Boolean,
-    default: false,
+    _transactions: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Medici_Transaction",
+      },
+    ],
+    book: String,
+    voided: {
+      type: Boolean,
+      default: false,
+    },
+    void_reason: String,
+    approved: {
+      type: Boolean,
+      default: true,
+    },
   },
-  void_reason: String,
-  approved: {
-    type: Boolean,
-    default: true,
-  },
-});
+  { id: false, versionKey: false, timestamps: false }
+);
 
 journalSchema.methods.void = async function (
   book: Book,
