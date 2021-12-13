@@ -65,7 +65,7 @@ export class Entry {
       Object.keys(extra).forEach(key => {
         const val = extra[key];
         if (isValidTransactionKey(key)) {
-          // @ts-ignore
+          // @ts-ignore dts-bundle-generator throws TS2322
           transaction[key] = val;
         } else {
           meta[key] = val;
@@ -105,7 +105,7 @@ export class Entry {
       Object.keys(extra).forEach(key => {
         const val = extra[key];
         if (isValidTransactionKey(key)) {
-          // @ts-ignore
+          // @ts-ignore dts-bundle-generator throws TS2322
           transaction[key] = val;
         } else {
           meta[key] = val;
