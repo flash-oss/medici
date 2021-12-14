@@ -25,10 +25,10 @@ In theory, the account names are entirely arbitrary, but you will likely want to
 Writing a journal entry is very simple. First you need a `book` object:
 
 ```js
-const { book } = require("medici");
+const { Book } = require("medici");
 
 // The first argument is the book name, which is used to determine which book the transactions and journals are queried from.
-const myBook = new book("MyBook");
+const myBook = new Book("MyBook");
 ```
 
 Now write an entry:
@@ -177,7 +177,7 @@ Then when you query transactions using the `book.ledger()` method, you can speci
 
 ## Performance
 
-Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [following](https://github.com/flash-oss/medici/commit/274528ef5d1dae0beedca4a98dbf706808be53bd) indexes are auto generated on the `medici_transaction` collection:
+Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [following](https://github.com/flash-oss/medici/commit/274528ef5d1dae0beedca4a98dbf706808be53bd) indexes are auto generated on the `medici_transactions` collection:
 
 ```
     "_journal": 1
@@ -277,7 +277,10 @@ For `medici_transactions` collection with 50000 documents:
 
 - **v5.0.0**
 
-  - Node.js 12 is required now.
+  - Node.js 12 is the lowest supported version. Although, 10 should still work fine.
+  - Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
+  - You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
+  - The project was rewritten with TypeScript. Types are provided within the package now.
 
 - **v4.0.0**
 
