@@ -5,7 +5,7 @@
   "main": "build/index.js",
   "typings": "types/index.d.ts",
   "scripts": {
-    "ci": "npm run build && npm run lint && npm run test",
+    "ci": "npm run lint && npm run test && npm run build",
     "build": "npm run clean && npm run build:node && npm run build:types",
     "build:node": "tsc -p .",
     "build:types": "dts-bundle-generator -o ./types/index.d.ts ./src/index.ts --project ./tsconfig.types.json --no-check",
