@@ -84,7 +84,7 @@ export class Entry {
       _original_journal: this.journal._original_journal,
       account_path,
       accounts: account_path.join(":"),
-      approved: false,
+      approved: true,
       book: this.book.name,
       credit,
       datetime: this.journal.datetime,

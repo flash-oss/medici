@@ -119,6 +119,10 @@ JournalSchema = {
     default: false,
   },
   void_reason: String,
+  approved: {
+    type: Boolean,
+    default: true,
+  },
 };
 ```
 
@@ -144,6 +148,12 @@ TransactionSchema = {
     default: false,
   },
   void_reason: String,
+  // The journal that this is voiding, if any
+  _original_journal: Schema.Types.ObjectId,
+  approved: {
+    type: Boolean,
+    default: true,
+  },
 };
 ```
 
@@ -179,6 +189,10 @@ MyTransactionSchema = {
     default: false,
   },
   void_reason: String,
+  approved: {
+    type: Boolean,
+    default: true,
+  },
 };
 ```
 
