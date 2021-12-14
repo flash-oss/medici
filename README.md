@@ -281,6 +281,7 @@ For `medici_transactions` collection with 50000 documents:
   - Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
   - You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
   - The project was rewritten with TypeScript. Types are provided within the package now.
+  - Add support for MongoDB sessions (aka ACID transactions). See `IOptions` type.
 
 - **v4.0.0**
 
