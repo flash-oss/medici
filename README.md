@@ -1,6 +1,20 @@
-[![Build Status](https://travis-ci.org/flash-oss/medici.png?branch=master)](https://travis-ci.org/flash-oss/medici)
-
 # medici
+
+<div align="center">
+
+[![Build Status](https://github.com/flash-oss/medici/workflows/ci/badge.svg)](https://github.com/flash-oss/medici/actions)
+[![Coverage Status](https://coveralls.io/repos/flash-oss/medici/badge.svg?branch=master)](https://coveralls.io/r/flash-oss/medici?branch=master)
+[![Known Vulnerabilities](https://snyk.io/test/github/flash-oss/medici/badge.svg)](https://snyk.io/test/github/flash-oss/medici)
+[![Security Responsible Disclosure](https://img.shields.io/badge/Security-Responsible%20Disclosure-yellow.svg)](https://github.com/nodejs/security-wg/blob/HEAD/processes/responsible_disclosure_template.md)
+
+</div>
+
+<div align="center">
+
+[![NPM version](https://img.shields.io/npm/v/medici.svg?style=flat)](https://www.npmjs.com/package/medici)
+[![NPM downloads](https://img.shields.io/npm/dm/medici.svg?style=flat)](https://www.npmjs.com/package/medici)
+
+</div>
 
 Double-entry accounting system for nodejs + mongoose
 
