@@ -141,14 +141,14 @@ journalSchema.pre("save", async function (next) {
   return next();
 });
 
-export type TJournalModel = Model<IJournal> & {
-  void: (book: string, reason: string) => Promise<any>;
+export type TJournalDocument = Document<IJournal> & {
+  void: (book: Book, reason: string, options?: IOptions) => Promise<any>;
 };
 
-export let journalModel: TJournalModel;
+export let journalModel: Model<IJournal>;
 
 try {
-  journalModel = model("Medici_Journal") as TJournalModel;
+  journalModel = model("Medici_Journal");
 } catch {
-  journalModel = model("Medici_Journal", journalSchema) as TJournalModel;
+  journalModel = model("Medici_Journal", journalSchema);
 }

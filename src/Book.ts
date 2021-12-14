@@ -1,6 +1,6 @@
 import { Entry } from "./Entry";
 import { IParseQuery, parseQuery } from "./helper/parseQuery";
-import { journalModel } from "./models/journals";
+import { journalModel, TJournalDocument } from "./models/journals";
 import { ITransaction, transactionModel } from "./models/transactions";
 import type { IOptions } from "./IOptions";
 import type { PipelineStage, Types } from "mongoose";
@@ -133,11 +133,11 @@ export class Book {
   }
 
   async void(journal_id: string, reason: string, options = {} as IOptions) {
-    const journal = await journalModel
+    const journal: TJournalDocument = await journalModel
       .findById(journal_id, undefined, options)
-      .exec();
-    // @ts-ignore
-    return await journal.void(this, reason);
+      .exec() as unknown as TJournalDocument;
+
+      return await journal.void(this, reason, options);
   }
 
   async listAccounts(options = {} as IOptions): Promise<string[]> {
