@@ -8,7 +8,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         node: ['12', '14', '16']
-        mongodb-version: [3.6, 4.0, 4.2]
+        mongodb-version: [3.6, 4.0, 4.2, 4.4, 5.0]
     steps:
       - uses: actions/checkout@v1
 
