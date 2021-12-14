@@ -25,7 +25,7 @@ if (process.env.CI !== "true" || process.env.MV !== "3.6") {
     });
 
     it("should not persist data if we throw an Error while using a session", async function () {
-      const book = new Book("LSD");
+      const book = new Book("Bicycle");
 
       try {
         await mongoose.connection.transaction(async (session) => {
