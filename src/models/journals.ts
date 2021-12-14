@@ -129,11 +129,9 @@ journalSchema.pre("save", async function (next) {
 
   const session = this.$session();
 
-  const transactions = (await transactionModel.find(
-    { _journal: this._id, approved: false },
-    undefined,
-    { session }
-  )) as (Document & ITransaction)[];
+  const transactions = (await transactionModel
+    .find({ _journal: this._id, approved: false }, undefined, { session })
+    .exec()) as (Document & ITransaction)[];
   await Promise.all(
     transactions.map((tx) => {
       tx.approved = true;

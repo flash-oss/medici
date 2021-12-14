@@ -65,14 +65,15 @@ export class Book {
         },
       };
       result = (
-        await transactionModel.aggregate(
-          [match, project, sort, skip, group],
-          options
-        )
+        await transactionModel
+          .aggregate([match, project, sort, skip, group], options)
+          .exec()
       )[0];
     } else {
       result = (
-        await transactionModel.aggregate([match, project, group], options)
+        await transactionModel
+          .aggregate([match, project, group], options)
+          .exec()
       )[0];
     }
     return !result
@@ -130,7 +131,9 @@ export class Book {
   }
 
   async void(journal_id: string, reason: string, options = {} as IOptions) {
-    const journal = await journalModel.findById(journal_id, undefined, options);
+    const journal = await journalModel
+      .findById(journal_id, undefined, options)
+      .exec();
     // @ts-ignore
     return await journal.void(this, reason);
   }

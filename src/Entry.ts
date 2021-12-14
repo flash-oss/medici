@@ -106,7 +106,7 @@ export class Entry {
         }
       });
     }
-    this.transactions.push(transaction as ITransaction);
+    this.transactions.push(transaction);
     (this.journal._transactions as Types.ObjectId[]).push(transaction._id);
 
     return this;

@@ -13,8 +13,8 @@ export interface IParseQuery {
   [key: string]: any;
 }
 
-const numberRE = /^[0-9]+$/;
-const referenceRE = /^_|_id$$/;
+const numberRE = /^\d+$/;
+const referenceRE = /(?:^_|_id$)/;
 
 /**
  * Turn query into an object readable by MongoDB.
@@ -33,7 +33,8 @@ export function parseQuery(
     approved: query.approved !== false,
   };
 
-  if ((account = query.account)) {
+  if (query.account) {
+    account = query.account;
     let accounts;
     if (Array.isArray(account)) {
       const $or = [];
