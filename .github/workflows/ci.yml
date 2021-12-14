@@ -21,8 +21,9 @@ jobs:
         uses: supercharge/mongodb-github-action@1.2.0
         with:
           mongodb-version: ${{ matrix.mongodb-version }}
-
-      - run: npm install
+      
+      # ignoring scripts to not install mongodb-memory-server
+      - run: npm install --ignore-scripts 
 
       - run: npm run ci
         env:
