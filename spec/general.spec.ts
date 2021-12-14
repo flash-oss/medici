@@ -1,9 +1,16 @@
 /* eslint sonarjs/no-duplicate-string: off */
 import { Book } from "../src/Book";
 import * as assert from "assert";
+import { Document, Types } from "mongoose";
+import { IJournal } from "../src/models/journals";
 
 describe("general", function () {
-  let sharedJournal = null;
+  let sharedJournal:
+    | (Document<any, any, any> &
+        IJournal & {
+          _original_journal?: Types.ObjectId;
+        })
+    | null = null;
 
   it("should let you create a basic transaction", async function () {
     const book = new Book("MyBook");
@@ -101,7 +108,7 @@ describe("general", function () {
     });
     assert.strictEqual(data.balance, -500);
 
-    await book.void(sharedJournal._id, "Messed up");
+    await book.void(sharedJournal!._id, "Messed up");
     const data1 = await book.balance({
       account: "Assets",
     });

@@ -10,5 +10,5 @@
     "sourceMap": false,
     "forceConsistentCasingInFileNames": true
   },
-  "exclude": ["spec"]
+  "include": ["src"]
 }

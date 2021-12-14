@@ -51,7 +51,7 @@ if (process.env.CI !== "true" || process.env.MV !== "3.6") {
           }
         });
       } catch (e) {
-        assert(e.message === "Not enough Balance.");
+        assert((e as Error).message === "Not enough Balance.");
       }
 
       const result = await book.balance({ account: "X:Y" });
