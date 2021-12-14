@@ -3,7 +3,7 @@ import { IParseQuery, parseQuery } from "./helper/parseQuery";
 import { journalModel } from "./models/journals";
 import { ITransaction, transactionModel } from "./models/transactions";
 import type { IOptions } from "./IOptions";
-import type { Types } from "mongoose";
+import type { PipelineStage, Types } from "mongoose";
 
 export class Book {
   name: string;
@@ -24,7 +24,7 @@ export class Book {
     query: IParseQuery,
     options = {} as IOptions
   ): Promise<{ balance: number; notes: number }> {
-    let skip;
+    let skip: PipelineStage.Skip | undefined = undefined;
 
     if (query.perPage) {
       skip = { $skip: (query.page ? query.page - 1 : 0) * query.perPage };
@@ -32,9 +32,11 @@ export class Book {
       delete query.perPage;
       delete query.page;
     }
-    const match = { $match: parseQuery(query, { name: this.name }) };
+    const match: PipelineStage.Match = {
+      $match: parseQuery(query, { name: this.name }),
+    };
 
-    const project = {
+    const project: PipelineStage.Project = {
       $project: {
         debit: "$debit",
         credit: "$credit",
@@ -42,9 +44,9 @@ export class Book {
         timestamp: "$timestamp",
       },
     };
-    const group = {
+    const group: PipelineStage.Group = {
       $group: {
-        _id: "1",
+        _id: null as any,
         credit: {
           $sum: "$credit",
         },
@@ -58,7 +60,7 @@ export class Book {
     };
     let result;
     if (typeof skip !== "undefined") {
-      const sort = {
+      const sort: PipelineStage.Sort = {
         $sort: {
           datetime: -1,
           timestamp: -1,
