@@ -5,6 +5,25 @@ import * as mongoose from "mongoose";
 // We can not run Transactions on Mongo 3.6
 if (process.env.CI !== "true" || process.env.MV !== "3.6") {
   describe("ACID", function () {
+    it("should persist data if while using a session", async function () {
+      const book = new Book("LSD");
+
+      await mongoose.connection.transaction(async (session) => {
+        await book
+          .entry("depth test")
+          .credit("X:Y:AUD", 1)
+          .credit("X:Y:EUR", 1)
+          .credit("X:Y:USD", 1)
+          .credit("X:Y:INR", 1)
+          .credit("X:Y:CHF", 1)
+          .debit("CashAssets", 5)
+          .commit({ session });
+      });
+
+      const result = await book.balance({ account: "X:Y" });
+      assert.strictEqual(result.balance, 5);
+    });
+
     it("should not persist data if we throw an Error while using a session", async function () {
       const book = new Book("LSD");
 
@@ -37,25 +56,6 @@ if (process.env.CI !== "true" || process.env.MV !== "3.6") {
 
       const result = await book.balance({ account: "X:Y" });
       assert.strictEqual(result.balance, 0);
-    });
-
-    it("should persist data if while using a session", async function () {
-      const book = new Book("LSD");
-
-      await mongoose.connection.transaction(async (session) => {
-        await book
-          .entry("depth test")
-          .credit("X:Y:AUD", 1)
-          .credit("X:Y:EUR", 1)
-          .credit("X:Y:USD", 1)
-          .credit("X:Y:INR", 1)
-          .credit("X:Y:CHF", 1)
-          .debit("CashAssets", 5)
-          .commit({ session });
-      });
-
-      const result = await book.balance({ account: "X:Y" });
-      assert.strictEqual(result.balance, 5);
     });
   });
 }
