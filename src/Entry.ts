@@ -55,7 +55,7 @@ export class Entry {
     type: -1 | 1,
     account_path: string | string[],
     amount: number | string,
-    extra = null as { [key: string]: any } | null
+    extra = null as Partial<ITransaction> & { [key: string]: any } | null
   ): Entry {
     if (typeof account_path === "string") {
       account_path = account_path.split(":");
@@ -99,8 +99,7 @@ export class Entry {
     if (extra) {
       Object.keys(extra).forEach((key) => {
         if (isValidTransactionKey(key)) {
-          // @ts-ignore dts-bundle-generator throws TS2322
-          transaction[key] = extra[key];
+          transaction[key as keyof ITransaction] = extra[key] as never;
         } else {
           transaction.meta[key] = extra[key];
         }
@@ -115,7 +114,7 @@ export class Entry {
   credit(
     account_path: string | string[],
     amount: number | string,
-    extra = null as { [key: string]: any } | null
+    extra = null as Partial<ITransaction> & { [key: string]: any } | null
   ): Entry {
     return this.transact(1, account_path, amount, extra);
   }
@@ -123,7 +122,7 @@ export class Entry {
   debit(
     account_path: string | string[],
     amount: number | string,
-    extra = null as { [key: string]: any } | null
+    extra = null as Partial<ITransaction> & { [key: string]: any } | null
   ): Entry {
     return this.transact(-1, account_path, amount, extra);
   }
