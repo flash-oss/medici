@@ -4,7 +4,7 @@ import * as mongoose from "mongoose";
 
 // We can not run Transactions on Mongo 3.6
 if (process.env.CI !== "true" || process.env.MV !== "3.6") {
-  describe("ACID", function () {
+  describe("Transactions", function () {
     it("should persist data if while using a session", async function () {
       const book = new Book("LSD");
 
@@ -25,7 +25,7 @@ if (process.env.CI !== "true" || process.env.MV !== "3.6") {
     });
 
     it("should not persist data if we throw an Error while using a session", async function () {
-      const book = new Book("Bicycle");
+      const book = new Book("ACID");
 
       try {
         await mongoose.connection.transaction(async (session) => {
