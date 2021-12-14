@@ -133,11 +133,11 @@ export class Book {
   }
 
   async void(journal_id: string, reason: string, options = {} as IOptions) {
-    const journal: TJournalDocument = await journalModel
+    const journal: TJournalDocument = (await journalModel
       .findById(journal_id, undefined, options)
-      .exec() as unknown as TJournalDocument;
+      .exec()) as unknown as TJournalDocument;
 
-      return await journal.void(this, reason, options);
+    return await journal.void(this, reason, options);
   }
 
   async listAccounts(options = {} as IOptions): Promise<string[]> {

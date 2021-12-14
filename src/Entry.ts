@@ -55,7 +55,7 @@ export class Entry {
     type: -1 | 1,
     account_path: string | string[],
     amount: number | string,
-    extra = null as Partial<ITransaction> & { [key: string]: any } | null
+    extra = null as (Partial<ITransaction> & { [key: string]: any }) | null
   ): Entry {
     if (typeof account_path === "string") {
       account_path = account_path.split(":");
@@ -114,7 +114,7 @@ export class Entry {
   credit(
     account_path: string | string[],
     amount: number | string,
-    extra = null as Partial<ITransaction> & { [key: string]: any } | null
+    extra = null as (Partial<ITransaction> & { [key: string]: any }) | null
   ): Entry {
     return this.transact(1, account_path, amount, extra);
   }
@@ -122,7 +122,7 @@ export class Entry {
   debit(
     account_path: string | string[],
     amount: number | string,
-    extra = null as Partial<ITransaction> & { [key: string]: any } | null
+    extra = null as (Partial<ITransaction> & { [key: string]: any }) | null
   ): Entry {
     return this.transact(-1, account_path, amount, extra);
   }
