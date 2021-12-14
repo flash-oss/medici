@@ -73,7 +73,7 @@ transactionSchema.index({
   approved: 1,
 });
 
-export let transactionModel: Model<ITransaction, {}, {}, {}>;
+export let transactionModel: Model<ITransaction>;
 
 try {
   transactionModel = model("Medici_Transaction");

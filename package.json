@@ -18,7 +18,8 @@
   "files": [
     "build/",
     "types/",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "repository": {
     "type": "git",

@@ -2,8 +2,6 @@ import { before, after } from "mocha";
 import * as mongoose from "mongoose";
 import { MongoMemoryReplSet } from "mongodb-memory-server";
 
-let mongoConfigUrl;
-
 let replSet: MongoMemoryReplSet;
 
 before(async function () {
@@ -31,7 +29,6 @@ before(async function () {
     await replSet.waitUntilRunning();
     const connectionString = replSet.getUri();
     await mongoose.connect(connectionString);
-    mongoConfigUrl = connectionString;
   }
 });
 

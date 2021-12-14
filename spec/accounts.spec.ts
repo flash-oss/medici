@@ -14,7 +14,7 @@ describe("accounts", function () {
       .debit("CashAssets", 5)
       .commit();
 
-    let result = await book.balance({ account: "X:Y" });
+    const result = await book.balance({ account: "X:Y" });
     assert.strictEqual(result.balance, 5);
 
     const accounts = await book.listAccounts();

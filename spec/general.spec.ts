@@ -1,12 +1,13 @@
+/* eslint sonarjs/no-duplicate-string: off */
 import { Book } from "../src/Book";
-const assert = require("assert");
+import * as assert from "assert";
 
 describe("general", function () {
   let sharedJournal = null;
 
   it("should let you create a basic transaction", async function () {
     const book = new Book("MyBook");
-    let journal = await book
+    const journal = await book
       .entry("Test Entry")
       .debit("Assets:Receivable", 500, { clientId: "12345" })
       .credit("Income:Rent", 500)
@@ -15,7 +16,7 @@ describe("general", function () {
     assert.strictEqual(journal._transactions.length, 2);
     sharedJournal = journal;
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
-    let journal1 = await book
+    const journal1 = await book
       .entry("Test Entry 2", threeDaysAgo)
       .debit("Assets:Receivable", 700)
       .credit("Income:Rent", 700)
@@ -33,7 +34,7 @@ describe("general", function () {
       .debit("A:B", 994.95)
       .debit("A:B", 10.05)
       .commit();
-    let result1 = await book.balance({ account: "A:B" });
+    const result1 = await book.balance({ account: "A:B" });
     const { balance } = result1;
     assert.strictEqual(balance, 0);
   });
@@ -128,7 +129,7 @@ describe("general", function () {
       account: ["Assets", "Income"],
     });
     assert.strictEqual(response.results.length, 6);
-    for (let res of response.results) {
+    for (const res of response.results) {
       assert.ok(
         res.account_path.includes("Assets") ||
           res.account_path.includes("Income")
