@@ -277,7 +277,7 @@ For `medici_transactions` collection with 50000 documents:
 
 - **v5.0.0**
 
-  - Node.js 12 is the lowest supported version. Although, 10 should still work fine.
+  - Node.js 12 is the lowest supported version. Although, 10 should still work fine, when using mongoose v5.
   - Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
   - You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
   - The project was rewritten with TypeScript. Types are provided within the package now.
