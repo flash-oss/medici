@@ -29,3 +29,4 @@ jobs:
       - run: npm run ci
         env:
           CI: true
+          MV: ${{ matrix.mongodb-version }}
