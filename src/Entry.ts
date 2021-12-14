@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import { Document, Types } from "mongoose";
 import { Book } from "./Book";
 import {
   isValidTransactionKey,
@@ -11,7 +11,7 @@ import type { IOptions } from "./IOptions";
 
 export class Entry {
   book: Book;
-  journal: IJournal & { _original_journal?: Types.ObjectId };
+  journal: Document & IJournal & { _original_journal?: Types.ObjectId };
   transactions: ITransaction[] = [];
 
   static write(
@@ -156,7 +156,6 @@ export class Entry {
       await Promise.all(
         this.transactions.map((tx) => new transactionModel(tx).save(options))
       );
-      // @ts-ignore
       return await this.journal.save(options);
     } catch (err) {
       if (!options.session) {
