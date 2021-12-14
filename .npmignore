@@ -1,8 +1,0 @@
-.scannerwork
-node_modules
-spec
-src
-.eslintignore
-.eslintrc.json
-tsconfig.json
-tsconfig.types.json
