@@ -146,6 +146,7 @@ export class Book {
   async listAccounts(options = {} as IOptions): Promise<string[]> {
     const results = await transactionModel
       .find({ book: this.name }, undefined, options)
+      .lean(true)
       .distinct("accounts")
       .exec();
     const uniqueAccounts: Set<string> = new Set();

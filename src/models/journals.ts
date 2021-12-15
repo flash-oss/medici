@@ -59,14 +59,16 @@ journalSchema.methods.void = async function (
   this.void_reason = reason || "";
 
   const voidTransaction = (trans_id: string) => {
-    return transactionModel.findByIdAndUpdate(
-      trans_id,
-      {
-        voided: true,
-        void_reason: this.void_reason,
-      },
-      { ...options, new: true }
-    );
+    return transactionModel
+      .findByIdAndUpdate(
+        trans_id,
+        {
+          voided: true,
+          void_reason: this.void_reason,
+        },
+        { ...options, new: true }
+      )
+      .lean(true);
   };
 
   const transactions = (await Promise.all(
@@ -98,25 +100,24 @@ journalSchema.methods.void = async function (
   }
 
   for (const trans of transactions) {
-    const transObject = trans.toObject() as unknown as ITransaction;
     const meta = {};
 
-    Object.keys(transObject).forEach((key) => {
-      const val = transObject[key as keyof ITransaction];
+    Object.keys(trans).forEach((key) => {
+      const val = trans[key as keyof ITransaction];
       if (key === "meta") {
-        Object.keys(transObject["meta"]).forEach((keyMeta) => {
-          processMetaField(keyMeta, transObject["meta"][keyMeta], meta);
+        Object.keys(trans["meta"]).forEach((keyMeta) => {
+          processMetaField(keyMeta, trans["meta"][keyMeta], meta);
         });
       } else {
         processMetaField(key, val, meta);
       }
     });
 
-    if (transObject.credit) {
-      entry.debit(transObject.account_path, transObject.credit, meta);
+    if (trans.credit) {
+      entry.debit(trans.account_path, trans.credit, meta);
     }
-    if (transObject.debit) {
-      entry.credit(transObject.account_path, transObject.debit, meta);
+    if (trans.debit) {
+      entry.credit(trans.account_path, trans.debit, meta);
     }
   }
   return entry.commit(options);
