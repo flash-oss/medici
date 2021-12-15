@@ -6,6 +6,7 @@ import {
 } from "./transactions";
 import { Book } from "../Book";
 import type { IOptions } from "../IOptions";
+import { handleVoidMemo } from "../helper/handleVoidMemo";
 
 export interface IJournal {
   _id: Types.ObjectId;
@@ -74,22 +75,8 @@ journalSchema.methods.void = async function (
   const transactions = (await Promise.all(
     (this._transactions as Types.ObjectId[]).map(voidTransaction)
   )) as ITransaction[];
-  let newMemo;
-  if (this.void_reason) {
-    newMemo = this.void_reason;
-  } else {
-    // It's either VOID, UNVOID, or REVOID
-    if (this.memo.substring(0, 6) === "[VOID]") {
-      newMemo = this.memo.replace("[VOID]", "[UNVOID]");
-    } else if (this.memo.substring(0, 8) === "[UNVOID]") {
-      newMemo = this.memo.replace("[UNVOID]", "[REVOID]");
-    } else if (this.memo.substring(0, 8) === "[REVOID]") {
-      newMemo = this.memo.replace("[REVOID]", "[UNVOID]");
-    } else {
-      newMemo = `[VOID] ${this.memo}`;
-    }
-  }
-  const entry = book.entry(newMemo, null, this._id);
+
+  const entry = book.entry(handleVoidMemo(reason, this.memo), null, this._id);
 
   function processMetaField(
     key: string,
