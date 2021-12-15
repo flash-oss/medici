@@ -5,7 +5,7 @@ import { parseDateField } from "./parseDateField";
 
 export interface IParseQuery {
   account?: string | string[];
-  _journal?: Types.ObjectId;
+  _journal?: Types.ObjectId | string;
   start_date?: Date | string | number;
   end_date?: Date | string | number;
   perPage?: number;
@@ -27,15 +27,24 @@ export function parseQuery(
   query: IParseQuery,
   book: Pick<Book, "name">
 ): FilterQuery<ITransaction> {
-  let account, i, il;
+  let i, il;
+
+  const {
+    page,
+    perPage,
+    approved,
+    account,
+    start_date,
+    end_date,
+    ...extra
+  } = query;
 
   const filterQuery: FilterQuery<ITransaction> = {
     book: book.name,
-    approved: query.approved !== false,
+    approved: approved !== false,
   };
 
-  if (query.account) {
-    account = query.account;
+  if (account) {
     let accounts;
     if (Array.isArray(account)) {
       const $or = [];
@@ -54,34 +63,26 @@ export function parseQuery(
         filterQuery[`account_path.${i}`] = accounts[i];
       }
     }
-    delete query.account;
   }
 
-  if (query._journal) {
-    filterQuery["_journal"] = query._journal;
-    delete query._journal;
-  }
-
-  if (query.start_date || query.end_date) {
+  if (start_date || end_date) {
     filterQuery["datetime"] = {};
 
-    if (query.start_date) {
-      filterQuery.datetime.$gte = parseDateField(query.start_date);
-      delete query.start_date;
+    if (start_date) {
+      filterQuery.datetime.$gte = parseDateField(start_date);
     }
-    if (query.end_date) {
-      filterQuery.datetime.$lte = parseDateField(query.end_date);
-      delete query.end_date;
+    if (end_date) {
+      filterQuery.datetime.$lte = parseDateField(end_date);
     }
   }
 
-  const keys = Object.keys(query);
+  const keys = Object.keys(extra);
 
   for (i = 0, il = keys.length; i < il; i++) {
     filterQuery[isValidTransactionKey(keys[i]) ? keys[i] : `meta.${keys[i]}`] =
-      referenceRE.test(keys[i]) && isValidObjectId(query[keys[i]])
-        ? new Types.ObjectId(query[keys[i]])
-        : query[keys[i]];
+      referenceRE.test(keys[i]) && isValidObjectId(extra[keys[i]])
+        ? new Types.ObjectId(extra[keys[i]])
+        : extra[keys[i]];
   }
 
   return filterQuery;
