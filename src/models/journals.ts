@@ -127,10 +127,7 @@ journalSchema.pre("save", async function (next) {
     .find({ _journal: this._id, approved: false }, undefined, { session })
     .exec()) as (Document & ITransaction)[];
 
-  // We do an .allSettled instead of .all, so that the potential transaction
-  // does not get flaky.
-  // @see https://github.com/Automattic/mongoose/issues/8713#issuecomment-674885815
-  await Promise.allSettled(
+  await Promise.all(
     transactions.map((tx) => {
       tx.approved = true;
       return tx.save({ session });

@@ -4,7 +4,7 @@ import { assert } from "chai";
 import * as mongoose from "mongoose";
 
 describe("Transactions", function () {
-  it("should persist data if while using a session", async function () {
+  it("should persist data while using a session", async function () {
     const book = new Book("LSD");
 
     await mongoose.connection.transaction(async (session) => {
