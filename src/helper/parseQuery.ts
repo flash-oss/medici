@@ -29,15 +29,8 @@ export function parseQuery(
 ): FilterQuery<ITransaction> {
   let i, il;
 
-  const {
-    page,
-    perPage,
-    approved,
-    account,
-    start_date,
-    end_date,
-    ...extra
-  } = query;
+  const { page, perPage, approved, account, start_date, end_date, ...extra } =
+    query;
 
   const filterQuery: FilterQuery<ITransaction> = {
     book: book.name,

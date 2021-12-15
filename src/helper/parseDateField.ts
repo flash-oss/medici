@@ -1,6 +1,5 @@
 import { numberRE } from "./parseQuery";
 
-
 export function parseDateField(value: any): Date {
   if (value instanceof Date) {
     return value;

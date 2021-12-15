@@ -1,18 +1,18 @@
+/* eslint sonarjs/no-duplicate-string: off */
 import { expect } from "chai";
 import { Types } from "mongoose";
 import { parseQuery } from "../src/helper/parseQuery";
 
 describe("parseQuery", () => {
   it("should handle empty object and book name correctly", () => {
-
-    const result = parseQuery({}, {name: "MyBook"});
+    const result = parseQuery({}, { name: "MyBook" });
     expect(Object.keys(result)).to.have.lengthOf(2);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
   });
 
   it("should handle approved false correctly", () => {
-    const result = parseQuery({approved: false}, {name: "MyBook"});
+    const result = parseQuery({ approved: false }, { name: "MyBook" });
     expect(Object.keys(result)).to.have.lengthOf(2);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(false);
@@ -20,7 +20,7 @@ describe("parseQuery", () => {
 
   it("should handle _journal string correctly", () => {
     const _journal = new Types.ObjectId().toString();
-    const result = parseQuery({_journal}, {name: "MyBook"});
+    const result = parseQuery({ _journal }, { name: "MyBook" });
     expect(Object.keys(result)).to.have.lengthOf(3);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
@@ -30,7 +30,7 @@ describe("parseQuery", () => {
 
   it("should handle _journal ObjectId correctly", () => {
     const _journal = new Types.ObjectId();
-    const result = parseQuery({_journal}, {name: "MyBook"});
+    const result = parseQuery({ _journal }, { name: "MyBook" });
     expect(Object.keys(result)).to.have.lengthOf(3);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
@@ -40,19 +40,19 @@ describe("parseQuery", () => {
 
   it("should handle start_date correctly", () => {
     const start_date = new Date(666);
-    const result = parseQuery({start_date}, {name: "MyBook"});
+    const result = parseQuery({ start_date }, { name: "MyBook" });
     expect(Object.keys(result)).to.have.lengthOf(3);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
-    expect(result.datetime).to.have.property("$gte")
+    expect(result.datetime).to.have.property("$gte");
     expect(result.datetime["$gte"]).to.be.instanceOf(Date);
     expect(result.datetime["$gte"].getTime()).to.be.equal(666);
-    expect(result.datetime).to.not.have.property("$lte")
+    expect(result.datetime).to.not.have.property("$lte");
   });
 
   it("should handle end_date correctly", () => {
     const end_date = new Date(999);
-    const result = parseQuery({end_date}, {name: "MyBook"});
+    const result = parseQuery({ end_date }, { name: "MyBook" });
     expect(Object.keys(result)).to.have.lengthOf(3);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
@@ -63,12 +63,12 @@ describe("parseQuery", () => {
   it("should handle start_date and end_date correctly", () => {
     const start_date = new Date(666);
     const end_date = new Date(999);
-    const result = parseQuery({start_date, end_date}, {name: "MyBook"});
+    const result = parseQuery({ start_date, end_date }, { name: "MyBook" });
     expect(Object.keys(result)).to.have.lengthOf(3);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
-    expect(result.datetime).to.have.property("$lte")
-    expect(result.datetime).to.have.property("$gte")
+    expect(result.datetime).to.have.property("$lte");
+    expect(result.datetime).to.have.property("$gte");
     expect(result.datetime["$gte"]).to.be.instanceOf(Date);
     expect(result.datetime["$gte"].getTime()).to.be.equal(666);
     expect(result.datetime["$lte"]).to.be.instanceOf(Date);
@@ -77,7 +77,7 @@ describe("parseQuery", () => {
 
   it("should handle meta correctly", () => {
     const clientId = "Jack Black";
-    const result = parseQuery({ clientId }, {name: "MyBook"});
+    const result = parseQuery({ clientId }, { name: "MyBook" });
     expect(Object.keys(result)).to.have.lengthOf(3);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
@@ -87,16 +87,16 @@ describe("parseQuery", () => {
 
   it("should handle account with one path part correctly", () => {
     const account = "Assets";
-    const result = parseQuery({ account }, {name: "MyBook"});
+    const result = parseQuery({ account }, { name: "MyBook" });
     expect(Object.keys(result)).to.have.lengthOf(3);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
     expect(result["account_path.0"]).to.be.equal("Assets");
   });
-  
+
   it("should handle account with two path parts correctly", () => {
     const account = "Assets:Gold";
-    const result = parseQuery({ account }, {name: "MyBook"});
+    const result = parseQuery({ account }, { name: "MyBook" });
     expect(Object.keys(result)).to.have.lengthOf(4);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
@@ -106,7 +106,7 @@ describe("parseQuery", () => {
 
   it("should handle account with three path parts correctly", () => {
     const account = "Assets:Gold:Swiss";
-    const result = parseQuery({ account }, {name: "MyBook"});
+    const result = parseQuery({ account }, { name: "MyBook" });
     expect(Object.keys(result)).to.have.lengthOf(5);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
@@ -117,7 +117,7 @@ describe("parseQuery", () => {
 
   it("should handle account array with one path part correctly", () => {
     const account = ["Assets", "Expenses"];
-    const result = parseQuery({ account }, {name: "MyBook"});
+    const result = parseQuery({ account }, { name: "MyBook" });
     expect(Object.keys(result)).to.have.lengthOf(3);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
@@ -128,7 +128,7 @@ describe("parseQuery", () => {
 
   it("should handle account array with two path parts correctly", () => {
     const account = ["Assets:Gold", "Expenses:Gold"];
-    const result = parseQuery({ account }, {name: "MyBook"});
+    const result = parseQuery({ account }, { name: "MyBook" });
     expect(Object.keys(result)).to.have.lengthOf(3);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
@@ -141,7 +141,7 @@ describe("parseQuery", () => {
 
   it("should handle account array with two path parts correctly", () => {
     const account = ["Assets:Gold:Swiss", "Expenses:Gold:Swiss"];
-    const result = parseQuery({ account }, {name: "MyBook"});
+    const result = parseQuery({ account }, { name: "MyBook" });
     expect(Object.keys(result)).to.have.lengthOf(3);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
