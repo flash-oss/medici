@@ -120,7 +120,7 @@ journalSchema.methods.void = async function (
       entry.credit(trans.account_path, trans.debit, meta);
     }
   }
-  this.save(options);
+  await this.save(options);
   return entry.commit(options);
 } as (
   this: TJournalDocument,
