@@ -1,4 +1,4 @@
-/* eslint sonarjs/no-duplicate-string: off */
+/* eslint sonarjs/no-duplicate-string: off, no-prototype-builtins: off*/
 import { Book } from "../src/Book";
 import * as assert from "assert";
 import { Document, Types } from "mongoose";
