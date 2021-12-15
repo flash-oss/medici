@@ -1,3 +1,4 @@
+/* eslint sonarjs/no-duplicate-string: off */
 import { expect } from "chai";
 import { handleVoidMemo } from "../src/helper/handleVoidMemo";
 
