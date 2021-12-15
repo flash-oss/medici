@@ -1,4 +1,4 @@
-import { Document, Types } from "mongoose";
+import { Types } from "mongoose";
 import { Book } from "./Book";
 import {
   isValidTransactionKey,
@@ -6,12 +6,12 @@ import {
   transactionModel,
 } from "./models/transactions";
 import { TransactionError } from "./TransactionError";
-import { IJournal, journalModel } from "./models/journals";
+import { journalModel, TJournalDocument } from "./models/journals";
 import type { IOptions } from "./IOptions";
 
 export class Entry {
   book: Book;
-  journal: Document & IJournal & { _original_journal?: Types.ObjectId };
+  journal: TJournalDocument & { _original_journal?: Types.ObjectId };
   transactions: ITransaction[] = [];
 
   static write(

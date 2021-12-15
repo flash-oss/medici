@@ -57,7 +57,7 @@ describe("Transactions", function () {
     assert.strictEqual(result.balance, 0);
   });
 
-  it("should pass a stresstest", async function () {
+  it("should pass a stresstest for erroring when commiting", async function () {
     const book = new Book("ACID");
 
     for (let i = 0, il = 100; i < il; i++) {
@@ -91,5 +91,34 @@ describe("Transactions", function () {
 
     const result = await book.balance({ account: "X:Y" });
     assert.strictEqual(result.balance, 0);
+  });
+
+  it("should pass a stresstest for erroring when voiding", async function () {
+    const book = new Book("ACID");
+
+    const journal = await book
+      .entry("depth test")
+      .credit("X:Y:AUD", 1)
+      .credit("X:Y:EUR", 1)
+      .credit("X:Y:USD", 1)
+      .credit("X:Y:INR", 1)
+      .credit("X:Y:CHF", 1)
+      .debit("CashAssets", 5)
+      .commit();
+
+    for (let i = 0, il = 100; i < il; i++) {
+      try {
+        await mongoose.connection.transaction(async (session) => {
+          await journal.void(book, null, { session });
+          throw new Error("Journaling failed.");
+        });
+      } catch (e) {
+        assert((e as Error).message === "Journaling failed.");
+      }
+      journal.voided = false;
+    }
+
+    // const result = await book.balance({ account: "X:Y" });
+    // assert.strictEqual(result.balance, 0);
   });
 });

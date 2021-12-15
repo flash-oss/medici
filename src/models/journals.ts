@@ -46,6 +46,10 @@ const journalSchema = new Schema<IJournal>(
   { id: false, versionKey: false, timestamps: false }
 );
 
+function processMetaField(key: string, val: any, meta: { [key: string]: any }) {
+  return isValidTransactionKey(key) ? undefined : (meta[key] = val);
+}
+
 journalSchema.methods.void = async function (
   book: Book,
   reason: string,
@@ -59,37 +63,29 @@ journalSchema.methods.void = async function (
   this.voided = true;
   this.void_reason = reason || "";
 
-  const voidTransaction = (trans_id: Types.ObjectId) => {
-    return transactionModel
-      .findByIdAndUpdate(
-        trans_id,
-        {
-          voided: true,
-          void_reason: this.void_reason,
-        },
-        { ...options }
-      )
-      .lean(true);
-  };
+  const transactions = await transactionModel.find(
+    {
+      _id: { $in: this._transactions as Types.ObjectId[] },
+    },
+    undefined,
+    options
+  );
 
-  const transactions = (await Promise.all(
-    (this._transactions as Types.ObjectId[]).map(voidTransaction)
-  )) as ITransaction[];
+  for (let i = 0, il = transactions.length; i < il; i++) {
+    transactions[i].voided = true;
+    transactions[i].void_reason = this.void_reason;
+  }
+
+  // We do an .allSettled instead of .all, so that the potential transaction
+  // does not get flaky.
+  // @see https://github.com/Automattic/mongoose/issues/8713#issuecomment-674885815
+  await Promise.allSettled(transactions.map((tx) => tx.save(options)));
 
   const entry = book.entry(handleVoidMemo(reason, this.memo), null, this._id);
 
-  function processMetaField(
-    key: string,
-    val: any,
-    meta: { [key: string]: any }
-  ) {
-    return isValidTransactionKey(key) ? undefined : (meta[key] = val);
-  }
-
   for (const trans of transactions) {
     const meta = {};
-
-    Object.keys(trans).forEach((key) => {
+    Object.keys(trans.toObject()).forEach((key) => {
       const val = trans[key as keyof ITransaction];
       if (key === "meta") {
         Object.keys(trans["meta"]).forEach((keyMeta) => {
@@ -146,10 +142,22 @@ export type TJournalDocument = Document &
     ) => Promise<any>;
   };
 
-export let journalModel: Model<IJournal>;
+type TJournalModel = Model<
+  IJournal,
+  any,
+  {
+    void: (
+      book: Book,
+      reason?: undefined | string,
+      options?: IOptions
+    ) => Promise<any>;
+  }
+>;
+
+export let journalModel: TJournalModel;
 
 try {
-  journalModel = model("Medici_Journal");
+  journalModel = model("Medici_Journal") as TJournalModel;
 } catch {
-  journalModel = model("Medici_Journal", journalSchema);
+  journalModel = model("Medici_Journal", journalSchema) as TJournalModel;
 }
