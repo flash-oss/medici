@@ -1,6 +1,7 @@
 import { FilterQuery, isValidObjectId, Types } from "mongoose";
 import { Book } from "../Book";
 import { isValidTransactionKey, ITransaction } from "../models/transactions";
+import { parseDateField } from "./parseDateField";
 
 export interface IParseQuery {
   account?: string | string[];
@@ -13,7 +14,7 @@ export interface IParseQuery {
   [key: string]: any;
 }
 
-const numberRE = /^\d+$/;
+export const numberRE = /^\d+$/;
 const referenceRE = /(?:^_|_id$)/;
 
 /**
@@ -84,16 +85,4 @@ export function parseQuery(
   }
 
   return filterQuery;
-}
-
-export function parseDateField(value: any): Date {
-  if (value instanceof Date) {
-    return value;
-  } else if (typeof value === "number") {
-    return new Date(value);
-  } else if (typeof value === "string" && numberRE.test(value)) {
-    return new Date(parseInt(value));
-  } else {
-    return new Date(value);
-  }
 }

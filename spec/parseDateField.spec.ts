@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { parseDateField } from "../src/helper/parseQuery";
+import { parseDateField } from "../src/helper/parseDateField";
 
 describe("parseDateField", () => {
   it("should passthrough Date-Objects", () => {
