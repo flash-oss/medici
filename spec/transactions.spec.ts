@@ -58,6 +58,7 @@ describe("Transactions", function () {
   });
 
   it("should pass a stresstest for erroring when commiting", async function () {
+    this.timeout(10000);
     const book = new Book("ACID");
 
     for (let i = 0, il = 100; i < il; i++) {
@@ -94,6 +95,7 @@ describe("Transactions", function () {
   });
 
   it("should pass a stresstest for erroring when voiding", async function () {
+    this.timeout(10000);
     const book = new Book("ACID");
 
     const journal = await book
@@ -118,7 +120,7 @@ describe("Transactions", function () {
       journal.voided = false;
     }
 
-    // const result = await book.balance({ account: "X:Y" });
-    // assert.strictEqual(result.balance, 0);
+    const result = await book.balance({ account: "X:Y" });
+    assert.strictEqual(result.balance, 5);
   });
 });
