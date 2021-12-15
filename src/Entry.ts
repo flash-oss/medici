@@ -152,12 +152,14 @@ export class Entry {
     }
 
     try {
-      // We dont use Promise.all, as this could result in an instability
-      // when using Mongo Sessions.
-      for (let i = 0, il = this.transactions.length; i < il; i++) {
-        await new transactionModel(this.transactions[i]).save(options);
-      }
+      // We do an .allSettled instead of .all, so that the potential transaction
+      // does not get flaky.
+      // @see https://github.com/Automattic/mongoose/issues/8713#issuecomment-674885815
+      await Promise.allSettled(
+        this.transactions.map((tx) => new transactionModel(tx).save(options))
+      );
       await this.journal.save(options);
+
       return this.journal;
     } catch (err) {
       if (!options.session) {
