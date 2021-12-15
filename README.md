@@ -302,6 +302,7 @@ For `medici_transactions` collection with 50000 documents:
 
   - Node.js 12 is the lowest supported version. Although, 10 should still work fine, when using mongoose v5.
   - Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
+  - MongoDB 4 and above is supported. This means not, that you cant use mongo 3, but multi-document transactions are supported from MongoDB version 4 and above. 
   - You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
   - The project was rewritten with TypeScript. Types are provided within the package now.
   - Add support for MongoDB sessions (aka ACID transactions). See `IOptions` type.
