@@ -2,16 +2,11 @@ import { Book } from "../src/Book";
 import { assert, expect } from "chai";
 
 describe("accounts", function () {
-
-  it('should error when trying to use an account with more than three parts', () => {
+  it("should error when trying to use an account with more than three parts", () => {
     expect(() => {
-
       const book = new Book("MyBook");
-      book
-        .entry("depth test")
-        .credit("X:Y:AUD:BTC", 1)
-  
-    }).to.throw("Account path is too deep (maximum 3)")
+      book.entry("depth test").credit("X:Y:AUD:BTC", 1);
+    }).to.throw("Account path is too deep (maximum 3)");
   });
 
   it("should allow more than 4 subaccounts of third level", async function () {
