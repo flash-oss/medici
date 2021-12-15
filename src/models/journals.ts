@@ -49,7 +49,7 @@ const journalSchema = new Schema<IJournal>(
 journalSchema.methods.void = async function (
   book: Book,
   reason: string,
-  options = {} as IOptions
+  options: IOptions
 ) {
   if (this.voided === true) {
     throw new Error("Journal already voided");
