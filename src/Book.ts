@@ -92,10 +92,12 @@ export class Book {
   async ledger(
     query: IParseQuery,
     populate = null as string[] | null,
-    options = {} as IOptions
+    options = {} as IOptions & { lean?: boolean }
   ): Promise<{ results: ITransaction[]; total: number }> {
     let skip;
     let limit = 0;
+
+    const { lean = false } = options;
 
     // Pagination
     if (query.perPage) {
@@ -125,7 +127,8 @@ export class Book {
         q.populate(populate[i]);
       }
     }
-    const results = await q.exec();
+    const results = await q.lean(lean).exec();
+
     return {
       results,
       total: (await count) || results.length,

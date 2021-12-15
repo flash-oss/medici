@@ -3,6 +3,7 @@ import { Book } from "../src/Book";
 import * as assert from "assert";
 import { Document, Types } from "mongoose";
 import { IJournal } from "../src/models/journals";
+import { TransformStreamDefaultController } from "node:stream/web";
 
 describe("general", function () {
   let sharedJournal:
@@ -97,6 +98,53 @@ describe("general", function () {
     const res = await book.ledger({
       account: "Assets",
     });
+    assert.strictEqual(res.results.length, 2);
+  });
+
+  it("should return full ledger with hydrated objects", async () => {
+    const book = new Book("MyBook");
+    const res = await book.ledger({
+      account: "Assets",
+    });
+    assert.strictEqual(res.results.length, 2);
+    assert.ok(res.results[0].hasOwnProperty("_doc") === true);
+    assert.ok(res.results[1].hasOwnProperty("_doc") === true);
+  });
+
+  it("should return full ledger with lean objects", async () => {
+    const book = new Book("MyBook");
+    const res = await book.ledger(
+      {
+        account: "Assets",
+      },
+      null,
+      { lean: true }
+    );
+    assert.strictEqual(res.results.length, 2);
+    assert.ok(res.results[0].hasOwnProperty("_doc") === false);
+    assert.ok(res.results[1].hasOwnProperty("_doc") === false);
+  });
+
+  it("should return full ledger with just ObjectId of the _journal attribute", async () => {
+    const book = new Book("MyBook");
+    const res = await book.ledger({
+      account: "Assets",
+    });
+    assert.strictEqual(res.results.length, 2);
+    assert.ok(res.results[0]._journal instanceof Types.ObjectId);
+    assert.ok(res.results[1]._journal instanceof Types.ObjectId);
+  });
+
+  it("should return full ledger with populated _journal", async () => {
+    const book = new Book("MyBook");
+    const res = await book.ledger(
+      {
+        account: "Assets",
+      },
+      ["_journal"]
+    );
+    assert.ok(res.results[0]._journal._id instanceof Types.ObjectId);
+    assert.ok(res.results[1]._journal._id instanceof Types.ObjectId);
     assert.strictEqual(res.results.length, 2);
   });
 

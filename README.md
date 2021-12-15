@@ -81,7 +81,7 @@ const { results, total } = await myBook.ledger({
   account: "Income",
   start_date: startDate,
   end_date: endDate,
-});
+}, null, { lean: true });
 ```
 
 ## Voiding Journal Entries
@@ -305,6 +305,7 @@ For `medici_transactions` collection with 50000 documents:
   - You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
   - The project was rewritten with TypeScript. Types are provided within the package now.
   - Add support for MongoDB sessions (aka ACID transactions). See `IOptions` type.
+  - `.ledger()` can return lean Objects for better performance. To retrieve lean Objects, set lean to true in the third parameter of ledger. 
 
 - **v4.0.0**
 
