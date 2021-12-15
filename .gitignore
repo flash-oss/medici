@@ -1,7 +1,7 @@
-node_modules
-build
-types
-coverage
-.nyc_output
+/node_modules
+/build
+/types
+/coverage
+/.nyc_output
 .npmrc
 .idea

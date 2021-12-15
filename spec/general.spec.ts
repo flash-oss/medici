@@ -100,17 +100,31 @@ describe("general", function () {
     assert.strictEqual(res.results.length, 2);
   });
 
-  it("should return full ledger with hydrated objects", async () => {
+  it("should return full ledger with hydrated objects when lean is not set", async () => {
     const book = new Book("MyBook");
     const res = await book.ledger({
       account: "Assets",
     });
     assert.strictEqual(res.results.length, 2);
+    assert.ok(res.results[0].hasOwnProperty("_doc") === false);
+    assert.ok(res.results[1].hasOwnProperty("_doc") === false);
+  });
+
+  it("should return full ledger with hydrated objects when lean is set to false", async () => {
+    const book = new Book("MyBook");
+    const res = await book.ledger(
+      {
+        account: "Assets",
+      },
+      undefined,
+      { lean: false }
+    );
+    assert.strictEqual(res.results.length, 2);
     assert.ok(res.results[0].hasOwnProperty("_doc") === true);
     assert.ok(res.results[1].hasOwnProperty("_doc") === true);
   });
 
-  it("should return full ledger with lean objects", async () => {
+  it("should return full ledger with lean objects when lean is set to true", async () => {
     const book = new Book("MyBook");
     const res = await book.ledger(
       {

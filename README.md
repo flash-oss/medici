@@ -306,7 +306,7 @@ For `medici_transactions` collection with 50000 documents:
   - You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
   - The project was rewritten with TypeScript. Types are provided within the package now.
   - Add support for MongoDB sessions (aka ACID transactions). See `IOptions` type.
-  - `.ledger()` can return lean Objects for better performance. To retrieve lean Objects, set lean to true in the third parameter of ledger. 
+  - `.ledger()` returns lean Transaction-Objects for better performance. To retrieve hydrated Transaction-Objects, set lean to false in the third parameter of `.ledger()`. It is recommended to not hydrate the transactions, as it implies that the transactions could be manipulated and the data integrity of Medici could be risked. 
 
 - **v4.0.0**
 

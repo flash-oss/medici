@@ -1,4 +1,5 @@
 import Book from "./Book";
+import type { Entry } from "./Entry";
 
-export { Book };
+export { Book, Entry };
 export default Book;

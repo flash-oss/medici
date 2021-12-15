@@ -3,7 +3,7 @@ import { IParseQuery, parseQuery } from "./helper/parseQuery";
 import { journalModel, TJournalDocument } from "./models/journals";
 import { ITransaction, transactionModel } from "./models/transactions";
 import type { IOptions } from "./IOptions";
-import type { PipelineStage, Types } from "mongoose";
+import type { Document, PipelineStage, Types } from "mongoose";
 
 export class Book {
   name: string;
@@ -91,13 +91,25 @@ export class Book {
 
   async ledger(
     query: IParseQuery,
+    populate?: string[] | null,
+    options?: IOptions & { lean?: true }
+  ): Promise<{ results: ITransaction[]; total: number }>;
+
+  async ledger(
+    query: IParseQuery,
+    populate?: string[] | null,
+    options?: IOptions & { lean?: false }
+  ): Promise<{ results: (Document & ITransaction)[]; total: number }>;
+
+  async ledger(
+    query: IParseQuery,
     populate = null as string[] | null,
     options = {} as IOptions & { lean?: boolean }
   ): Promise<{ results: ITransaction[]; total: number }> {
     let skip;
     let limit = 0;
 
-    const { lean = false } = options;
+    const { lean = true } = options;
 
     // Pagination
     if (query.perPage) {
