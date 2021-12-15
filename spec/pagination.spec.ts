@@ -15,6 +15,40 @@ describe("pagination", () => {
     assert.strictEqual(response.results[1].memo, "Test Entry 2");
   });
 
+  it("should give you a paginated ledger when requested and start by page 1 if page is not defined", async () => {
+    const book = new Book("MyBook");
+    const response = await book.ledger({
+      account: ["Assets", "Income"],
+      perPage: 2,
+    });
+    assert.strictEqual(response.results.length, 2);
+    assert.strictEqual(response.total, 6);
+    assert.strictEqual(response.results[0].memo, "Messed up");
+    assert.strictEqual(response.results[1].memo, "Messed up");
+  });
+
+  it("should give you a paginated ledger when requested and start by page 1 if page is defined", async () => {
+    const book = new Book("MyBook");
+    const response = await book.ledger({
+      account: ["Assets", "Income"],
+      perPage: 2,
+      page: 1,
+    });
+    assert.strictEqual(response.results.length, 2);
+    assert.strictEqual(response.total, 6);
+    assert.strictEqual(response.results[0].memo, "Messed up");
+    assert.strictEqual(response.results[1].memo, "Messed up");
+  });
+
+  it("should give you the balance by page and start by page 1 if page is not defined", async () => {
+    const book = new Book("MyBook");
+    const data = await book.balance({
+      account: "Assets",
+      perPage: 1,
+    });
+    assert.strictEqual(data.balance, -700);
+  });
+
   it("should give you the balance by page", async () => {
     const book = new Book("MyBook");
     const data = await book.balance({
