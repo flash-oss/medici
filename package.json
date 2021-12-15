@@ -43,7 +43,7 @@
     "url": "https://github.com/flash-oss/medici/issues"
   },
   "dependencies": {
-    "mongoose": "^6.1.1"
+    "mongoose": "^6.1.2"
   },
   "homepage": "https://github.com/flash-oss/medici",
   "devDependencies": {
