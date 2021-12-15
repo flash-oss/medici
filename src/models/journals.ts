@@ -58,7 +58,7 @@ journalSchema.methods.void = async function (
   this.voided = true;
   this.void_reason = reason || "";
 
-  const voidTransaction = (trans_id: string) => {
+  const voidTransaction = (trans_id: Types.ObjectId) => {
     return transactionModel
       .findByIdAndUpdate(
         trans_id,
@@ -66,24 +66,24 @@ journalSchema.methods.void = async function (
           voided: true,
           void_reason: this.void_reason,
         },
-        { ...options, new: true }
+        { ...options }
       )
       .lean(true);
   };
 
   const transactions = (await Promise.all(
-    this._transactions.map(voidTransaction)
-  )) as (Document & ITransaction)[];
+    (this._transactions as Types.ObjectId[]).map(voidTransaction)
+  )) as ITransaction[];
   let newMemo;
   if (this.void_reason) {
     newMemo = this.void_reason;
   } else {
     // It's either VOID, UNVOID, or REVOID
-    if (this.memo.substr(0, 6) === "[VOID]") {
+    if (this.memo.substring(0, 6) === "[VOID]") {
       newMemo = this.memo.replace("[VOID]", "[UNVOID]");
-    } else if (this.memo.substr(0, 8) === "[UNVOID]") {
+    } else if (this.memo.substring(0, 8) === "[UNVOID]") {
       newMemo = this.memo.replace("[UNVOID]", "[REVOID]");
-    } else if (this.memo.substr(0, 8) === "[REVOID]") {
+    } else if (this.memo.substring(0, 8) === "[REVOID]") {
       newMemo = this.memo.replace("[REVOID]", "[UNVOID]");
     } else {
       newMemo = `[VOID] ${this.memo}`;
@@ -120,8 +120,14 @@ journalSchema.methods.void = async function (
       entry.credit(trans.account_path, trans.debit, meta);
     }
   }
+  this.save(options);
   return entry.commit(options);
-};
+} as (
+  this: TJournalDocument,
+  book: Book,
+  reason?: undefined | string,
+  options?: IOptions
+) => Promise<any>;
 
 journalSchema.pre("save", async function (next) {
   if (!(this.isModified("approved") && this.approved === true)) {
@@ -144,9 +150,14 @@ journalSchema.pre("save", async function (next) {
   return next();
 });
 
-export type TJournalDocument = Document<IJournal> & {
-  void: (book: Book, reason: string, options?: IOptions) => Promise<any>;
-};
+export type TJournalDocument = Document &
+  IJournal & {
+    void: (
+      book: Book,
+      reason?: undefined | string,
+      options?: IOptions
+    ) => Promise<any>;
+  };
 
 export let journalModel: Model<IJournal>;
 

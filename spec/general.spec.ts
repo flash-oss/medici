@@ -156,6 +156,11 @@ describe("general", function () {
     assert.strictEqual(data.balance, -500);
 
     await book.void(sharedJournal!._id, "Messed up");
+    const clientAccount = await book.balance({
+      account: "Assets",
+      clientId: "12345",
+    });
+    assert.strictEqual(clientAccount.balance, 0);
     const data1 = await book.balance({
       account: "Assets",
     });
@@ -166,6 +171,16 @@ describe("general", function () {
       clientId: "12345",
     });
     assert.strictEqual(data2.balance, 0);
+  });
+
+  it("should throw an error if journal was already voided", () => {
+    const book = new Book("MyBook");
+    book
+      .void(sharedJournal!._id, "Messed up")
+      .then(() => {
+        throw new Error("Should have thrown.");
+      })
+      .catch((err) => err.message === "Journal already voided");
   });
 
   it("should list all accounts", async () => {

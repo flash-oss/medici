@@ -135,7 +135,11 @@ export class Book {
     };
   }
 
-  async void(journal_id: string, reason: string, options = {} as IOptions) {
+  async void(
+    journal_id: string,
+    reason?: undefined | string,
+    options = {} as IOptions
+  ) {
     const journal: TJournalDocument = (await journalModel
       .findById(journal_id, undefined, options)
       .exec()) as unknown as TJournalDocument;
