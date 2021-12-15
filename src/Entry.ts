@@ -127,7 +127,7 @@ export class Entry {
     return this.transact(-1, account_path, amount, extra);
   }
 
-  async commit(options = {} as IOptions) {
+  async commit(options = {} as IOptions): Promise<Entry["journal"]> {
     let total = 0.0;
     for (let i = 0, il = this.transactions.length; i < il; i++) {
       // set approved on transactions to approved-value on journal
@@ -152,10 +152,13 @@ export class Entry {
     }
 
     try {
-      await Promise.all(
-        this.transactions.map((tx) => new transactionModel(tx).save(options))
-      );
-      return await this.journal.save(options);
+      // We dont use Promise.all, as this could result in an instability
+      // when using Mongo Sessions.
+      for (let i = 0, il = this.transactions.length; i < il; i++) {
+        await new transactionModel(this.transactions[i]).save(options);
+      }
+      await this.journal.save(options);
+      return this.journal;
     } catch (err) {
       if (!options.session) {
         transactionModel

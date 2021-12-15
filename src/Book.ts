@@ -153,7 +153,7 @@ export class Book {
       .findById(journal_id, undefined, options)
       .exec()) as unknown as TJournalDocument;
 
-    return await journal.void(this, reason, options);
+    return journal.void(this, reason, options);
   }
 
   async listAccounts(options = {} as IOptions): Promise<string[]> {
