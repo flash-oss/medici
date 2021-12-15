@@ -65,33 +65,11 @@ export function parseQuery(
     filterQuery["datetime"] = {};
 
     if (query.start_date) {
-      if (query.start_date instanceof Date) {
-        filterQuery.datetime.$gte = query.start_date;
-      } else if (typeof query.start_date === "number") {
-        filterQuery.datetime.$gte = new Date(query.start_date);
-      } else if (
-        typeof query.start_date === "string" &&
-        numberRE.test(query.start_date)
-      ) {
-        filterQuery.datetime.$gte = new Date(parseInt(query.start_date));
-      } else {
-        filterQuery.datetime.$gte = new Date(query.start_date);
-      }
+      filterQuery.datetime.$gte = parseDateField(query.start_date);
       delete query.start_date;
     }
     if (query.end_date) {
-      if (query.end_date instanceof Date) {
-        filterQuery.datetime.$lte = query.end_date;
-      } else if (typeof query.end_date === "number") {
-        filterQuery.datetime.$lte = new Date(query.end_date);
-      } else if (
-        typeof query.end_date === "string" &&
-        numberRE.test(query.end_date)
-      ) {
-        filterQuery.datetime.$lte = new Date(parseInt(query.end_date));
-      } else {
-        filterQuery.datetime.$lte = new Date(query.end_date);
-      }
+      filterQuery.datetime.$lte = parseDateField(query.end_date);
       delete query.end_date;
     }
   }
@@ -106,4 +84,19 @@ export function parseQuery(
   }
 
   return filterQuery;
+}
+
+export function parseDateField (value: any): Date {
+  if (value instanceof Date) {
+    return value;
+  } else if (typeof value === "number") {
+    return new Date(value);
+  } else if (
+    typeof value === "string" &&
+    numberRE.test(value)
+  ) {
+    return new Date(parseInt(value));
+  } else {
+    return new Date(value);
+  }
 }
