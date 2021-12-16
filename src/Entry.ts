@@ -111,18 +111,18 @@ export class Entry {
     return this;
   }
 
-  credit(
+  credit<T extends { [key: string]: any } = { [key: string]: any }>(
     account_path: string | string[],
     amount: number | string,
-    extra = null as (Partial<ITransaction> & { [key: string]: any }) | null
+    extra = null as (T & Partial<ITransaction>) | null
   ): Entry {
     return this.transact(1, account_path, amount, extra);
   }
 
-  debit(
+  debit<T extends { [key: string]: any } = { [key: string]: any }>(
     account_path: string | string[],
     amount: number | string,
-    extra = null as (Partial<ITransaction> & { [key: string]: any }) | null
+    extra = null as (T & Partial<ITransaction>) | null
   ): Entry {
     return this.transact(-1, account_path, amount, extra);
   }
