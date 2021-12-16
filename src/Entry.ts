@@ -17,8 +17,8 @@ export class Entry {
   static write(
     book: Book,
     memo: string,
-    date = null as Date | null,
-    original_journal = null as Types.ObjectId | null
+    date: Date | null,
+    original_journal: string | Types.ObjectId | null
   ): Entry {
     return new this(book, memo, date, original_journal);
   }
@@ -27,14 +27,14 @@ export class Entry {
     book: Book,
     memo: string,
     date: Date | null,
-    original_journal: Types.ObjectId | null
+    original_journal: string | Types.ObjectId | null
   ) {
     this.book = book;
     this.journal = new journalModel();
     this.journal.memo = memo;
 
     if (original_journal) {
-      this.journal._original_journal = original_journal;
+      this.journal._original_journal = typeof original_journal === "string" ? new Types.ObjectId(original_journal) : original_journal;
     }
 
     if (!date) {
@@ -55,7 +55,7 @@ export class Entry {
     type: -1 | 1,
     account_path: string | string[],
     amount: number | string,
-    extra = null as (Partial<ITransaction> & { [key: string]: any }) | null
+    extra: (Partial<ITransaction> & { [key: string]: any }) | null
   ): Entry {
     if (typeof account_path === "string") {
       account_path = account_path.split(":");

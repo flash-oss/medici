@@ -18,7 +18,7 @@ export class Book {
   entry(
     memo: string,
     date = null as Date | null,
-    original_journal = null as Types.ObjectId | null
+    original_journal = null as string | Types.ObjectId | null
   ) {
     return Entry.write(this, memo, date, original_journal);
   }

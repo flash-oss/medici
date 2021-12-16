@@ -21,6 +21,7 @@ expectType<Entry>(book.entry("a memo"));
 expectType<Entry>(book.entry("a memo", undefined, new Types.ObjectId()));
 expectType<Entry>(book.entry("a memo", new Date(), undefined));
 expectType<Entry>(book.entry("a memo", new Date(), new Types.ObjectId()));
+expectType<Entry>(book.entry("a memo", new Date(), "123456789012345678901234"));
 
 expectError(book.entry("a memo").credit());
 expectError(book.entry("a memo").credit("Assets"));
