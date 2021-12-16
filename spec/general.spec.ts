@@ -4,6 +4,8 @@ import * as assert from "assert";
 import { Document, Types } from "mongoose";
 import { IJournal } from "../src/models/journals";
 import { expect } from "chai";
+import { stub } from "sinon";
+import { transactionModel } from "../src/models/transactions";
 
 describe("general", function () {
   let sharedJournal:
@@ -286,5 +288,38 @@ describe("general", function () {
 
     const { balance } = await book.balance({ account: "A:B" });
     expect(balance).to.be.equal(0);
+  });
+
+  it("should delete transactions when not in transaction and saving the journal fails", async () => {
+    const book = new Book(
+      "MyBook-Entry-Test" + new Types.ObjectId().toString()
+    );
+
+    const deleteManyStub = stub(transactionModel, "deleteMany").throws(
+      new Error()
+    );
+    const consoleErrorStub = stub(console, "error");
+
+    try {
+      await book
+        .entry("extra")
+        .debit("A:B", 1, { debit: 2, clientId: "Mr. B" })
+        // @ts-expect-error
+        .credit("A:B", 1, { credit: 2, timestamp: "asdasd" })
+        .commit();
+    } catch (e) {
+      expect(e.message).to.match(
+        /Failure to save journal: Medici_Transaction validation failed/
+      );
+    }
+
+    expect(consoleErrorStub.firstCall.args[0]).match(
+      /Can't delete txs for journal [a-f0-9]{24}. Medici ledger consistency got harmed./
+    );
+    deleteManyStub.restore();
+    consoleErrorStub.restore();
+
+    const { balance } = await book.balance({ account: "A:B" });
+    expect(balance).to.be.equal(-2);
   });
 });

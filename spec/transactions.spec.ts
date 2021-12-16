@@ -1,9 +1,35 @@
 /* eslint sonarjs/no-duplicate-string: off, sonarjs/no-identical-functions: off */
 import { Book } from "../src/Book";
-import { assert } from "chai";
+import { assert, expect } from "chai";
 import * as mongoose from "mongoose";
+import { fail } from "assert";
 
 describe("Transactions", function () {
+  it("should not persist data when saving journal fails while using a session", async function () {
+    const book = new Book("LSD");
+
+    try {
+      await mongoose.connection.transaction(async (session) => {
+        await book
+          .entry("depth test")
+          .credit("X:Y:AUD", 1)
+          .credit("X:Y:EUR", 1)
+          .credit("X:Y:USD", 1)
+          .credit("X:Y:INR", 1)
+          // @ts-expect-error
+          .credit("X:Y:CHF", 1, { timestamp: "invalid " })
+          .debit("CashAssets", 5)
+          .commit({ session });
+      });
+      fail();
+    } catch (e) {
+      expect(e.message).match(/Medici_Transaction validation failed/);
+    }
+
+    const result = await book.balance({ account: "X:Y" });
+    assert.strictEqual(result.balance, 0);
+  });
+
   it("should persist data while using a session", async function () {
     const book = new Book("LSD");
 
