@@ -58,6 +58,7 @@ describe("Transactions", function () {
   });
 
   it("should pass a stresstest when persisting data while using a session", async function () {
+    this.timeout(10000);
     for (let i = 0, il = 100; i < il; i++) {
       const book = new Book("LSD" + Date.now());
 
