@@ -1,4 +1,12 @@
-import { Schema, Document, Model, model, Types } from "mongoose";
+import {
+  connection,
+  Schema,
+  Document,
+  Model,
+  model,
+  Types,
+  PreSaveMiddlewareFunction,
+} from "mongoose";
 import {
   isValidTransactionKey,
   ITransaction,
@@ -50,7 +58,7 @@ function processMetaField(key: string, val: any, meta: { [key: string]: any }) {
   return isValidTransactionKey(key) ? undefined : (meta[key] = val);
 }
 
-journalSchema.methods.void = async function (
+const voidJournal = async function (
   book: Book,
   reason: string,
   options: IOptions
@@ -111,7 +119,10 @@ journalSchema.methods.void = async function (
   options?: IOptions
 ) => Promise<any>;
 
-journalSchema.pre("save", async function (next) {
+const preSave: PreSaveMiddlewareFunction<IJournal & Document> = async function (
+  this,
+  next
+) {
   if (!(this.isModified("approved") && this.approved === true)) {
     return next();
   }
@@ -130,10 +141,10 @@ journalSchema.pre("save", async function (next) {
   );
 
   return next();
-});
+};
 
-export type TJournalDocument = Document &
-  IJournal & {
+export type TJournalDocument<T extends IJournal = IJournal> = Document &
+  T & {
     void: (
       book: Book,
       reason?: undefined | string,
@@ -141,8 +152,8 @@ export type TJournalDocument = Document &
     ) => Promise<any>;
   };
 
-type TJournalModel = Model<
-  IJournal,
+type TJournalModel<T extends IJournal = IJournal> = Model<
+  T,
   any,
   {
     void: (
@@ -155,8 +166,14 @@ type TJournalModel = Model<
 
 export let journalModel: TJournalModel;
 
-try {
-  journalModel = model("Medici_Journal") as TJournalModel;
-} catch {
-  journalModel = model("Medici_Journal", journalSchema) as TJournalModel;
+export function setJournalSchema(schema: Schema, collection?: string) {
+  delete connection.models["Medici_Journal"];
+
+  schema.methods.void = voidJournal;
+  journalSchema.pre("save", preSave);
+
+  journalModel = model("Medici_Journal", schema, collection) as TJournalModel;
 }
+
+typeof connection.models["Medici_Journal"] === "undefined" &&
+  setJournalSchema(journalSchema);

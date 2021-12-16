@@ -6,20 +6,23 @@ import {
   transactionModel,
 } from "./models/transactions";
 import { TransactionError } from "./TransactionError";
-import { journalModel, TJournalDocument } from "./models/journals";
+import { IJournal, journalModel, TJournalDocument } from "./models/journals";
 import type { IOptions } from "./IOptions";
 
-export class Entry {
+export class Entry<
+  U extends ITransaction = ITransaction,
+  J extends IJournal = IJournal
+> {
   book: Book;
-  journal: TJournalDocument & { _original_journal?: Types.ObjectId };
-  transactions: ITransaction[] = [];
+  journal: TJournalDocument<J> & { _original_journal?: Types.ObjectId };
+  transactions: U[] = [];
 
-  static write(
+  static write<U extends ITransaction, J extends IJournal>(
     book: Book,
     memo: string,
     date: Date | null,
     original_journal: string | Types.ObjectId | null
-  ): Entry {
+  ): Entry<U, J> {
     return new this(book, memo, date, original_journal);
   }
 
@@ -30,7 +33,9 @@ export class Entry {
     original_journal: string | Types.ObjectId | null
   ) {
     this.book = book;
-    this.journal = new journalModel();
+    this.journal = new journalModel() as TJournalDocument<J> & {
+      _original_journal?: Types.ObjectId;
+    };
     this.journal.memo = memo;
 
     if (original_journal) {
@@ -49,7 +54,7 @@ export class Entry {
     this.journal.approved = true;
   }
 
-  setApproved(value: boolean): Entry {
+  setApproved(value: boolean): Entry<U, J> {
     this.journal.approved = value;
     return this;
   }
@@ -58,8 +63,8 @@ export class Entry {
     type: -1 | 1,
     account_path: string | string[],
     amount: number | string,
-    extra: (Partial<ITransaction> & { [key: string]: any }) | null
-  ): Entry {
+    extra: (Partial<U> & { [key: string]: any }) | null
+  ): Entry<U, J> {
     if (typeof account_path === "string") {
       account_path = account_path.split(":");
     }
@@ -102,13 +107,13 @@ export class Entry {
     if (extra) {
       Object.keys(extra).forEach((key) => {
         if (isValidTransactionKey(key)) {
-          transaction[key as keyof ITransaction] = extra[key] as never;
+          transaction[key] = extra[key] as never;
         } else {
           transaction.meta[key] = extra[key];
         }
       });
     }
-    this.transactions.push(transaction);
+    this.transactions.push(transaction as U);
     (this.journal._transactions as Types.ObjectId[]).push(transaction._id);
 
     return this;
@@ -117,20 +122,20 @@ export class Entry {
   credit<T extends { [key: string]: any } = { [key: string]: any }>(
     account_path: string | string[],
     amount: number | string,
-    extra = null as (T & Partial<ITransaction>) | null
-  ): Entry {
+    extra = null as (T & Partial<U>) | null
+  ): Entry<U, J> {
     return this.transact(1, account_path, amount, extra);
   }
 
   debit<T extends { [key: string]: any } = { [key: string]: any }>(
     account_path: string | string[],
     amount: number | string,
-    extra = null as (T & Partial<ITransaction>) | null
-  ): Entry {
+    extra = null as (T & Partial<U>) | null
+  ): Entry<U, J> {
     return this.transact(-1, account_path, amount, extra);
   }
 
-  async commit(options = {} as IOptions): Promise<Entry["journal"]> {
+  async commit(options = {} as IOptions): Promise<Entry<U, J>["journal"]> {
     let total = 0.0;
     for (let i = 0, il = this.transactions.length; i < il; i++) {
       // set approved on transactions to approved-value on journal

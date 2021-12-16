@@ -1,4 +1,4 @@
-import { Schema, model, Model, Types } from "mongoose";
+import { connection, Schema, model, Model, Types } from "mongoose";
 import { IJournal } from "./journals";
 
 export interface ITransaction {
@@ -19,7 +19,7 @@ export interface ITransaction {
   _original_journal?: Types.ObjectId;
 }
 
-const transactionSchema = new Schema<ITransaction>(
+export const transactionSchema = new Schema<ITransaction>(
   {
     credit: Number,
     debit: Number,
@@ -48,38 +48,10 @@ const transactionSchema = new Schema<ITransaction>(
   },
   { id: false, versionKey: false, timestamps: false }
 );
-transactionSchema.index({ _journal: 1 });
-transactionSchema.index({
-  accounts: 1,
-  book: 1,
-  approved: 1,
-  datetime: -1,
-  timestamp: -1,
-});
-transactionSchema.index({ "account_path.0": 1, book: 1, approved: 1 });
-transactionSchema.index({
-  "account_path.0": 1,
-  "account_path.1": 1,
-  book: 1,
-  approved: 1,
-});
-transactionSchema.index({
-  "account_path.0": 1,
-  "account_path.1": 1,
-  "account_path.2": 1,
-  book: 1,
-  approved: 1,
-});
 
 export let transactionModel: Model<ITransaction>;
 
-try {
-  transactionModel = model("Medici_Transaction");
-} catch {
-  transactionModel = model("Medici_Transaction", transactionSchema);
-}
-
-const transactionSchemaKeys = Object.keys(transactionModel.schema.paths);
+let transactionSchemaKeys = Object.keys(transactionSchema.paths);
 
 export function isValidTransactionKey(
   value: unknown
@@ -88,3 +60,37 @@ export function isValidTransactionKey(
     typeof value === "string" && transactionSchemaKeys.indexOf(value) !== -1
   );
 }
+
+export function setTransactionSchema(schema: Schema, collection?: string) {
+  delete connection.models["Medici_Transaction"];
+
+  schema.index({ _journal: 1 });
+  schema.index({
+    accounts: 1,
+    book: 1,
+    approved: 1,
+    datetime: -1,
+    timestamp: -1,
+  });
+  schema.index({ "account_path.0": 1, book: 1, approved: 1 });
+  schema.index({
+    "account_path.1": 1,
+    "account_path.0": 1,
+    book: 1,
+    approved: 1,
+  });
+  schema.index({
+    "account_path.2": 1,
+    "account_path.1": 1,
+    "account_path.0": 1,
+    book: 1,
+    approved: 1,
+  });
+
+  transactionModel = model("Medici_Transaction", schema, collection);
+
+  transactionSchemaKeys = Object.keys(transactionModel.schema.paths);
+}
+
+typeof connection.models["Medici_Transaction"] === "undefined" &&
+  setTransactionSchema(transactionSchema);

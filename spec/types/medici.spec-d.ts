@@ -1,6 +1,11 @@
 /* eslint import/no-unresolved: off */
 import { expectError, expectType } from "tsd";
-import BookESM, { Book, Entry } from "../../types/index";
+import BookESM, {
+  Book,
+  Entry,
+  setJournalSchema,
+  setTransactionSchema,
+} from "../../types/index";
 import { Types, Document, ClientSession } from "mongoose";
 import { ITransaction } from "../../src/models/transactions";
 
@@ -13,6 +18,9 @@ expectError(new Book("MyBook", ""));
 expectError(new Book("MyBook", 7));
 expectError(new Book("MyBook", { precision: "8" }));
 expectError(new Book("MyBook", { precision: true }));
+
+expectError(setJournalSchema());
+expectError(setTransactionSchema());
 
 const book = new Book("MyBook");
 

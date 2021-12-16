@@ -172,9 +172,9 @@ Note that the `book`, `datetime`, `memo`, `voided`, and `void_reason` attributes
 
 ### Customizing the Transaction document schema
 
-If you need to have related documents for Transactions and want to use Mongoose's `populate` method, or if you need to add additional fields to the schema that the `meta` won't satisfy, you can define your own schema for `Medici_Transaction` and register it before you load the Medici module. If the `Medici_Transaction` schema is already registered with Mongoose, Medici will use the registered schema instead of the default schema. When you specify meta values when querying or writing transactions, the system will check the Transaction schema to see if those values correspond to actual top-level fields, and if so will set those instead of the corresponding `meta` field.
+If you need to have related documents for Transactions and want to use Mongoose's `populate` method, or if you need to add additional fields to the schema that the `meta` won't satisfy, you can define your own schema for `Medici_Transaction` and use the `setJournalSchema` and `setTransactionSchema` to use those schemas. When you specify meta values when querying or writing transactions, the system will check the Transaction schema to see if those values correspond to actual top-level fields, and if so will set those instead of the corresponding `meta` field.
 
-For example, if you want transactions to have a related "person" document, you can define the transaction schema like so:
+For example, if you want transactions to have a related "person" document, you can define the transaction schema like so and use setTransactionSchema to register it:
 
 ```js
 MyTransactionSchema = {
@@ -205,6 +205,8 @@ MyTransactionSchema = {
     default: true,
   },
 };
+
+setTransactionSchema(MyTransactionSchema);
 ```
 
 Then when you query transactions using the `book.ledger()` method, you can specify the related documents to populate as the second argument. E.g., `book.ledger({account:'Assets:Accounts Receivable'}, ['_person']).then()...`
@@ -319,6 +321,7 @@ For `medici_transactions` collection with 50000 documents:
   - The project was rewritten with TypeScript. Types are provided within the package now.
   - `.ledger()` returns lean Transaction-Objects for better performance. To retrieve hydrated Transaction-Objects, set lean to false in the third parameter of `.ledger()`. It is recommended to not hydrate the transactions, as it implies that the transactions could be manipulated and the data integrity of Medici could be risked. 
   - You can now specifify the `precision`. Book now accepts an optional second parameter, where you can set the `precision` used internally by Medici. Default value is 7 digits precision. Javascript has issues with floating points precision and can only handle 16 digits precision, like 0.1 + 0.2 results in 0.30000000000000004 and not 0.3. The default precision of 7 digits after decimal, results in the correct result of 0.1 + 0.2 = 0.3. The default value is taken from medici version 4.0.2. Be careful, if you use currency, which has more decimal points, e.g. Bitcoin has a precision of 8 digits after the comma. So for Bitcoin you should set the precision to 8. You can enforce an "only-Integer"-mode, by setting the precision to 0. But keep in mind that Javascript has a max safe integer limit of 9007199254740991.
+  - Added `setJournalSchema` and `setTransactionSchema` to use custom Schemas. It will ensure, that all relevant middlewares and methods are also added when using custom Schemas. 
 
 - **v4.0.0**
 

@@ -1,11 +1,14 @@
 import { Entry } from "./Entry";
 import { IParseQuery, parseQuery } from "./helper/parseQuery";
-import { journalModel, TJournalDocument } from "./models/journals";
+import { IJournal, journalModel, TJournalDocument } from "./models/journals";
 import { ITransaction, transactionModel } from "./models/transactions";
 import type { IOptions } from "./IOptions";
 import type { Document, PipelineStage, Types } from "mongoose";
 
-export class Book {
+export class Book<
+  U extends ITransaction = ITransaction,
+  J extends IJournal = IJournal
+> {
   name: string;
   precision: number;
 
@@ -19,8 +22,8 @@ export class Book {
     memo: string,
     date = null as Date | null,
     original_journal = null as string | Types.ObjectId | null
-  ) {
-    return Entry.write(this, memo, date, original_journal);
+  ): Entry<U, J> {
+    return Entry.write<U, J>(this, memo, date, original_journal);
   }
 
   async balance(
@@ -94,23 +97,23 @@ export class Book {
         };
   }
 
-  async ledger(
+  async ledger<T = U>(
     query: IParseQuery,
     populate?: string[] | null,
     options?: IOptions & { lean?: true }
-  ): Promise<{ results: ITransaction[]; total: number }>;
+  ): Promise<{ results: T[]; total: number }>;
 
-  async ledger(
+  async ledger<T = U>(
     query: IParseQuery,
     populate?: string[] | null,
     options?: IOptions & { lean?: false }
-  ): Promise<{ results: (Document & ITransaction)[]; total: number }>;
+  ): Promise<{ results: (Document & T)[]; total: number }>;
 
-  async ledger(
+  async ledger<T = U>(
     query: IParseQuery,
     populate = null as string[] | null,
     options = {} as IOptions & { lean?: boolean }
-  ): Promise<{ results: ITransaction[]; total: number }> {
+  ): Promise<{ results: T[]; total: number }> {
     let skip;
     let limit = 0;
 
@@ -141,7 +144,7 @@ export class Book {
         q.populate(populate[i]);
       }
     }
-    const results = await q.lean(lean).exec();
+    const results = (await q.lean(lean).exec()) as unknown as T[];
 
     return {
       results,
@@ -154,9 +157,9 @@ export class Book {
     reason?: undefined | string,
     options = {} as IOptions
   ) {
-    const journal: TJournalDocument = (await journalModel
+    const journal: TJournalDocument<J> = (await journalModel
       .findById(journal_id, undefined, options)
-      .exec()) as unknown as TJournalDocument;
+      .exec()) as unknown as TJournalDocument<J>;
 
     return journal.void(this, reason, options);
   }
