@@ -57,9 +57,11 @@ describe("general", function () {
       .debit("Assets:Receivable", "500", { clientId: "12345" })
       .credit("Income:Rent", "500")
       .commit();
-    
-      expect(journal._original_journal).to.be.instanceOf(Types.ObjectId);
-      expect(journal._original_journal.toString()).to.be.equal("012345678901234567890123");
+
+    expect(journal._original_journal).to.be.instanceOf(Types.ObjectId);
+    expect(journal._original_journal.toString()).to.be.equal(
+      "012345678901234567890123"
+    );
   });
 
   it("should deal with JavaScript rounding weirdness", async function () {
