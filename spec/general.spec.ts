@@ -33,6 +33,20 @@ describe("general", function () {
     assert.strictEqual(journal1._transactions.length, 2);
   });
 
+  it("should let you use strings for amounts", async function () {
+    const book = new Book("MyBookAmountStrings");
+    await book
+      .entry("Test Entry")
+      .debit("Assets:Receivable", "500", { clientId: "12345" })
+      .credit("Income:Rent", "500")
+      .commit();
+      let result = await book.balance({ account: "Assets" });
+      assert.strictEqual(result.balance, -500);
+      
+      result = await book.balance({ account: "Income" });
+      assert.strictEqual(result.balance, 500);
+  });
+
   it("should deal with JavaScript rounding weirdness", async function () {
     const book = new Book("MyBook");
     await book
