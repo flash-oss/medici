@@ -136,13 +136,7 @@ export class Entry {
       total += this.transactions[i].credit - this.transactions[i].debit;
     }
 
-    // Hello JavaScript. Your math rounding skill is mesmerising.
-    if (total > -1e-7 && total < 1e-7) total = 0;
-    // Medici is about money counting. It should probably use more precise floating point number structure.
-    // However, for now we use JS built-in Number. Hence Medici limitations are coming from Number.MAX_SAFE_INTEGER === 9007199254740991
-    // Here are the limitations:
-    // * You can safely add values up to 1 billion and down to 0.000001.
-    // * Anything more than 1 billion or less than 0.000001 is not guaranteed and might throw the below error.
+    total = parseFloat(total.toFixed(this.book.precision));
 
     if (total !== 0) {
       throw new TransactionError(

@@ -33,10 +33,7 @@ const transactionSchema = new Schema<ITransaction>(
       type: Schema.Types.ObjectId,
       ref: "Medici_Journal",
     },
-    timestamp: {
-      type: Date,
-      default: () => new Date(),
-    },
+    timestamp: Date,
     voided: {
       type: Boolean,
       default: false,

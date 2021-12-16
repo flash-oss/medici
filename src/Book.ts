@@ -7,9 +7,12 @@ import type { Document, PipelineStage, Types } from "mongoose";
 
 export class Book {
   name: string;
+  precision: number;
 
-  constructor(name: string) {
+  constructor(name: string, options = {} as { precision?: number }) {
     this.name = name;
+    this.precision =
+      typeof options.precision === "number" ? options.precision : 7;
   }
 
   entry(
@@ -84,7 +87,9 @@ export class Book {
           notes: 0,
         }
       : {
-          balance: result.credit - result.debit,
+          balance: parseFloat(
+            (result.credit - result.debit).toFixed(this.precision)
+          ),
           notes: result.count,
         };
   }

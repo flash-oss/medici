@@ -6,7 +6,13 @@ import { ITransaction } from "../../src/models/transactions";
 
 expectType<Book>(new BookESM("MyBook"));
 expectType<Book>(new Book("MyBook"));
+expectType<Book>(new Book("MyBook", {}));
+expectType<Book>(new Book("MyBook", { precision: 8 }));
 expectError(new Book());
+expectError(new Book("MyBook", ""));
+expectError(new Book("MyBook", 7));
+expectError(new Book("MyBook", { precision: "8" }));
+expectError(new Book("MyBook", { precision: true }));
 
 const book = new Book("MyBook");
 

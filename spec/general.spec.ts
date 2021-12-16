@@ -40,11 +40,11 @@ describe("general", function () {
       .debit("Assets:Receivable", "500", { clientId: "12345" })
       .credit("Income:Rent", "500")
       .commit();
-      let result = await book.balance({ account: "Assets" });
-      assert.strictEqual(result.balance, -500);
-      
-      result = await book.balance({ account: "Income" });
-      assert.strictEqual(result.balance, 500);
+    let result = await book.balance({ account: "Assets" });
+    assert.strictEqual(result.balance, -500);
+
+    result = await book.balance({ account: "Income" });
+    assert.strictEqual(result.balance, 500);
   });
 
   it("should deal with JavaScript rounding weirdness", async function () {

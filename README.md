@@ -29,6 +29,17 @@ Each transaction in Medici is for one account. Additionally, sub accounts can be
 
 In theory, the account names are entirely arbitrary, but you will likely want to use traditional accounting sections and subsections like assets, expenses, income, accounts receivable, accounts payable, etc. But, in the end, how you structure the accounts is entirely up to you.
 
+## Limitations:
+
+ * You can safely add values up to 9007199254740991 (Number.MAX_SAFE_INTEGER) and by default down to 0.000001 (precision: 7).
+ * Anything more than 9007199254740991 or less than 0.000001 (precision: 7) is not guaranteed to be handled properly.
+
+You can set the floating point precision as follows: 
+
+```javascript
+const myBook = new Book("MyBook", { precision: 8 });
+```
+
 ## Writing journal entries
 
 Writing a journal entry is very simple. First you need a `book` object:
@@ -307,6 +318,7 @@ For `medici_transactions` collection with 50000 documents:
   - The project was rewritten with TypeScript. Types are provided within the package now.
   - Add support for MongoDB sessions (aka ACID transactions). See `IOptions` type.
   - `.ledger()` returns lean Transaction-Objects for better performance. To retrieve hydrated Transaction-Objects, set lean to false in the third parameter of `.ledger()`. It is recommended to not hydrate the transactions, as it implies that the transactions could be manipulated and the data integrity of Medici could be risked. 
+  - Book now accepts an optional second parameter. In the options-parameter you can set the `precision` used internally by Medici. Default value is 7 digits after the comma. Javascript has issues with floating points, like 0.1 + 0.2 results in 0.30000000000000004 and not 0.3. A precision of 7 cuts off the after decimal points after the 7th place, resulting in the correct result 0.3. The value is taken from medici version 4.0.2. Be careful, if you use currency, which has more decimal points, e.g. Bitcoin has a precision of 8. So you are on the safe side, by setting the precision to 8. You can enforce an "only-Integer"-mode, which does not have any rounding errors, by setting the precision to 0. But keep in mind that max safe integer is 9007199254740991.
 
 - **v4.0.0**
 
