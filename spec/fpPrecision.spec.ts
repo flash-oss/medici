@@ -2,9 +2,9 @@
 import { expect } from "chai";
 import { Book } from "../src/Book";
 
-describe("fpCompensation", function () {
-  describe("fpCompensation - default: fp-Mode 7", () => {
-    const book = new Book("MyBook-fpCompensation-7");
+describe("fpPrecision", function () {
+  describe("fpPrecision - default: fp-Mode 7", () => {
+    const book = new Book("MyBook-fpPrecision-7");
 
     it("should store a journal without error", async function () {
       await book
@@ -35,8 +35,8 @@ describe("fpCompensation", function () {
     });
   });
 
-  describe("fpCompensation - fp-Mode 8", () => {
-    const book = new Book("MyBook-fpCompensation-8", { precision: 8 });
+  describe("fpPrecision - fp-Mode 8", () => {
+    const book = new Book("MyBook-fpPrecision-8", { precision: 8 });
 
     it("should store a journal without error", async function () {
       await book
@@ -79,7 +79,7 @@ describe("fpCompensation", function () {
     });
   });
 
-  describe("fpCompensation - integer-Mode", () => {
+  describe("fpPrecision - integer-Mode", () => {
     const book = new Book("MyBook-integer", { precision: 0 });
 
     it("should store a journal without error", async function () {
