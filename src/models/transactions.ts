@@ -74,15 +74,15 @@ export function setTransactionSchema(schema: Schema, collection?: string) {
   });
   schema.index({ "account_path.0": 1, book: 1, approved: 1 });
   schema.index({
-    "account_path.1": 1,
     "account_path.0": 1,
+    "account_path.1": 1,
     book: 1,
     approved: 1,
   });
   schema.index({
-    "account_path.2": 1,
-    "account_path.1": 1,
     "account_path.0": 1,
+    "account_path.1": 1,
+    "account_path.2": 1,
     book: 1,
     approved: 1,
   });
