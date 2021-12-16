@@ -1,13 +1,13 @@
 /* eslint sonarjs/no-duplicate-string: off, sonarjs/no-identical-functions: off */
 import { Book } from "../src/Book";
 import { assert } from "chai";
-import * as mongoose from "mongoose";
+import { Types, connection } from "mongoose";
 
 describe("Transactions", function () {
   it("should persist data while using a session", async function () {
-    const book = new Book("LSD");
+    const book = new Book("ACID" + new Types.ObjectId().toString());
 
-    await mongoose.connection.transaction(async (session) => {
+    await connection.transaction(async (session) => {
       await book
         .entry("depth test")
         .credit("X:Y:AUD", 1)
@@ -24,10 +24,10 @@ describe("Transactions", function () {
   });
 
   it("should not persist data if we throw an Error while using a session", async function () {
-    const book = new Book("ACID");
+    const book = new Book("ACID" + new Types.ObjectId().toString());
 
     try {
-      await mongoose.connection.transaction(async (session) => {
+      await connection.transaction(async (session) => {
         await book
           .entry("depth test")
           .credit("X:Y:AUD", 1)
@@ -59,11 +59,11 @@ describe("Transactions", function () {
 
   it("should pass a stresstest for erroring when commiting", async function () {
     this.timeout(10000);
-    const book = new Book("ACID");
+    const book = new Book("ACID" + new Types.ObjectId().toString());
 
     for (let i = 0, il = 100; i < il; i++) {
       try {
-        await mongoose.connection.transaction(async (session) => {
+        await connection.transaction(async (session) => {
           await book
             .entry("depth test")
             .credit("X:Y:AUD", 1)
@@ -96,7 +96,7 @@ describe("Transactions", function () {
 
   it("should pass a stresstest for erroring when voiding", async function () {
     this.timeout(10000);
-    const book = new Book("ACID");
+    const book = new Book("ACID" + new Types.ObjectId().toString());
 
     const journal = await book
       .entry("depth test")
@@ -110,7 +110,7 @@ describe("Transactions", function () {
 
     for (let i = 0, il = 100; i < il; i++) {
       try {
-        await mongoose.connection.transaction(async (session) => {
+        await connection.transaction(async (session) => {
           await journal.void(book, null, { session });
           throw new Error("Journaling failed.");
         });

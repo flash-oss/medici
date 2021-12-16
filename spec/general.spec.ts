@@ -236,7 +236,7 @@ describe("general", function () {
   });
 
   it("should handle extra data when creating an Entry", async () => {
-    const book = new Book("MyBook-Entry-Test");
+    const book = new Book("MyBook-Entry-Test" + new Types.ObjectId().toString());
 
     await book
       .entry("extra")
