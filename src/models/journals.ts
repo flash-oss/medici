@@ -67,13 +67,15 @@ const voidJournal = async function (
     throw new Error("Journal already voided");
   }
 
+  reason = handleVoidMemo(reason, this.memo);
+
   // Set this to void with reason and also set all associated transactions
   this.voided = true;
-  this.void_reason = reason || "";
+  this.void_reason = reason;
 
   const transactions = await transactionModel.find(
     {
-      _id: { $in: this._transactions as Types.ObjectId[] },
+      _journal: this._id,
     },
     undefined,
     options
@@ -88,7 +90,7 @@ const voidJournal = async function (
     await new transactionModel(transactions[i]).save(options);
   }
 
-  const entry = book.entry(handleVoidMemo(reason, this.memo), null, this._id);
+  const entry = book.entry(reason, null, this._id);
 
   for (const trans of transactions) {
     const meta = {};
