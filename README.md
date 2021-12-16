@@ -311,12 +311,12 @@ For `medici_transactions` collection with 50000 documents:
 
 - **v5.0.0**
 
+  - Add support for MongoDB sessions (aka ACID transactions). See `IOptions` type.
   - Node.js 12 is the lowest supported version. Although, 10 should still work fine, when using mongoose v5.
   - Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
-  - MongoDB 4 and above is supported. This means not, that you cant use mongo 3, but multi-document transactions are supported from MongoDB version 4 and above. 
+  - MongoDB 4 and above is supported. You can still use MongoDB 3, but ACID-sessions could have issues.
   - You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
   - The project was rewritten with TypeScript. Types are provided within the package now.
-  - Add support for MongoDB sessions (aka ACID transactions). See `IOptions` type.
   - `.ledger()` returns lean Transaction-Objects for better performance. To retrieve hydrated Transaction-Objects, set lean to false in the third parameter of `.ledger()`. It is recommended to not hydrate the transactions, as it implies that the transactions could be manipulated and the data integrity of Medici could be risked. 
   - Book now accepts an optional second parameter. In the options-parameter you can set the `precision` used internally by Medici. Default value is 7 digits after the comma. Javascript has issues with floating points, like 0.1 + 0.2 results in 0.30000000000000004 and not 0.3. A precision of 7 cuts off the after decimal points after the 7th place, resulting in the correct result 0.3. The value is taken from medici version 4.0.2. Be careful, if you use currency, which has more decimal points, e.g. Bitcoin has a precision of 8. So you are on the safe side, by setting the precision to 8. You can enforce an "only-Integer"-mode, which does not have any rounding errors, by setting the precision to 0. But keep in mind that max safe integer is 9007199254740991.
 
