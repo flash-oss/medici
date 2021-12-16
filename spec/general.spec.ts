@@ -50,6 +50,18 @@ describe("general", function () {
     assert.strictEqual(result.balance, 500);
   });
 
+  it("should let you use string for original journal", async function () {
+    const book = new Book("MyBookAmountStrings");
+    const journal = await book
+      .entry("Test Entry", null, "012345678901234567890123")
+      .debit("Assets:Receivable", "500", { clientId: "12345" })
+      .credit("Income:Rent", "500")
+      .commit();
+    
+      expect(journal._original_journal).to.be.instanceOf(Types.ObjectId);
+      expect(journal._original_journal.toString()).to.be.equal("012345678901234567890123");
+  });
+
   it("should deal with JavaScript rounding weirdness", async function () {
     const book = new Book("MyBook");
     await book
