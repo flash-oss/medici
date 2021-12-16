@@ -125,7 +125,13 @@ export class Book<
       limit = query.perPage;
     }
     const filterQuery = parseQuery(query, { name: this.name });
-    const q = transactionModel.find(filterQuery, undefined, options);
+    const q = transactionModel
+      .find(filterQuery, undefined, options)
+      .lean(lean)
+      .sort({
+        datetime: -1,
+        timestamp: -1,
+      });
 
     let count = Promise.resolve(0);
     if (typeof skip !== "undefined") {
@@ -135,16 +141,14 @@ export class Book<
         .exec();
       q.skip(skip).limit(limit);
     }
-    q.sort({
-      datetime: -1,
-      timestamp: -1,
-    });
+
     if (populate) {
       for (let i = 0, il = populate.length; i < il; i++) {
         q.populate(populate[i]);
       }
     }
-    const results = (await q.lean(lean).exec()) as unknown as T[];
+
+    const results = (await q.exec()) as unknown as T[];
 
     return {
       results,

@@ -6,6 +6,7 @@
     "target": "es2021",
     "outDir": "build",
     "strict": true,
+    "strictNullChecks": true,
     "skipLibCheck": true,
     "noImplicitThis": true,
     "noUnusedParameters": true,
