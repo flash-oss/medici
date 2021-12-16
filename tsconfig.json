@@ -7,6 +7,9 @@
     "outDir": "build",
     "strict": true,
     "skipLibCheck": true,
+    "noImplicitThis": true,
+    "noUnusedParameters": true,
+    "noUnusedLocals": true,
     "sourceMap": false,
     "forceConsistentCasingInFileNames": true
   },
