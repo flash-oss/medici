@@ -96,7 +96,6 @@ describe("Transactions", function () {
         .credit("X:Y:CHF", 1)
         .debit("CashAssets", 5)
         .commit();
-    
 
       await mongoose.connection.transaction(async (session) => {
         await journal.void(book, null, { session });

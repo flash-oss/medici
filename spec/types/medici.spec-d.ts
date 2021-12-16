@@ -30,11 +30,25 @@ expectType<Entry>(
   book.entry("a memo").credit("Assets", 200, { approved: true })
 );
 expectError(book.entry("a memo").credit("Assets", 200, "invalid"));
-expectType<Entry>(book.entry("a memo").credit("Assets", 200, { fieldA: "aaa" }));
+expectType<Entry>(
+  book.entry("a memo").credit("Assets", 200, { fieldA: "aaa" })
+);
 expectError(book.entry("a memo").credit("Assets", 200, { credit: "aaa" }));
-expectType<Entry>(book.entry("a memo").credit<{fieldA: string}>("Assets", 200, { fieldA: "aaa" }));
-expectType<Entry>(book.entry("a memo").credit<{fieldA: string}>("Assets", 200, { fieldA: "aaa", credit: 2 }));
-expectError(book.entry("a memo").credit<{fieldA: string}>("Assets", 200, { fieldB: "aaa" }));
+expectType<Entry>(
+  book
+    .entry("a memo")
+    .credit<{ fieldA: string }>("Assets", 200, { fieldA: "aaa" })
+);
+expectType<Entry>(
+  book
+    .entry("a memo")
+    .credit<{ fieldA: string }>("Assets", 200, { fieldA: "aaa", credit: 2 })
+);
+expectError(
+  book
+    .entry("a memo")
+    .credit<{ fieldA: string }>("Assets", 200, { fieldB: "aaa" })
+);
 
 async () => {
   expectType<{ results: ITransaction[]; total: number }>(await book.ledger({}));

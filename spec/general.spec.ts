@@ -8,9 +8,9 @@ import { expect } from "chai";
 describe("general", function () {
   let sharedJournal:
     | (Document<any, any, any> &
-      IJournal & {
-        _original_journal?: Types.ObjectId;
-      })
+        IJournal & {
+          _original_journal?: Types.ObjectId;
+        })
     | null = null;
 
   it("should let you create a basic transaction", async function () {
@@ -230,13 +230,15 @@ describe("general", function () {
     for (const res of response.results) {
       assert.ok(
         res.account_path.includes("Assets") ||
-        res.account_path.includes("Income")
+          res.account_path.includes("Income")
       );
     }
   });
 
   it("should handle extra data when creating an Entry", async () => {
-    const book = new Book("MyBook-Entry-Test" + new Types.ObjectId().toString());
+    const book = new Book(
+      "MyBook-Entry-Test" + new Types.ObjectId().toString()
+    );
 
     await book
       .entry("extra")
@@ -247,12 +249,10 @@ describe("general", function () {
     const { balance } = await book.balance({ account: "A:B" });
     expect(balance).to.be.equal(0);
 
-    const res = await book.ledger(
-      {
-        account: "A:B",
-      }
-    );
-    
+    const res = await book.ledger({
+      account: "A:B",
+    });
+
     if (res.results[0].meta.clientId === "Mr. A") {
       expect(res.results[0].credit).to.be.equal(2);
       expect(res.results[0].meta.clientId).to.be.equal("Mr. A");
@@ -264,5 +264,27 @@ describe("general", function () {
       expect(res.results[0].debit).to.be.equal(2);
       expect(res.results[0].meta.clientId).to.be.equal("Mr. B");
     }
+  });
+
+  it("should delete transactions when not in transaction and saving the journal fails", async () => {
+    const book = new Book(
+      "MyBook-Entry-Test" + new Types.ObjectId().toString()
+    );
+
+    try {
+      await book
+        .entry("extra")
+        .debit("A:B", 1, { debit: 2, clientId: "Mr. B" })
+        // @ts-expect-error
+        .credit("A:B", 1, { credit: 2, timestamp: "asdasd" })
+        .commit();
+    } catch (e) {
+      expect(e.message).to.match(
+        /Failure to save journal: Medici_Transaction validation failed/
+      );
+    }
+
+    const { balance } = await book.balance({ account: "A:B" });
+    expect(balance).to.be.equal(0);
   });
 });

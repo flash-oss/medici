@@ -34,7 +34,10 @@ export class Entry {
     this.journal.memo = memo;
 
     if (original_journal) {
-      this.journal._original_journal = typeof original_journal === "string" ? new Types.ObjectId(original_journal) : original_journal;
+      this.journal._original_journal =
+        typeof original_journal === "string"
+          ? new Types.ObjectId(original_journal)
+          : original_journal;
     }
 
     if (!date) {
@@ -155,16 +158,16 @@ export class Entry {
       return this.journal;
     } catch (err) {
       if (!options.session) {
-        transactionModel
-          .deleteMany({
+        try {
+          await transactionModel.deleteMany({
             _journal: this.journal._id,
-          })
-          .catch((e) =>
-            console.error(
-              `Can't delete txs for journal ${this.journal._id}. Medici ledger consistency got harmed.`,
-              e
-            )
+          });
+        } catch (e) {
+          console.error(
+            `Can't delete txs for journal ${this.journal._id}. Medici ledger consistency got harmed.`,
+            e
           );
+        }
       }
       throw new Error(`Failure to save journal: ${(err as Error).message}`);
     }
