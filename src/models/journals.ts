@@ -76,10 +76,9 @@ journalSchema.methods.void = async function (
     transactions[i].void_reason = this.void_reason;
   }
 
-  // We do an .allSettled instead of .all, so that the potential transaction
-  // does not get flaky.
-  // @see https://github.com/Automattic/mongoose/issues/8713#issuecomment-674885815
-  await Promise.allSettled(transactions.map((tx) => tx.save(options)));
+  for (let i = 0, il = transactions.length; i < il; i++) {
+    await new transactionModel(transactions[i]).save(options);
+  }
 
   const entry = book.entry(handleVoidMemo(reason, this.memo), null, this._id);
 
