@@ -168,9 +168,11 @@ export class Entry<
     } catch (err) {
       if (!options.session) {
         try {
-          await transactionModel.deleteMany({
-            _journal: this.journal._id,
-          });
+          await transactionModel
+            .deleteMany({
+              _journal: this.journal._id,
+            })
+            .exec();
         } catch (e) {
           console.error(
             `Can't delete txs for journal ${this.journal._id}. Medici ledger consistency got harmed.`,
