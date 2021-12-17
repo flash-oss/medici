@@ -22,7 +22,9 @@ describe("ACID Transactions", function () {
       });
       throw new Error("should have thrown");
     } catch (e) {
-      expect(e.message).match(/Medici_Transaction validation failed/);
+      expect((e as Error).message).match(
+        /Medici_Transaction validation failed/
+      );
     }
 
     const result = await book.balance({ account: "X:Y" });

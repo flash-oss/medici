@@ -61,7 +61,7 @@ function processMetaField(key: string, val: unknown, meta: IAnyObject): void {
 
 const voidJournal = async function (
   book: Book,
-  reason: string,
+  reason: undefined | null | string,
   options: IOptions
 ) {
   if (this.voided === true) {
@@ -157,7 +157,7 @@ export type TJournalDocument<T extends IJournal = IJournal> = Omit<
   T & {
     void: (
       book: Book,
-      reason?: undefined | string,
+      reason?: undefined | null | string,
       options?: IOptions
     ) => Promise<TJournalDocument<T>>;
   };
@@ -168,7 +168,7 @@ type TJournalModel<T extends IJournal = IJournal> = Model<
   {
     void: (
       book: Book,
-      reason?: undefined | string,
+      reason?: undefined | null | string,
       options?: IOptions
     ) => Promise<TJournalDocument<T>>;
   }

@@ -1,4 +1,4 @@
-/* eslint sonarjs/no-duplicate-string: off, security/detect-object-injection: off */
+/* eslint sonarjs/no-duplicate-string: off, @typescript-eslint/no-non-null-assertion: off, security/detect-object-injection: off */
 import { expect } from "chai";
 import { handleVoidMemo } from "../src/helper/handleVoidMemo";
 
@@ -19,10 +19,11 @@ describe("handleVoidMemo", () => {
       "[REVOID] memo",
       "[UNVOID] memo",
     ],
+    ["should handle no reason and no memo", undefined, undefined, "[VOID]"],
   ];
 
   for (let i = 0, il = cases.length; i < il; i++) {
-    it(cases[i][0], () => {
+    it(cases[i][0]!, () => {
       expect(handleVoidMemo(cases[i][1], cases[i][2])).to.be.equal(cases[i][3]);
     });
   }

@@ -2,9 +2,14 @@ const voidRE = /^\[VOID\]/;
 const unvoidRE = /^\[UNVOID\]/;
 const revoidRE = /^\[REVOID\]/;
 
-export function handleVoidMemo(reason: string, memo: string): string {
+export function handleVoidMemo(
+  reason: string | undefined | null,
+  memo: string | undefined | null
+): string {
   if (reason) {
     return reason;
+  } else if (!memo) {
+    return "[VOID]";
   } else if (voidRE.test(memo)) {
     return memo.replace("[VOID]", "[UNVOID]");
   } else if (unvoidRE.test(memo)) {

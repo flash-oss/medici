@@ -11,7 +11,9 @@ export type IParseQuery = {
   start_date?: Date | string | number;
   end_date?: Date | string | number;
   approved?: boolean;
-} & { [key: string]: string[] | number | string | Date | boolean };
+} & {
+  [key: string]: string[] | number | string | Date | boolean | Types.ObjectId;
+};
 
 export interface IPaginationQuery {
   perPage?: number;

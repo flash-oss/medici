@@ -1,4 +1,4 @@
-/* eslint sonarjs/no-duplicate-string: off */
+/* eslint sonarjs/no-duplicate-string: off, @typescript-eslint/no-non-null-assertion: off */
 import { expect } from "chai";
 import { Types } from "mongoose";
 import { parseQuery } from "../src/helper/parseQuery";
@@ -122,8 +122,10 @@ describe("parseQuery", () => {
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
     expect(result["$or"]).to.have.lengthOf(2);
-    expect(result["$or"][0]["account_path.0"]).to.be.equal("Assets");
-    expect(result["$or"][1]["account_path.0"]).to.be.equal("Expenses");
+    expect(Object.keys(result["$or"]![0])).to.have.lengthOf(1);
+    expect(Object.keys(result["$or"]![1])).to.have.lengthOf(1);
+    expect(result["$or"]![0]["account_path.0"]).to.be.equal("Assets");
+    expect(result["$or"]![1]["account_path.0"]).to.be.equal("Expenses");
   });
 
   it("should handle account array with two path parts correctly", () => {
@@ -133,10 +135,12 @@ describe("parseQuery", () => {
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
     expect(result["$or"]).to.have.lengthOf(2);
-    expect(result["$or"][0]["account_path.0"]).to.be.equal("Assets");
-    expect(result["$or"][0]["account_path.1"]).to.be.equal("Gold");
-    expect(result["$or"][1]["account_path.0"]).to.be.equal("Expenses");
-    expect(result["$or"][1]["account_path.1"]).to.be.equal("Gold");
+    expect(Object.keys(result["$or"]![0])).to.have.lengthOf(2);
+    expect(Object.keys(result["$or"]![1])).to.have.lengthOf(2);
+    expect(result["$or"]![0]["account_path.0"]).to.be.equal("Assets");
+    expect(result["$or"]![0]["account_path.1"]).to.be.equal("Gold");
+    expect(result["$or"]![1]["account_path.0"]).to.be.equal("Expenses");
+    expect(result["$or"]![1]["account_path.1"]).to.be.equal("Gold");
   });
 
   it("should handle account array with two path parts correctly", () => {
@@ -146,9 +150,14 @@ describe("parseQuery", () => {
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
     expect(result["$or"]).to.have.lengthOf(2);
-    expect(result["$or"][0]["account_path.0"]).to.be.equal("Assets");
-    expect(result["$or"][0]["account_path.1"]).to.be.equal("Gold");
-    expect(result["$or"][0]["account_path.2"]).to.be.equal("Swiss");
+    expect(Object.keys(result["$or"]![0])).to.have.lengthOf(3);
+    expect(Object.keys(result["$or"]![1])).to.have.lengthOf(3);
+    expect(result["$or"]![0]["account_path.0"]).to.be.equal("Assets");
+    expect(result["$or"]![0]["account_path.1"]).to.be.equal("Gold");
+    expect(result["$or"]![0]["account_path.2"]).to.be.equal("Swiss");
+    expect(result["$or"]![1]["account_path.0"]).to.be.equal("Expenses");
+    expect(result["$or"]![1]["account_path.1"]).to.be.equal("Gold");
+    expect(result["$or"]![1]["account_path.2"]).to.be.equal("Swiss");
   });
 
   it("should handle account array with one item and three path parts correctly", () => {

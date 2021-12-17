@@ -1,3 +1,4 @@
+/* eslint @typescript-eslint/no-non-null-assertion: off */
 import { expect } from "chai";
 import { parseDateField } from "../src/helper/parseDateField";
 
@@ -11,14 +12,14 @@ describe("parseDateField", () => {
   });
 
   it("should handle numbers as unix timestamps", () => {
-    const parsedDate = parseDateField(50);
+    const parsedDate = parseDateField(50)!;
 
     expect(parsedDate).to.be.instanceOf(Date);
     expect(parsedDate.getTime()).to.be.equal(50);
   });
 
   it("should handle strings of numbers as unix timestamps", () => {
-    const parsedDate = parseDateField("50");
+    const parsedDate = parseDateField("50")!;
 
     expect(parsedDate).to.be.instanceOf(Date);
     expect(parsedDate.getTime()).to.be.equal(50);
@@ -26,7 +27,7 @@ describe("parseDateField", () => {
 
   it("should handle strings which are not pure numbers gracefully", () => {
     const date = new Date(1639577227000);
-    const parsedDate = parseDateField(date.toUTCString());
+    const parsedDate = parseDateField(date.toUTCString())!;
 
     expect(parsedDate).to.be.instanceOf(Date);
     expect(parsedDate.getTime()).to.be.equal(date.getTime());

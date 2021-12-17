@@ -1,4 +1,4 @@
-/* eslint sonarjs/no-duplicate-string: off, no-prototype-builtins: off*/
+/* eslint sonarjs/no-duplicate-string: off, @typescript-eslint/no-non-null-assertion: off, no-prototype-builtins: off*/
 import { Book } from "../src/Book";
 import { Document, Types } from "mongoose";
 import { IJournal } from "../src/models/journals";
@@ -86,7 +86,7 @@ describe("book", function () {
         .commit();
 
       expect(journal._original_journal).to.be.instanceOf(Types.ObjectId);
-      expect(journal._original_journal.toString()).to.be.equal(
+      expect(journal._original_journal!.toString()).to.be.equal(
         "012345678901234567890123"
       );
     });
@@ -101,7 +101,7 @@ describe("book", function () {
         await entry.commit();
         throw new Error("Should have thrown");
       } catch (e) {
-        expect(e.message).to.be.equal(
+        expect((e as Error).message).to.be.equal(
           "INVALID_JOURNAL: can't commit non zero total"
         );
       }
@@ -116,7 +116,7 @@ describe("book", function () {
         await entry.commit();
         throw new Error("should have thrown");
       } catch (e) {
-        expect(e.message).to.be.equal(
+        expect((e as Error).message).to.be.equal(
           "INVALID_JOURNAL: can't commit non zero total"
         );
       }
@@ -166,7 +166,7 @@ describe("book", function () {
           .credit("A:B", 1, { credit: 2, timestamp: "asdasd" })
           .commit();
       } catch (e) {
-        expect(e.message).to.match(
+        expect((e as Error).message).to.match(
           /Failure to save journal: Medici_Transaction validation failed/
         );
       }
@@ -193,7 +193,7 @@ describe("book", function () {
           .credit("A:B", 1, { credit: 2, timestamp: "asdasd" })
           .commit();
       } catch (e) {
-        expect(e.message).to.match(
+        expect((e as Error).message).to.match(
           /Failure to save journal: Medici_Transaction validation failed/
         );
       }
