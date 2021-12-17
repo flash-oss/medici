@@ -119,11 +119,11 @@ const voidJournal = async function (
   }
   return entry.commit(options);
 } as (
-    this: TJournalDocument,
-    book: Book,
-    reason?: undefined | string,
-    options?: IOptions
-  ) => Promise<TJournalDocument>;
+  this: TJournalDocument,
+  book: Book,
+  reason?: undefined | string,
+  options?: IOptions
+) => Promise<TJournalDocument>;
 
 const preSave: PreSaveMiddlewareFunction<IJournal & Document> = async function (
   this,
@@ -147,11 +147,7 @@ const preSave: PreSaveMiddlewareFunction<IJournal & Document> = async function (
     transactions[i].approved = true;
   }
 
-  await transactions.pop()!.save({ session });
-
-  await Promise.all(
-    transactions.map((tx) => tx.save({ session }))
-  );
+  await Promise.all(transactions.map((tx) => tx.save({ session })));
 
   return next();
 };
