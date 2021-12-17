@@ -2,11 +2,10 @@
 import { Book } from "../src/Book";
 import { assert, expect } from "chai";
 import * as mongoose from "mongoose";
-import { fail } from "assert";
 
-describe("Transactions", function () {
+describe("ACID Transactions", function () {
   it("should not persist data when saving journal fails while using a session", async function () {
-    const book = new Book("LSD");
+    const book = new Book("ACID" + Date.now());
 
     try {
       await mongoose.connection.transaction(async (session) => {
@@ -21,7 +20,7 @@ describe("Transactions", function () {
           .debit("CashAssets", 5)
           .commit({ session });
       });
-      fail();
+      throw new Error("should have thrown");
     } catch (e) {
       expect(e.message).match(/Medici_Transaction validation failed/);
     }
@@ -31,7 +30,7 @@ describe("Transactions", function () {
   });
 
   it("should persist data while using a session", async function () {
-    const book = new Book("LSD");
+    const book = new Book("ACID" + Date.now());
 
     await mongoose.connection.transaction(async (session) => {
       await book
@@ -86,7 +85,7 @@ describe("Transactions", function () {
   it("should pass a stresstest when persisting data while using a session", async function () {
     this.timeout(10000);
     for (let i = 0, il = 100; i < il; i++) {
-      const book = new Book("LSD" + Date.now());
+      const book = new Book("ACID" + Date.now());
 
       await mongoose.connection.transaction(async (session) => {
         await book
@@ -112,7 +111,7 @@ describe("Transactions", function () {
     this.timeout(10000);
 
     for (let i = 0, il = 100; i < il; i++) {
-      const book = new Book("LSD" + Date.now());
+      const book = new Book("ACID" + Date.now());
 
       const journal = await book
         .entry("depth test")
