@@ -6,7 +6,7 @@
 		"coverage",
 		"dist",
 		"spec",
-		"src/shared"
+		"src/index.ts"
 	],
 	"reporter": [
 		"text",
