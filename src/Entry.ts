@@ -7,6 +7,7 @@ import {
 } from "./models/transactions";
 import { TransactionError } from "./TransactionError";
 import { IJournal, journalModel, TJournalDocument } from "./models/journals";
+import { isPrototypeAttribute } from "./helper/isPrototypeAttribute";
 import type { IOptions } from "./IOptions";
 import type { IAnyObject } from "./IAnyObject";
 
@@ -97,7 +98,9 @@ export class Entry<
     };
 
     if (extra) {
-      const keys = Object.keys(extra);
+      const keys = Object.keys(extra).filter(
+        (key) => !isPrototypeAttribute(key)
+      );
 
       for (let i = 0, il = keys.length; i < il; i++) {
         const key = keys[i];

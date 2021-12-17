@@ -1,6 +1,7 @@
 import { FilterQuery, isValidObjectId, Types } from "mongoose";
 import type { Book } from "../Book";
 import { isValidTransactionKey, ITransaction } from "../models/transactions";
+import { isPrototypeAttribute } from "./isPrototypeAttribute";
 import { parseAccountField } from "./parseAccountField";
 import { parseDateField } from "./parseDateField";
 
@@ -50,7 +51,7 @@ export function parseQuery(
     }
   }
 
-  const keys = Object.keys(extra);
+  const keys = Object.keys(extra).filter((key) => !isPrototypeAttribute(key));
 
   for (i = 0, il = keys.length; i < il; i++) {
     const key = keys[i];
