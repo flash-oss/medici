@@ -3,14 +3,13 @@ import { Book } from "../Book";
 import { isValidTransactionKey, ITransaction } from "../models/transactions";
 import { parseDateField } from "./parseDateField";
 
-export interface IParseQuery {
+export type IParseQuery = {
   account?: string | string[];
   _journal?: Types.ObjectId | string;
   start_date?: Date | string | number;
   end_date?: Date | string | number;
   approved?: boolean;
-  [key: string]: any;
-}
+} & { [key: string]: string | Date | boolean };
 
 export interface IPaginationQuery {
   perPage?: number;
