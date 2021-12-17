@@ -146,7 +146,10 @@ const preSave: PreSaveMiddlewareFunction<IJournal & Document> = async function (
   return next();
 };
 
-export type TJournalDocument<T extends IJournal = IJournal> = Document &
+export type TJournalDocument<T extends IJournal = IJournal> = Omit<
+  Document,
+  "__v" | "id"
+> &
   T & {
     void: (
       book: Book,
