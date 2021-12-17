@@ -1,6 +1,5 @@
 import { FilterQuery, isValidObjectId, Types } from "mongoose";
 import { Book } from "../Book";
-import type { IAnyObject } from "../IAnyObject";
 import { isValidTransactionKey, ITransaction } from "../models/transactions";
 import { parseDateField } from "./parseDateField";
 
@@ -31,7 +30,7 @@ export function parseQuery(
   query: IParseQuery & IPaginationQuery,
   book: Pick<Book, "name">
 ): FilterQuery<ITransaction> {
-  let i, il;
+  let i, il, j, jl;
 
   const { approved, account, start_date, end_date, ...extra } = query;
 
@@ -44,20 +43,22 @@ export function parseQuery(
   };
 
   if (account) {
-    let accounts;
-    if (Array.isArray(account)) {
-      const $or = [];
-      for (const acct of account) {
-        accounts = acct.split(":");
-        const match: IAnyObject = {};
-        for (i = 0, il = accounts.length; i < il; i++) {
-          match[`account_path.${i}`] = accounts[i];
-        }
-        $or.push(match);
+    if (Array.isArray(account) && account.length === 1) {
+      const accounts = account[0].split(":");
+      for (i = 0, il = accounts.length; i < il; i++) {
+        filterQuery[`account_path.${i}`] = accounts[i];
       }
-      filterQuery["$or"] = $or;
+    } else if (Array.isArray(account)) {
+      filterQuery["$or"] = new Array(account.length);
+      for (i = 0, il = account.length; i < il; i++) {
+        const accounts = account[i].split(":");
+        filterQuery["$or"][i] = {};
+        for (j = 0, jl = accounts.length; j < jl; j++) {
+          filterQuery["$or"][i][`account_path.${j}`] = accounts[j];
+        }
+      }
     } else {
-      accounts = account.split(":");
+      const accounts = account.split(":");
       for (i = 0, il = accounts.length; i < il; i++) {
         filterQuery[`account_path.${i}`] = accounts[i];
       }
