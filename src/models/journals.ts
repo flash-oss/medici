@@ -55,8 +55,8 @@ const journalSchema = new Schema<IJournal>(
   { id: false, versionKey: false, timestamps: false }
 );
 
-function processMetaField(key: string, val: unknown, meta: IAnyObject) {
-  return isValidTransactionKey(key) ? undefined : (meta[key] = val);
+function processMetaField(key: string, val: unknown, meta: IAnyObject): void {
+  isValidTransactionKey(key) ? undefined : (meta[key] = val);
 }
 
 const voidJournal = async function (
@@ -98,15 +98,14 @@ const voidJournal = async function (
   const entry = book.entry(reason, null, this._id);
 
   for (const trans of transactions) {
-    const meta = {};
+    const meta: IAnyObject = {};
     Object.keys(trans.toObject()).forEach((key) => {
-      const val = trans[key as keyof ITransaction];
       if (key === "meta") {
         Object.keys(trans["meta"]).forEach((keyMeta) => {
           processMetaField(keyMeta, trans["meta"][keyMeta], meta);
         });
       } else {
-        processMetaField(key, val, meta);
+        processMetaField(key, trans[key as keyof ITransaction], meta);
       }
     });
 
