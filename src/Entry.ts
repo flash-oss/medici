@@ -158,11 +158,11 @@ export class Entry<
     }
 
     try {
-      for (let i = 0, il = this.transactions.length; i < il; i++) {
-        await new transactionModel(this.transactions[i]).save(options);
-      }
-
       await this.journal.save(options);
+
+      await Promise.all(
+        this.transactions.map((tx) => new transactionModel(tx).save(options))
+      );
 
       return this.journal;
     } catch (err) {

@@ -195,4 +195,58 @@ describe("ACID Transactions", function () {
     const result = await book.balance({ account: "X:Y" });
     expect(result.balance).to.be.equal(5);
   });
+
+  it("should pass a stresstest for approving", async function () {
+    this.timeout(10000);
+    const book = new Book("ACID" + Date.now());
+
+    for (let i = 0, il = 100; i < il; i++) {
+      const journal = await book
+        .entry("depth test")
+        .credit("X:Y:AUD", 1)
+        .credit("X:Y:EUR", 1)
+        .credit("X:Y:USD", 1)
+        .credit("X:Y:INR", 1)
+        .credit("X:Y:CHF", 1)
+        .debit("CashAssets", 5)
+        .setApproved(false)
+        .commit();
+
+      await mongoose.connection.transaction(async (session) => {
+        journal.approved = true;
+        await journal.save({ session });
+      });
+    }
+    const result = await book.balance({ account: "X:Y" });
+    expect(result.balance).to.be.equal(500);
+  });
+
+  it("should pass a stresstest for erroring when approving", async function () {
+    this.timeout(10000);
+    const book = new Book("ACID" + Date.now());
+
+    for (let i = 0, il = 100; i < il; i++) {
+      const journal = await book
+        .entry("depth test")
+        .credit("X:Y:AUD", 1)
+        .credit("X:Y:EUR", 1)
+        .credit("X:Y:USD", 1)
+        .credit("X:Y:INR", 1)
+        .credit("X:Y:CHF", 1)
+        .debit("CashAssets", 5)
+        .setApproved(false)
+        .commit();
+      try {
+        await mongoose.connection.transaction(async (session) => {
+          journal.approved = true;
+          await journal.save({ session });
+          throw new Error("Approving Failed.");
+        });
+      } catch (e) {
+        expect((e as Error).message).to.be.equal("Approving Failed.");
+      }
+    }
+    const result = await book.balance({ account: "X:Y" });
+    expect(result.balance).to.be.equal(0);
+  });
 });

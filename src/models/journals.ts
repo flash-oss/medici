@@ -74,6 +74,8 @@ const voidJournal = async function (
   this.voided = true;
   this.void_reason = reason;
 
+  await this.save(options);
+
   const transactions = await transactionModel
     .find(
       {
@@ -89,9 +91,9 @@ const voidJournal = async function (
     transactions[i].void_reason = this.void_reason;
   }
 
-  for (let i = 0, il = transactions.length; i < il; i++) {
-    await new transactionModel(transactions[i]).save(options);
-  }
+  await Promise.all(
+    transactions.map((tx) => new transactionModel(tx).save(options))
+  );
 
   const entry = book.entry(reason, null, this._id);
 
@@ -115,14 +117,13 @@ const voidJournal = async function (
       entry.credit(trans.account_path, trans.debit, meta);
     }
   }
-  await this.save(options);
   return entry.commit(options);
 } as (
-  this: TJournalDocument,
-  book: Book,
-  reason?: undefined | string,
-  options?: IOptions
-) => Promise<TJournalDocument>;
+    this: TJournalDocument,
+    book: Book,
+    reason?: undefined | string,
+    options?: IOptions
+  ) => Promise<TJournalDocument>;
 
 const preSave: PreSaveMiddlewareFunction<IJournal & Document> = async function (
   this,
@@ -138,10 +139,19 @@ const preSave: PreSaveMiddlewareFunction<IJournal & Document> = async function (
     .find({ _journal: this._id, approved: false }, undefined, { session })
     .exec()) as (Document & ITransaction)[];
 
+  if (transactions.length === 0) {
+    return next();
+  }
+
   for (let i = 0, il = transactions.length; i < il; i++) {
     transactions[i].approved = true;
-    await transactions[i].save({ session });
   }
+
+  await transactions.pop()!.save({ session });
+
+  await Promise.all(
+    transactions.map((tx) => tx.save({ session }))
+  );
 
   return next();
 };
