@@ -1,7 +1,11 @@
 import { Entry } from "./Entry";
-import { IParseQuery, parseQuery } from "./helper/parseQuery";
+import { IPaginationQuery, IParseQuery, parseQuery } from "./helper/parseQuery";
 import { IJournal, journalModel, TJournalDocument } from "./models/journals";
-import { ITransaction, transactionModel } from "./models/transactions";
+import {
+  isValidTransactionKey,
+  ITransaction,
+  transactionModel,
+} from "./models/transactions";
 import type { IOptions } from "./IOptions";
 import type { Document, PipelineStage, Types } from "mongoose";
 
@@ -27,7 +31,7 @@ export class Book<
   }
 
   async balance(
-    query: IParseQuery,
+    query: IParseQuery & IPaginationQuery,
     options = {} as IOptions
   ): Promise<{ balance: number; notes: number }> {
     let skip: PipelineStage.Skip | undefined = undefined;
@@ -52,7 +56,8 @@ export class Book<
     };
     const group: PipelineStage.Group = {
       $group: {
-        _id: null as any,
+        // https://github.com/Automattic/mongoose/pull/11104
+        _id: null as unknown,
         credit: {
           $sum: "$credit",
         },
@@ -98,19 +103,19 @@ export class Book<
   }
 
   async ledger<T = U>(
-    query: IParseQuery,
+    query: IParseQuery & IPaginationQuery,
     populate?: string[] | null,
     options?: IOptions & { lean?: true }
   ): Promise<{ results: T[]; total: number }>;
 
   async ledger<T = U>(
-    query: IParseQuery,
+    query: IParseQuery & IPaginationQuery,
     populate?: string[] | null,
     options?: IOptions & { lean?: false }
   ): Promise<{ results: (Document & T)[]; total: number }>;
 
   async ledger<T = U>(
-    query: IParseQuery,
+    query: IParseQuery & IPaginationQuery,
     populate = null as string[] | null,
     options = {} as IOptions & { lean?: boolean }
   ): Promise<{ results: T[]; total: number }> {
@@ -144,7 +149,9 @@ export class Book<
 
     if (populate) {
       for (let i = 0, il = populate.length; i < il; i++) {
-        q.populate(populate[i]);
+        if (isValidTransactionKey<U>(populate[i])) {
+          q.populate(populate[i]);
+        }
       }
     }
 

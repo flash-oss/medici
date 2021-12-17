@@ -15,7 +15,7 @@ describe("ACID Transactions", function () {
           .credit("X:Y:EUR", 1)
           .credit("X:Y:USD", 1)
           .credit("X:Y:INR", 1)
-          // @ts-expect-error
+          // @ts-expect-error mongoose validator should throw an error
           .credit("X:Y:CHF", 1, { timestamp: "invalid " })
           .debit("CashAssets", 5)
           .commit({ session });

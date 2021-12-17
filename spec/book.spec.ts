@@ -3,7 +3,7 @@ import { Book } from "../src/Book";
 import { Document, Types } from "mongoose";
 import { IJournal } from "../src/models/journals";
 import { expect } from "chai";
-import { stub } from "sinon";
+import { stub, spy } from "sinon";
 import { transactionModel } from "../src/models/transactions";
 
 describe("general", function () {
@@ -162,7 +162,7 @@ describe("general", function () {
         await book
           .entry("extra")
           .debit("A:B", 1, { debit: 2, clientId: "Mr. B" })
-          // @ts-expect-error
+          // @ts-expect-error mongoose validator should throw error
           .credit("A:B", 1, { credit: 2, timestamp: "asdasd" })
           .commit();
       } catch (e) {
@@ -189,7 +189,7 @@ describe("general", function () {
         await book
           .entry("extra")
           .debit("A:B", 1, { debit: 2, clientId: "Mr. B" })
-          // @ts-expect-error
+          // @ts-expect-error mongoose validator should throw an error
           .credit("A:B", 1, { credit: 2, timestamp: "asdasd" })
           .commit();
       } catch (e) {
@@ -210,7 +210,7 @@ describe("general", function () {
 
     describe("approved/pending transactions", function () {
       let pendingJournal:
-        | (Document<any, any, any> &
+        | (Document &
             IJournal & {
               _original_journal?: Types.ObjectId;
             })
@@ -236,8 +236,11 @@ describe("general", function () {
       });
 
       it("should set all transactions to approved when approving the journal", async () => {
-        pendingJournal!.approved = true;
-        await pendingJournal!.save();
+        if (!pendingJournal) {
+          throw new Error("pendingJournal missing.");
+        }
+        pendingJournal.approved = true;
+        await pendingJournal.save();
         const fooBalance = await book.balance({
           account: "Foo",
         });
@@ -353,13 +356,16 @@ describe("general", function () {
         .commit();
     });
     it("should allow you to void a journal entry", async () => {
+      if (!journal) {
+        throw new Error("journal missing.");
+      }
       const data = await book.balance({
         account: "Assets",
         clientId: "12345",
       });
       expect(data.balance).to.be.equal(-500);
 
-      await book.void(journal!._id, "Messed up");
+      await book.void(journal._id, "Messed up");
       const clientAccount = await book.balance({
         account: "Assets",
         clientId: "12345",
@@ -378,9 +384,12 @@ describe("general", function () {
     });
 
     it("should throw an error if journal was already voided", () => {
+      if (!journal) {
+        throw new Error("journal missing.");
+      }
       const book = new Book("MyBook");
       book
-        .void(journal!._id, "Messed up")
+        .void(journal._id, "Messed up")
         .then(() => {
           throw new Error("Should have thrown.");
         })
@@ -497,6 +506,18 @@ describe("general", function () {
       expect(res.results[0]._journal._id).to.be.instanceof(Types.ObjectId);
       expect(res.results[1]._journal._id).to.be.instanceof(Types.ObjectId);
       expect(res.results[2]._journal._id).to.be.instanceof(Types.ObjectId);
+    });
+
+    it("should ignore populate if the field does not exist", async () => {
+      const populateSpy = spy(transactionModel, "populate");
+      await book.ledger(
+        {
+          account: "Assets",
+        },
+        ["notExisting", "_journal"]
+      );
+      expect(populateSpy.callCount).to.be.equal(1);
+      populateSpy.restore();
     });
 
     it("should return ledger with array of accounts", async () => {

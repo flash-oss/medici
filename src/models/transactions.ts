@@ -1,11 +1,12 @@
 import { connection, Schema, model, Model, Types } from "mongoose";
+import type { IAnyObject } from "../IAnyObject";
 import { IJournal } from "./journals";
 
 export interface ITransaction {
   _id: Types.ObjectId;
   credit: number;
   debit: number;
-  meta: { [key: string]: any };
+  meta: IAnyObject;
   datetime: Date;
   account_path: string[];
   accounts: string;
@@ -53,9 +54,9 @@ export let transactionModel: Model<ITransaction>;
 
 let transactionSchemaKeys = Object.keys(transactionSchema.paths);
 
-export function isValidTransactionKey(
+export function isValidTransactionKey<T extends ITransaction = ITransaction>(
   value: unknown
-): value is keyof ITransaction {
+): value is keyof T {
   return (
     typeof value === "string" && transactionSchemaKeys.indexOf(value) !== -1
   );

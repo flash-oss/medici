@@ -1,4 +1,4 @@
-import Book from "./Book";
+import { Book } from "./Book";
 import type { Entry } from "./Entry";
 
 export { setJournalSchema } from "./models/journals";

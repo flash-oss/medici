@@ -1,7 +1,8 @@
 /* eslint sonarjs/no-duplicate-string: off */
 import { expect } from "chai";
 import { Schema, Types } from "mongoose";
-import Book from "../src/Book";
+import { Book } from "../src/Book";
+import { IAnyObject } from "../src/IAnyObject";
 import { IJournal } from "../src/models/journals";
 import {
   setTransactionSchema,
@@ -12,7 +13,7 @@ export interface ITransactionNew {
   _id: Types.ObjectId;
   credit: number;
   debit: number;
-  meta: { [key: string]: any };
+  meta: IAnyObject;
   datetime: Date;
   account_path: string[];
   accounts: string;

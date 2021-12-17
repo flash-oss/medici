@@ -15,6 +15,7 @@ import {
 import { Book } from "../Book";
 import type { IOptions } from "../IOptions";
 import { handleVoidMemo } from "../helper/handleVoidMemo";
+import type { IAnyObject } from "../IAnyObject";
 
 export interface IJournal {
   _id: Types.ObjectId;
@@ -54,7 +55,7 @@ const journalSchema = new Schema<IJournal>(
   { id: false, versionKey: false, timestamps: false }
 );
 
-function processMetaField(key: string, val: any, meta: { [key: string]: any }) {
+function processMetaField(key: string, val: unknown, meta: IAnyObject) {
   return isValidTransactionKey(key) ? undefined : (meta[key] = val);
 }
 
@@ -119,7 +120,7 @@ const voidJournal = async function (
   book: Book,
   reason?: undefined | string,
   options?: IOptions
-) => Promise<any>;
+) => Promise<TJournalDocument>;
 
 const preSave: PreSaveMiddlewareFunction<IJournal & Document> = async function (
   this,
@@ -135,12 +136,10 @@ const preSave: PreSaveMiddlewareFunction<IJournal & Document> = async function (
     .find({ _journal: this._id, approved: false }, undefined, { session })
     .exec()) as (Document & ITransaction)[];
 
-  await Promise.all(
-    transactions.map((tx) => {
-      tx.approved = true;
-      return tx.save({ session });
-    })
-  );
+  for (let i = 0, il = transactions.length; i < il; i++) {
+    transactions[i].approved = true;
+    await transactions[i].save({ session });
+  }
 
   return next();
 };
@@ -151,18 +150,18 @@ export type TJournalDocument<T extends IJournal = IJournal> = Document &
       book: Book,
       reason?: undefined | string,
       options?: IOptions
-    ) => Promise<any>;
+    ) => Promise<TJournalDocument<T>>;
   };
 
 type TJournalModel<T extends IJournal = IJournal> = Model<
   T,
-  any,
+  unknown,
   {
     void: (
       book: Book,
       reason?: undefined | string,
       options?: IOptions
-    ) => Promise<any>;
+    ) => Promise<TJournalDocument<T>>;
   }
 >;
 

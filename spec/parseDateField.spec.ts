@@ -31,4 +31,11 @@ describe("parseDateField", () => {
     expect(parsedDate).to.be.instanceOf(Date);
     expect(parsedDate.getTime()).to.be.equal(date.getTime());
   });
+
+  it("should return undefined if it is not parsable", () => {
+    const date = true;
+    const parsedDate = parseDateField(date);
+
+    expect(parsedDate).to.be.undefined;
+  });
 });

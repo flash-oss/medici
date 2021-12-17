@@ -8,6 +8,7 @@ import {
 import { TransactionError } from "./TransactionError";
 import { IJournal, journalModel, TJournalDocument } from "./models/journals";
 import type { IOptions } from "./IOptions";
+import type { IAnyObject } from "./IAnyObject";
 
 export class Entry<
   U extends ITransaction = ITransaction,
@@ -63,7 +64,7 @@ export class Entry<
     type: -1 | 1,
     account_path: string | string[],
     amount: number | string,
-    extra: (Partial<U> & { [key: string]: any }) | null
+    extra: (Partial<U> & IAnyObject) | null
   ): Entry<U, J> {
     if (typeof account_path === "string") {
       account_path = account_path.split(":");
@@ -105,13 +106,16 @@ export class Entry<
     };
 
     if (extra) {
-      Object.keys(extra).forEach((key) => {
+      const keys = Object.keys(extra);
+
+      for (let i = 0, il = keys.length; i < il; i++) {
+        const key = keys[i];
         if (isValidTransactionKey(key)) {
           transaction[key] = extra[key] as never;
         } else {
           transaction.meta[key] = extra[key];
         }
-      });
+      }
     }
     this.transactions.push(transaction as U);
     (this.journal._transactions as Types.ObjectId[]).push(transaction._id);
@@ -119,7 +123,7 @@ export class Entry<
     return this;
   }
 
-  credit<T extends { [key: string]: any } = { [key: string]: any }>(
+  credit<T extends IAnyObject = IAnyObject>(
     account_path: string | string[],
     amount: number | string,
     extra = null as (T & Partial<U>) | null
@@ -127,7 +131,7 @@ export class Entry<
     return this.transact(1, account_path, amount, extra);
   }
 
-  debit<T extends { [key: string]: any } = { [key: string]: any }>(
+  debit<T extends IAnyObject = IAnyObject>(
     account_path: string | string[],
     amount: number | string,
     extra = null as (T & Partial<U>) | null
