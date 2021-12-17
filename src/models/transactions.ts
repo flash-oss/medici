@@ -90,7 +90,7 @@ export function setTransactionSchema(schema: Schema, collection?: string) {
 
   transactionModel = model("Medici_Transaction", schema, collection);
 
-  transactionSchemaKeys = new Set(Object.keys(transactionSchema.paths));
+  transactionSchemaKeys = new Set(Object.keys(schema.paths));
 }
 
 typeof connection.models["Medici_Transaction"] === "undefined" &&
