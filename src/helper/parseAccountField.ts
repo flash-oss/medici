@@ -1,7 +1,9 @@
-import { FilterQuery } from "mongoose";
-import { ITransaction } from "../models/transactions";
+import type { FilterQuery } from "mongoose";
+import type { ITransaction } from "../models/transactions";
 
-export function parseAccountField(account: string | string[] | undefined) {
+export function parseAccountField(
+  account: string | string[] | undefined
+): FilterQuery<ITransaction> {
   const filterQuery: FilterQuery<ITransaction> = {};
   let i, il, j, jl;
 
