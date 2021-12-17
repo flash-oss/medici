@@ -125,7 +125,6 @@ const voidJournal = async function (
 ) => Promise<TJournalDocument>;
 
 const preSave: PreSaveMiddlewareFunction<IJournal & Document> = async function (
-  this,
   next
 ) {
   if (!(this.isModified("approved") && this.approved === true)) {
@@ -181,7 +180,7 @@ export function setJournalSchema(schema: Schema, collection?: string) {
   delete connection.models["Medici_Journal"];
 
   schema.methods.void = voidJournal;
-  journalSchema.pre("save", preSave);
+  schema.pre("save", preSave);
 
   journalModel = model("Medici_Journal", schema, collection) as TJournalModel;
 }
