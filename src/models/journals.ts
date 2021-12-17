@@ -74,13 +74,15 @@ const voidJournal = async function (
   this.voided = true;
   this.void_reason = reason;
 
-  const transactions = await transactionModel.find(
-    {
-      _journal: this._id,
-    },
-    undefined,
-    options
-  );
+  const transactions = await transactionModel
+    .find(
+      {
+        _journal: this._id,
+      },
+      undefined,
+      options
+    )
+    .exec();
 
   for (let i = 0, il = transactions.length; i < il; i++) {
     transactions[i].voided = true;
