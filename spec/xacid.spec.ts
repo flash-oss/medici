@@ -5,10 +5,9 @@ import * as mongoose from "mongoose";
 import { initModels } from "../src";
 
 describe("acid", function () {
-
   before(async () => {
     await initModels();
-  })
+  });
 
   it("should not persist data when saving journal fails while using a session", async function () {
     const book = new Book("ACID" + Date.now());
