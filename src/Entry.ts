@@ -74,18 +74,9 @@ export class Entry<
       throw new Error("Account path is too deep (maximum 3)");
     }
 
-    const credit =
-      type === 1
-        ? typeof amount === "string"
-          ? parseFloat(amount)
-          : amount
-        : 0.0;
-    const debit =
-      type === -1
-        ? typeof amount === "string"
-          ? parseFloat(amount)
-          : amount
-        : 0.0;
+    amount = typeof amount === "string" ? parseFloat(amount) : amount;
+    const credit = type === 1 ? amount : 0.0;
+    const debit = type === -1 ? amount : 0.0;
 
     const transaction: ITransaction = {
       _id: new Types.ObjectId(),
