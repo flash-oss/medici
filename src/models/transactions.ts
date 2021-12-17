@@ -17,7 +17,7 @@ export interface ITransaction {
   voided: boolean;
   void_reason?: string;
   approved: boolean;
-  _original_journal?: Types.ObjectId;
+  _original_journal?: Types.ObjectId | IJournal;
 }
 
 export const transactionSchema = new Schema<ITransaction>(
@@ -41,7 +41,10 @@ export const transactionSchema = new Schema<ITransaction>(
     },
     void_reason: String,
     // The journal that this is voiding, if any
-    _original_journal: Schema.Types.ObjectId,
+    _original_journal: {
+      type: Schema.Types.ObjectId,
+      ref: "Medici_Journal",
+    },
     approved: {
       type: Boolean,
       default: true,
