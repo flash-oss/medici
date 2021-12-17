@@ -16,14 +16,10 @@ export interface IPaginationQuery {
   page?: number;
 }
 
-export const numberRE = /^\d+$/;
 const referenceRE = /(?:^_|_id$)/;
 
 /**
  * Turn query into an object readable by MongoDB.
- *
- * @param query {{account: {acct, subacct, subsubacct}, start_date, month_date, meta}}
- * @returns {Object}
  */
 export function parseQuery(
   query: IParseQuery & IPaginationQuery,

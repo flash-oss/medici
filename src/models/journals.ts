@@ -13,9 +13,9 @@ import {
   transactionModel,
 } from "./transactions";
 import { Book } from "../Book";
-import type { IOptions } from "../IOptions";
 import { handleVoidMemo } from "../helper/handleVoidMemo";
 import type { IAnyObject } from "../IAnyObject";
+import type { IOptions } from "../IOptions";
 
 export interface IJournal {
   _id: Types.ObjectId;

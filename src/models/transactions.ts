@@ -52,14 +52,14 @@ export const transactionSchema = new Schema<ITransaction>(
 
 export let transactionModel: Model<ITransaction>;
 
-let transactionSchemaKeys = Object.keys(transactionSchema.paths);
+let transactionSchemaKeys: Set<string> = new Set(
+  Object.keys(transactionSchema.paths)
+);
 
 export function isValidTransactionKey<T extends ITransaction = ITransaction>(
   value: unknown
 ): value is keyof T {
-  return (
-    typeof value === "string" && transactionSchemaKeys.indexOf(value) !== -1
-  );
+  return typeof value === "string" && transactionSchemaKeys.has(value);
 }
 
 export function setTransactionSchema(schema: Schema, collection?: string) {
@@ -90,7 +90,7 @@ export function setTransactionSchema(schema: Schema, collection?: string) {
 
   transactionModel = model("Medici_Transaction", schema, collection);
 
-  transactionSchemaKeys = Object.keys(transactionModel.schema.paths);
+  transactionSchemaKeys = new Set(Object.keys(transactionSchema.paths));
 }
 
 typeof connection.models["Medici_Transaction"] === "undefined" &&

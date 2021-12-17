@@ -1,4 +1,4 @@
-import { numberRE } from "./parseQuery";
+const numberRE = /^\d+$/;
 
 export function parseDateField(value: unknown): Date | undefined {
   if (value instanceof Date) {
