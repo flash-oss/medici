@@ -175,7 +175,7 @@ describe("book", function () {
       expect(balance).to.be.equal(0);
     });
 
-    it("should delete transactions when not in transaction and saving the journal fails", async () => {
+    it("should write an error into the console when reverting in non-mongo-transaction fails", async () => {
       const book = new Book(
         "MyBook-Entry-Test" + new Types.ObjectId().toString()
       );
