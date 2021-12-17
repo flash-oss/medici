@@ -6,7 +6,7 @@ import { expect } from "chai";
 import { stub, spy } from "sinon";
 import { transactionModel } from "../src/models/transactions";
 
-describe("general", function () {
+describe("book", function () {
   describe("journaling", () => {
     it("should error when trying to use an account with more than three parts", () => {
       expect(() => {
@@ -341,7 +341,12 @@ describe("general", function () {
 
   describe("journal.void", () => {
     const book = new Book("MyBook-journal-void");
-    let journal;
+    let journal:
+      | (Document &
+          IJournal & {
+            _original_journal?: Types.ObjectId;
+          })
+      | null = null;
 
     before(async () => {
       await book
@@ -355,6 +360,7 @@ describe("general", function () {
         .credit("Income:Rent", 500)
         .commit();
     });
+
     it("should allow you to void a journal entry", async () => {
       if (!journal) {
         throw new Error("journal missing.");
@@ -394,6 +400,44 @@ describe("general", function () {
           throw new Error("Should have thrown.");
         })
         .catch((err) => err.message === "Journal already voided");
+    });
+
+    it("should create the correct memo fields when reason is given", async () => {
+      const journal = await book
+        .entry("Test Entry")
+        .debit("Assets:Receivable", 700)
+        .credit("Income:Rent", 700)
+        .commit();
+
+      const voidedJournal = await book.void(journal._id, "Void reason");
+
+      const updatedJournal = (await book.ledger({ _journal: journal._id }))
+        .results[0];
+
+      expect(updatedJournal.memo).to.be.equal("Test Entry");
+      expect(updatedJournal.void_reason).to.be.equal("Void reason");
+
+      expect(voidedJournal.memo).to.be.equal("Void reason");
+      expect(voidedJournal.void_reason).to.be.equal(undefined);
+    });
+
+    it("should create the correct memo fields when reason was not given", async () => {
+      const journal = await book
+        .entry("Test Entry")
+        .debit("Assets:Receivable", 700)
+        .credit("Income:Rent", 700)
+        .commit();
+
+      const voidedJournal = await book.void(journal._id);
+
+      const updatedJournal = (await book.ledger({ _journal: journal._id }))
+        .results[0];
+
+      expect(updatedJournal.memo).to.be.equal("Test Entry");
+      expect(updatedJournal.void_reason).to.be.equal("[VOID] Test Entry");
+
+      expect(voidedJournal.memo).to.be.equal("[VOID] Test Entry");
+      expect(voidedJournal.void_reason).to.be.equal(undefined);
     });
   });
 
