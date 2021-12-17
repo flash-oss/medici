@@ -1,6 +1,6 @@
 /* eslint sonarjs/no-duplicate-string: off, sonarjs/no-identical-functions: off */
 import { Book } from "../src/Book";
-import { assert, expect } from "chai";
+import { expect } from "chai";
 import * as mongoose from "mongoose";
 
 describe("ACID Transactions", function () {
@@ -26,7 +26,7 @@ describe("ACID Transactions", function () {
     }
 
     const result = await book.balance({ account: "X:Y" });
-    assert.strictEqual(result.balance, 0);
+    expect(result.balance).to.be.equal(0);
   });
 
   it("should persist data while using a session", async function () {
@@ -45,7 +45,7 @@ describe("ACID Transactions", function () {
     });
 
     const result = await book.balance({ account: "X:Y" });
-    assert.strictEqual(result.balance, 5);
+    expect(result.balance).to.be.equal(5);
   });
 
   it("should not persist data if we throw an Error while using a session", async function () {
@@ -75,11 +75,11 @@ describe("ACID Transactions", function () {
         }
       });
     } catch (e) {
-      assert((e as Error).message === "Not enough Balance.");
+      expect((e as Error).message).to.be.equal("Not enough Balance.");
     }
 
     const result = await book.balance({ account: "X:Y" });
-    assert.strictEqual(result.balance, 0);
+    expect(result.balance).to.be.equal(0);
   });
 
   it("should pass a stresstest when persisting data while using a session", async function () {
@@ -100,10 +100,7 @@ describe("ACID Transactions", function () {
       });
 
       const result = await book.balance({ account: "X:Y" });
-      if (result.balance !== 5) {
-        console.log(await book.ledger({ account: "X:Y" }));
-      }
-      assert.strictEqual(result.balance, 5);
+      expect(result.balance).to.be.equal(5);
     }
   });
 
@@ -128,7 +125,7 @@ describe("ACID Transactions", function () {
       });
 
       const result = await book.balance({ account: "X:Y" });
-      assert.strictEqual(result.balance, 0);
+      expect(result.balance).to.be.equal(0);
     }
   });
 
@@ -161,12 +158,12 @@ describe("ACID Transactions", function () {
           }
         });
       } catch (e) {
-        assert((e as Error).message === "Not enough Balance.");
+        expect((e as Error).message).to.be.equal("Not enough Balance.");
       }
     }
 
     const result = await book.balance({ account: "X:Y" });
-    assert.strictEqual(result.balance, 0);
+    expect(result.balance).to.be.equal(0);
   });
 
   it("should pass a stresstest for erroring when voiding", async function () {
@@ -190,12 +187,12 @@ describe("ACID Transactions", function () {
           throw new Error("Journaling failed.");
         });
       } catch (e) {
-        assert((e as Error).message === "Journaling failed.");
+        expect((e as Error).message).to.be.equal("Journaling failed.");
       }
       journal.voided = false;
     }
 
     const result = await book.balance({ account: "X:Y" });
-    assert.strictEqual(result.balance, 5);
+    expect(result.balance).to.be.equal(5);
   });
 });
