@@ -2,7 +2,7 @@
 import { Book } from "../src/Book";
 import { expect } from "chai";
 import * as mongoose from "mongoose";
-import { initModels } from "../src";
+import { initModels, mongoTransaction } from "../src";
 
 describe("acid", function () {
   before(async () => {
@@ -14,6 +14,33 @@ describe("acid", function () {
 
     try {
       await mongoose.connection.transaction(async (session) => {
+        await book
+          .entry("depth test")
+          .credit("X:Y:AUD", 1)
+          .credit("X:Y:EUR", 1)
+          .credit("X:Y:USD", 1)
+          .credit("X:Y:INR", 1)
+          // @ts-expect-error mongoose validator should throw an error
+          .credit("X:Y:CHF", 1, { timestamp: "invalid " })
+          .debit("CashAssets", 5)
+          .commit({ session });
+      });
+      throw new Error("should have thrown");
+    } catch (e) {
+      expect((e as Error).message).match(
+        /Medici_Transaction validation failed/
+      );
+    }
+
+    const result = await book.balance({ account: "X:Y" });
+    expect(result.balance).to.be.equal(0);
+  });
+
+  it("check if mongoTransaction is working as an alias", async function () {
+    const book = new Book("ACID" + Date.now());
+
+    try {
+      await mongoTransaction(async (session) => {
         await book
           .entry("depth test")
           .credit("X:Y:AUD", 1)

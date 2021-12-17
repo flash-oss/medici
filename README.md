@@ -313,6 +313,7 @@ For `medici_transactions` collection with 50000 documents:
 - **v5.0.0**
 
   - Add support for MongoDB sessions (aka ACID transactions). See `IOptions` type.
+  - Added a `mongoTransaction`-method, which is a convenience shortcut for `mongoose.connection.transaction`.
   - Added async helper method `initModels`, which initializes the underlying `transactionModel` and `journalModel`. Use this after you connected to  the MongoDB-Server if you want to use transactions. Or else you could get `Unable to read from a snapshot due to pending collection catalog changes; please retry the operation.`-Error when acquiring a session because the actual database-collection is still being created by the underlying mongoose-instance.
   - Node.js 12 is the lowest supported version. Although, 10 should still work fine, when using mongoose v5.
   - Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
