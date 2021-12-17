@@ -74,12 +74,14 @@ export function parseQuery(
   const keys = Object.keys(extra);
 
   for (i = 0, il = keys.length; i < il; i++) {
-    filterQuery[isValidTransactionKey(keys[i]) ? keys[i] : `meta.${keys[i]}`] =
-      typeof extra[keys[i]] === "string" &&
-      referenceRE.test(keys[i]) &&
-      isValidObjectId(extra[keys[i]])
-        ? new Types.ObjectId(extra[keys[i]] as string)
-        : extra[keys[i]];
+    const key = keys[i];
+    const value = extra[key];
+    filterQuery[isValidTransactionKey(key) ? key : `meta.${key}`] =
+      typeof value === "string" &&
+      referenceRE.test(key) &&
+      isValidObjectId(value)
+        ? new Types.ObjectId(value)
+        : value;
   }
 
   return filterQuery;
