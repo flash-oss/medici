@@ -1,5 +1,5 @@
 import { FilterQuery, isValidObjectId, Types } from "mongoose";
-import { Book } from "../Book";
+import type { Book } from "../Book";
 import { isValidTransactionKey, ITransaction } from "../models/transactions";
 import { parseAccountField } from "./parseAccountField";
 import { parseDateField } from "./parseDateField";

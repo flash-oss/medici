@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { Book } from "./Book";
+import type { Book } from "./Book";
 import {
   isValidTransactionKey,
   ITransaction,

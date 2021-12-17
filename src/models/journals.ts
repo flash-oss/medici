@@ -12,7 +12,7 @@ import {
   ITransaction,
   transactionModel,
 } from "./transactions";
-import { Book } from "../Book";
+import type { Book } from "../Book";
 import { handleVoidMemo } from "../helper/handleVoidMemo";
 import type { IAnyObject } from "../IAnyObject";
 import type { IOptions } from "../IOptions";
