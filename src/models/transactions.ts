@@ -1,4 +1,5 @@
 import { connection, Schema, model, Model, Types } from "mongoose";
+import { extractObjectIdKeysFromSchema } from "../helper/extractObjectIdKeysFromSchema";
 import type { IAnyObject } from "../IAnyObject";
 import type { IJournal } from "./journals";
 
@@ -65,6 +66,13 @@ export function isValidTransactionKey<T extends ITransaction = ITransaction>(
   return typeof value === "string" && transactionSchemaKeys.has(value);
 }
 
+let transactionSchemaObjectIdKeys: Set<string> =
+  extractObjectIdKeysFromSchema(transactionSchema);
+
+export function isTransactionObjectIdKey(value: unknown): boolean {
+  return typeof value === "string" && transactionSchemaObjectIdKeys.has(value);
+}
+
 export function setTransactionSchema(
   schema: Schema,
   collection?: string,
@@ -102,6 +110,7 @@ export function setTransactionSchema(
   transactionModel = model("Medici_Transaction", schema, collection);
 
   transactionSchemaKeys = new Set(Object.keys(schema.paths));
+  transactionSchemaObjectIdKeys = extractObjectIdKeysFromSchema(schema);
 }
 
 typeof connection.models["Medici_Transaction"] === "undefined" &&
