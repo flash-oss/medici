@@ -19,7 +19,7 @@ export class Book<
 
   constructor(
     name: string,
-    options = {} as { precision?: number; maxAccountPath: number }
+    options = {} as { precision?: number; maxAccountPath?: number }
   ) {
     this.name = name;
     this.precision =
