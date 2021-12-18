@@ -71,8 +71,10 @@ export class Entry<
       account_path = account_path.split(":");
     }
 
-    if (account_path.length > 3) {
-      throw new Error("Account path is too deep (maximum 3)");
+    if (account_path.length > this.book.maxAccountPath) {
+      throw new Error(
+        `Account path is too deep (maximum ${this.book.maxAccountPath})`
+      );
     }
 
     amount = typeof amount === "string" ? parseFloat(amount) : amount;

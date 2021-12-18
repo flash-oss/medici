@@ -27,7 +27,7 @@ const referenceRE = /(?:^_|_id$)/;
  */
 export function parseQuery(
   query: IParseQuery & IPaginationQuery,
-  book: Pick<Book, "name">
+  book: Pick<Book, "name"> & Partial<Pick<Book, "maxAccountPath">>
 ): FilterQuery<ITransaction> {
   let i, il;
 
@@ -39,7 +39,7 @@ export function parseQuery(
   const filterQuery: FilterQuery<ITransaction> = {
     book: book.name,
     approved: approved !== false,
-    ...parseAccountField(account),
+    ...parseAccountField(account, book.maxAccountPath),
   };
 
   if (start_date || end_date) {

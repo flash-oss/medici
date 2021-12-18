@@ -3,6 +3,7 @@
 	"all": true,
 	"exclude": [
 		"build",
+		"bench",
 		"coverage",
 		"dist",
 		"spec",

@@ -15,11 +15,16 @@ export class Book<
 > {
   name: string;
   precision: number;
+  maxAccountPath: number;
 
-  constructor(name: string, options = {} as { precision?: number }) {
+  constructor(
+    name: string,
+    options = {} as { precision?: number; maxAccountPath: number }
+  ) {
     this.name = name;
     this.precision =
       typeof options.precision === "number" ? options.precision : 7;
+    this.maxAccountPath = options.maxAccountPath || 3;
   }
 
   entry(
@@ -40,7 +45,7 @@ export class Book<
       skip = { $skip: (query.page ? query.page - 1 : 0) * query.perPage };
     }
     const match: PipelineStage.Match = {
-      $match: parseQuery(query, { name: this.name }),
+      $match: parseQuery(query, this),
     };
 
     const group: PipelineStage.Group = {
@@ -116,7 +121,7 @@ export class Book<
       skip = (query.page ? query.page - 1 : 0) * query.perPage;
       limit = query.perPage;
     }
-    const filterQuery = parseQuery(query, { name: this.name });
+    const filterQuery = parseQuery(query, this);
     const q = transactionModel
       .find(filterQuery, undefined, options)
       .lean(lean)

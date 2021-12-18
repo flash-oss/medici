@@ -2,7 +2,8 @@ import type { FilterQuery } from "mongoose";
 import type { ITransaction } from "../models/transactions";
 
 export function parseAccountField(
-  account: string | string[] | undefined
+  account: string | string[] | undefined,
+  maxAccountPath = 3
 ): FilterQuery<ITransaction> {
   const filterQuery: FilterQuery<ITransaction> = {};
   let i, il, j, jl;
@@ -21,6 +22,11 @@ export function parseAccountField(
         filterQuery["$or"][i][`account_path.${j}`] = accounts[j];
       }
     }
+  } else if (
+    typeof account === "string" &&
+    account.split(":").length === maxAccountPath
+  ) {
+    filterQuery.accounts = account;
   } else if (typeof account === "string") {
     const accounts = account.split(":");
     for (i = 0, il = accounts.length; i < il; i++) {

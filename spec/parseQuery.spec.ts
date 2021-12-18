@@ -104,15 +104,25 @@ describe("parseQuery", () => {
     expect(result["account_path.1"]).to.be.equal("Gold");
   });
 
+  it("should handle account with two path parts and maxAccountPath = 2 correctly", () => {
+    const account = "Assets:Gold";
+    const result = parseQuery(
+      { account },
+      { name: "MyBook", maxAccountPath: 2 }
+    );
+    expect(Object.keys(result)).to.have.lengthOf(3);
+    expect(result.book).to.be.equal("MyBook");
+    expect(result.approved).to.be.equal(true);
+    expect(result.accounts).to.be.equal("Assets:Gold");
+  });
+
   it("should handle account with three path parts correctly", () => {
     const account = "Assets:Gold:Swiss";
     const result = parseQuery({ account }, { name: "MyBook" });
-    expect(Object.keys(result)).to.have.lengthOf(5);
+    expect(Object.keys(result)).to.have.lengthOf(3);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
-    expect(result["account_path.0"]).to.be.equal("Assets");
-    expect(result["account_path.1"]).to.be.equal("Gold");
-    expect(result["account_path.2"]).to.be.equal("Swiss");
+    expect(result.accounts).to.be.equal("Assets:Gold:Swiss");
   });
 
   it("should handle account array with one path part correctly", () => {
