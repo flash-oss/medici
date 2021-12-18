@@ -38,7 +38,7 @@ let replSet: MongoMemoryReplSet;
         .debit("Assets:Receivable", 700)
         .credit("Income:Rent", 700)
         .commit({ session });
-    })
+    });
 
     i % 100 === 0 && console.log(i);
   }

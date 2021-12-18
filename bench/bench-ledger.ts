@@ -38,7 +38,7 @@ let replSet: MongoMemoryReplSet;
         .debit("Assets:Receivable", 700)
         .credit("Income:Rent", 700)
         .commit({ session });
-    })
+    });
 
     i % 100 === 0 && console.log(i);
   }
@@ -46,11 +46,14 @@ let replSet: MongoMemoryReplSet;
   console.log("start benchmark");
   let start = Date.now();
   for (let i = 0; i < 1000; i++) {
-    await book.ledger({
-      account: "Income:Rent",
-      perPage: 34,
-      page: 5
-    }, null);
+    await book.ledger(
+      {
+        account: "Income:Rent",
+        perPage: 34,
+        page: 5,
+      },
+      null
+    );
     i % 100 === 0 && console.log(i);
   }
 

@@ -38,22 +38,11 @@ export class Book<
 
     if (query.perPage) {
       skip = { $skip: (query.page ? query.page - 1 : 0) * query.perPage };
-
-      delete query.perPage;
-      delete query.page;
     }
     const match: PipelineStage.Match = {
       $match: parseQuery(query, { name: this.name }),
     };
 
-    const project: PipelineStage.Project = {
-      $project: {
-        debit: "$debit",
-        credit: "$credit",
-        datetime: "$datetime",
-        timestamp: "$timestamp",
-      },
-    };
     const group: PipelineStage.Group = {
       $group: {
         // https://github.com/Automattic/mongoose/pull/11104
@@ -79,14 +68,12 @@ export class Book<
       };
       result = (
         await transactionModel
-          .aggregate([match, project, sort, skip, group], options)
+          .aggregate([match, sort, skip, group], options)
           .exec()
       )[0];
     } else {
       result = (
-        await transactionModel
-          .aggregate([match, project, group], options)
-          .exec()
+        await transactionModel.aggregate([match, group], options).exec()
       )[0];
     }
     return !result
