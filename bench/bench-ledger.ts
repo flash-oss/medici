@@ -32,13 +32,11 @@ let replSet: MongoMemoryReplSet;
 
   for (let i = 0; i < 5000; i++) {
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
-    await mongoose.connection.transaction(async (session) => {
-      await book
-        .entry(`Test Entry ${i}`, threeDaysAgo)
-        .debit("Assets:Receivable", 700)
-        .credit("Income:Rent", 700)
-        .commit({ session });
-    });
+    await book
+      .entry(`Test Entry ${i}`, threeDaysAgo)
+      .debit("Assets:Receivable", 700)
+      .credit("Income:Rent", 700)
+      .commit();
 
     i % 100 === 0 && console.log(i);
   }
