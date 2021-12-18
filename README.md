@@ -205,8 +205,13 @@ MyTransactionSchema = {
   },
 };
 
+// add an index to the Schema
+MyTransactionSchema.index({ void: 1, void_reason: 1 });
+
+// assign the Schema to the Model
 setTransactionSchema(MyTransactionSchema, undefined, { defaultIndexes: true });
 
+// Enforce the index 'void_1_void_reason_1'
 await syncIndexes({ background: false });
 ```
 
