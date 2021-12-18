@@ -6,8 +6,10 @@ import { IAnyObject } from "../src/IAnyObject";
 import { IJournal } from "../src/models/journals";
 import {
   setTransactionSchema,
+  transactionModel,
   transactionSchema,
 } from "../src/models/transactions";
+import { syncIndexes } from "../src/helper/syncIndexes";
 
 export interface ITransactionNew {
   _id: Types.ObjectId;
@@ -29,7 +31,8 @@ export interface ITransactionNew {
 }
 
 describe("setTransactionSchema", () => {
-  it("should return full ledger with populated _journal2", async () => {
+  it("should return full ledger with populated _journal2", async function () {
+    this.timeout(10000);
     const newTransactionSchema = new Schema<ITransactionNew>(
       {
         credit: Number,
@@ -63,7 +66,22 @@ describe("setTransactionSchema", () => {
       },
       { id: false, versionKey: false, timestamps: false }
     );
-    setTransactionSchema(newTransactionSchema);
+
+    newTransactionSchema.index({
+      voided: 1,
+      void_reason: 1,
+    });
+
+    setTransactionSchema(newTransactionSchema, undefined, {
+      defaultIndexes: false,
+    });
+
+    const diffIndexesBefore = await transactionModel.diffIndexes();
+    expect(diffIndexesBefore.toDrop).to.have.lengthOf(5);
+    expect(diffIndexesBefore.toCreate[0]).to.be.eql({
+      voided: 1,
+      void_reason: 1,
+    });
 
     const book = new Book<ITransactionNew>("MyBook-TransactionSchema");
 
@@ -95,6 +113,8 @@ describe("setTransactionSchema", () => {
     expect(res.results[1]._journal2._id.toString()).to.be.equal(
       journal._id.toString()
     );
+
     setTransactionSchema(transactionSchema);
+    syncIndexes({ background: true });
   });
 });

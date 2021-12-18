@@ -65,31 +65,39 @@ export function isValidTransactionKey<T extends ITransaction = ITransaction>(
   return typeof value === "string" && transactionSchemaKeys.has(value);
 }
 
-export function setTransactionSchema(schema: Schema, collection?: string) {
+export function setTransactionSchema(
+  schema: Schema,
+  collection?: string,
+  options = {} as { defaultIndexes: boolean }
+) {
+  const { defaultIndexes: defaultIndexes = true } = options;
+
   delete connection.models["Medici_Transaction"];
 
-  schema.index({ _journal: 1 });
-  schema.index({
-    accounts: 1,
-    book: 1,
-    approved: 1,
-    datetime: -1,
-    timestamp: -1,
-  });
-  schema.index({ "account_path.0": 1, book: 1, approved: 1 });
-  schema.index({
-    "account_path.0": 1,
-    "account_path.1": 1,
-    book: 1,
-    approved: 1,
-  });
-  schema.index({
-    "account_path.0": 1,
-    "account_path.1": 1,
-    "account_path.2": 1,
-    book: 1,
-    approved: 1,
-  });
+  if (defaultIndexes) {
+    schema.index({ _journal: 1 });
+    schema.index({
+      accounts: 1,
+      book: 1,
+      approved: 1,
+      datetime: -1,
+      timestamp: -1,
+    });
+    schema.index({ "account_path.0": 1, book: 1, approved: 1 });
+    schema.index({
+      "account_path.0": 1,
+      "account_path.1": 1,
+      book: 1,
+      approved: 1,
+    });
+    schema.index({
+      "account_path.0": 1,
+      "account_path.1": 1,
+      "account_path.2": 1,
+      book: 1,
+      approved: 1,
+    });
+  }
 
   transactionModel = model("Medici_Transaction", schema, collection);
 
