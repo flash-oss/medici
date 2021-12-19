@@ -7,5 +7,11 @@ export { mongoTransaction } from "./helper/mongoTransaction";
 export { initModels } from "./helper/initModels";
 export { syncIndexes } from "./helper/syncIndexes";
 
+export { BookConstructorError } from "./errors/BookConstructorError";
+export { InvalidAccountPathLengthError } from "./errors/InvalidAccountPathLengthError";
+export { JournalAlreadyVoidedError } from "./errors/JournalAlreadyVoidedError";
+export { JournalNotFoundError } from "./errors/JournalNotFoundError";
+export { TransactionError } from "./errors/TransactionError";
+
 export { Book, Entry };
 export default Book;
