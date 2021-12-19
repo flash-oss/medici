@@ -16,6 +16,7 @@ import type { Book } from "../Book";
 import { handleVoidMemo } from "../helper/handleVoidMemo";
 import type { IAnyObject } from "../IAnyObject";
 import type { IOptions } from "../IOptions";
+import { JournalAlreadyVoidedError } from "../errors/JournalAlreadyVoidedError";
 
 export interface IJournal {
   _id: Types.ObjectId;
@@ -65,7 +66,7 @@ const voidJournal = async function (
   options: IOptions
 ) {
   if (this.voided === true) {
-    throw new Error("Journal already voided");
+    throw new JournalAlreadyVoidedError();
   }
 
   reason = handleVoidMemo(reason, this.memo);

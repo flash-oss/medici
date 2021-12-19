@@ -1,6 +1,6 @@
 import { Entry } from "./Entry";
 import { IPaginationQuery, IParseQuery, parseQuery } from "./helper/parseQuery";
-import { IJournal, journalModel, TJournalDocument } from "./models/journals";
+import { IJournal, journalModel } from "./models/journals";
 import {
   isValidTransactionKey,
   ITransaction,
@@ -8,6 +8,8 @@ import {
 } from "./models/transactions";
 import type { IOptions } from "./IOptions";
 import type { Document, PipelineStage, Types } from "mongoose";
+import { JournalNotFoundError } from "./errors/JournalNotFoundError";
+import { BookConstructorError } from "./errors/BookConstructorError";
 
 export class Book<
   U extends ITransaction = ITransaction,
@@ -30,7 +32,7 @@ export class Book<
         : 3;
 
     if (typeof this.name !== "string" || this.name.trim().length === 0) {
-      throw new Error("Invalid value for name provided.");
+      throw new BookConstructorError("Invalid value for name provided.");
     }
 
     if (
@@ -38,7 +40,7 @@ export class Book<
       !Number.isInteger(this.precision) ||
       this.precision < 0
     ) {
-      throw new Error("Invalid value for precision provided.");
+      throw new BookConstructorError("Invalid value for precision provided.");
     }
 
     if (
@@ -46,7 +48,9 @@ export class Book<
       !Number.isInteger(this.maxAccountPath) ||
       this.maxAccountPath < 0
     ) {
-      throw new Error("Invalid value for maxAccountPath provided.");
+      throw new BookConstructorError(
+        "Invalid value for maxAccountPath provided."
+      );
     }
   }
 
@@ -176,13 +180,24 @@ export class Book<
   }
 
   async void(
-    journal_id: string,
+    journal_id: string | Types.ObjectId,
     reason?: undefined | string,
     options = {} as IOptions
   ) {
-    const journal: TJournalDocument<J> = (await journalModel
-      .findById(journal_id, undefined, options)
-      .exec()) as unknown as TJournalDocument<J>;
+    const journal = await journalModel
+      .findOne(
+        {
+          _id: journal_id,
+          book: this.name,
+        },
+        undefined,
+        options
+      )
+      .exec();
+
+    if (journal === null) {
+      throw new JournalNotFoundError();
+    }
 
     return journal.void(this, reason, options);
   }

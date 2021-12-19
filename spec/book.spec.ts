@@ -5,6 +5,7 @@ import { IJournal } from "../src/models/journals";
 import { expect } from "chai";
 import { stub, spy } from "sinon";
 import { transactionModel } from "../src/models/transactions";
+import { JournalNotFoundError } from "../src/errors/JournalNotFoundError";
 
 describe("book", function () {
   describe("constructor", () => {
@@ -406,6 +407,31 @@ describe("book", function () {
         .commit();
     });
 
+    it("should throw an JournalNotFoundError if journal does not exist", async () => {
+      try {
+        await book.void(new Types.ObjectId());
+        throw new Error("Should have thrown.");
+      } catch (e) {
+        expect(e).to.be.instanceOf(JournalNotFoundError);
+      }
+    });
+
+    it("should throw an JournalNotFoundError if journal does not exist in book", async () => {
+      const anotherBook = new Book("AnotherBook");
+
+      const anotherJournal = await anotherBook
+        .entry("Test Entry")
+        .debit("Assets:Receivable", 700)
+        .credit("Income:Rent", 700)
+        .commit();
+      try {
+        await book.void(anotherJournal._id);
+        throw new Error("Should have thrown.");
+      } catch (e) {
+        expect(e).to.be.instanceOf(JournalNotFoundError);
+      }
+    });
+
     it("should allow you to void a journal entry", async () => {
       if (!journal) {
         throw new Error("journal missing.");
@@ -434,17 +460,16 @@ describe("book", function () {
       expect(data2.balance).to.be.equal(0);
     });
 
-    it("should throw an error if journal was already voided", () => {
+    it("should throw an error if journal was already voided", async () => {
       if (!journal) {
         throw new Error("journal missing.");
       }
-      const book = new Book("MyBook");
-      book
-        .void(journal._id, "Messed up")
-        .then(() => {
-          throw new Error("Should have thrown.");
-        })
-        .catch((err) => err.message === "Journal already voided");
+      try {
+        await book.void(journal._id, "Messed up");
+        throw new Error("Should have thrown.");
+      } catch (e) {
+        expect((e as Error).message).to.be.equal("Journal already voided.");
+      }
     });
 
     it("should create the correct memo fields when reason is given", async () => {

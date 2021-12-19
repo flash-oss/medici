@@ -5,11 +5,12 @@ import {
   ITransaction,
   transactionModel,
 } from "./models/transactions";
-import { TransactionError } from "./TransactionError";
+import { TransactionError } from "./errors/TransactionError";
 import { IJournal, journalModel, TJournalDocument } from "./models/journals";
 import { isPrototypeAttribute } from "./helper/isPrototypeAttribute";
 import type { IOptions } from "./IOptions";
 import type { IAnyObject } from "./IAnyObject";
+import { InvalidAccountPathLengthError } from "./errors/InvalidAccountPathLengthError";
 
 export class Entry<
   U extends ITransaction = ITransaction,
@@ -72,7 +73,7 @@ export class Entry<
     }
 
     if (account_path.length > this.book.maxAccountPath) {
-      throw new Error(
+      throw new InvalidAccountPathLengthError(
         `Account path is too deep (maximum ${this.book.maxAccountPath})`
       );
     }
@@ -176,7 +177,10 @@ export class Entry<
           );
         }
       }
-      throw new Error(`Failure to save journal: ${(err as Error).message}`);
+      throw new TransactionError(
+        `Failure to save journal: ${(err as Error).message}`,
+        total
+      );
     }
   }
 }
