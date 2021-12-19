@@ -91,6 +91,10 @@ export function setTransactionSchema(
       datetime: -1,
       timestamp: -1,
     });
+    schema.index({
+      datetime: -1,
+      timestamp: -1,
+    });
     schema.index({ "account_path.0": 1, book: 1, approved: 1 });
     schema.index({
       "account_path.0": 1,

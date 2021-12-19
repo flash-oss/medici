@@ -254,6 +254,13 @@ Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [fol
     "approved": 1
 ```
 
+Added in version 5:
+
+```
+    "datetime": -1,
+    "timestamp": -1
+```
+
 However, if you are doing lots of queries using the `meta` data (which is a typical scenario) you probably would want to add the following index(es):
 
 ```
@@ -319,14 +326,15 @@ For `medici_transactions` collection with 50000 documents:
 
 - **v5.0.0**
 
-  - Add support for MongoDB sessions (aka ACID transactions). See `IOptions` type.
+  - The project was rewritten with TypeScript. Types are provided within the package now.
+  - Added support for MongoDB sessions (aka ACID transactions). See `IOptions` type.
   - Added a `mongoTransaction`-method, which is a convenience shortcut for `mongoose.connection.transaction`.
   - Added async helper method `initModels`, which initializes the underlying `transactionModel` and `journalModel`. Use this after you connected to  the MongoDB-Server if you want to use transactions. Or else you could get `Unable to read from a snapshot due to pending collection catalog changes; please retry the operation.`-Error when acquiring a session because the actual database-collection is still being created by the underlying mongoose-instance.
   - Node.js 12 is the lowest supported version. Although, 10 should still work fine, when using mongoose v5.
   - Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
   - MongoDB 4 and above is supported. You can still use MongoDB 3, but ACID-sessions could have issues.
   - You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
-  - The project was rewritten with TypeScript. Types are provided within the package now.
+  - Added a new index on the transactionModel to improve paginated ledger queries.
   - `.ledger()` returns lean Transaction-Objects for better performance. To retrieve hydrated Transaction-Objects, set lean to false in the third parameter of `.ledger()`. It is recommended to not hydrate the transactions, as it implies that the transactions could be manipulated and the data integrity of Medici could be risked. 
   - You can now specify the `precision`. Book now accepts an optional second parameter, where you can set the `precision` used internally by Medici. Default value is 7 digits precision. Javascript has issues with floating points precision and can only handle 16 digits precision, like 0.1 + 0.2 results in 0.30000000000000004 and not 0.3. The default precision of 7 digits after decimal, results in the correct result of 0.1 + 0.2 = 0.3. The default value is taken from medici version 4.0.2. Be careful, if you use currency, which has more decimal points, e.g. Bitcoin has a precision of 8 digits after the comma. So for Bitcoin you should set the precision to 8. You can enforce an "only-Integer"-mode, by setting the precision to 0. But keep in mind that Javascript has a max safe integer limit of 9007199254740991.
   - Added `setJournalSchema` and `setTransactionSchema` to use custom Schemas. It will ensure, that all relevant middlewares and methods are also added when using custom Schemas. Use `syncIndexes`-method from medici after setTransactionSchema to enforce the defined indexes on the models.

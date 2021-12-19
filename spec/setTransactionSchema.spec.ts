@@ -77,7 +77,7 @@ describe("setTransactionSchema", () => {
     });
 
     const diffIndexesBefore = await transactionModel.diffIndexes();
-    expect(diffIndexesBefore.toDrop).to.have.lengthOf(5);
+    expect(diffIndexesBefore.toDrop).to.have.lengthOf(6);
     expect(diffIndexesBefore.toCreate[0]).to.be.eql({
       voided: 1,
       void_reason: 1,
