@@ -10,16 +10,24 @@ export function parseAccountField(
 
   if (Array.isArray(account) && account.length === 1) {
     const accounts = account[0].split(":");
-    for (i = 0, il = accounts.length; i < il; i++) {
-      filterQuery[`account_path.${i}`] = accounts[i];
+    if (accounts.length === maxAccountPath) {
+      filterQuery.accounts = account[0];
+    } else {
+      for (i = 0, il = accounts.length; i < il; i++) {
+        filterQuery[`account_path.${i}`] = accounts[i];
+      }
     }
   } else if (Array.isArray(account)) {
     filterQuery["$or"] = new Array(account.length);
     for (i = 0, il = account.length; i < il; i++) {
       const accounts = account[i].split(":");
       filterQuery["$or"][i] = {};
-      for (j = 0, jl = accounts.length; j < jl; j++) {
-        filterQuery["$or"][i][`account_path.${j}`] = accounts[j];
+      if (accounts.length === maxAccountPath) {
+        filterQuery["$or"][i][`accounts`] = account[i];
+      } else {
+        for (j = 0, jl = accounts.length; j < jl; j++) {
+          filterQuery["$or"][i][`account_path.${j}`] = accounts[j];
+        }
       }
     }
   } else if (

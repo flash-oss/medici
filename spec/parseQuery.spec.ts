@@ -153,31 +153,35 @@ describe("parseQuery", () => {
     expect(result["$or"]![1]["account_path.1"]).to.be.equal("Gold");
   });
 
-  it("should handle account array with two path parts correctly", () => {
+  it("should handle account array with three path parts correctly", () => {
     const account = ["Assets:Gold:Swiss", "Expenses:Gold:Swiss"];
     const result = parseQuery({ account }, { name: "MyBook" });
     expect(Object.keys(result)).to.have.lengthOf(3);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
     expect(result["$or"]).to.have.lengthOf(2);
-    expect(Object.keys(result["$or"]![0])).to.have.lengthOf(3);
-    expect(Object.keys(result["$or"]![1])).to.have.lengthOf(3);
-    expect(result["$or"]![0]["account_path.0"]).to.be.equal("Assets");
-    expect(result["$or"]![0]["account_path.1"]).to.be.equal("Gold");
-    expect(result["$or"]![0]["account_path.2"]).to.be.equal("Swiss");
-    expect(result["$or"]![1]["account_path.0"]).to.be.equal("Expenses");
-    expect(result["$or"]![1]["account_path.1"]).to.be.equal("Gold");
-    expect(result["$or"]![1]["account_path.2"]).to.be.equal("Swiss");
+    expect(Object.keys(result["$or"]![0])).to.have.lengthOf(1);
+    expect(Object.keys(result["$or"]![1])).to.have.lengthOf(1);
+    expect(result["$or"]![0]["accounts"]).to.be.equal("Assets:Gold:Swiss");
+    expect(result["$or"]![1]["accounts"]).to.be.equal("Expenses:Gold:Swiss");
+  });
+
+  it("should handle account array with one item and two path parts correctly", () => {
+    const account = ["Assets:Gold"];
+    const result = parseQuery({ account }, { name: "MyBook" });
+    expect(Object.keys(result)).to.have.lengthOf(4);
+    expect(result.book).to.be.equal("MyBook");
+    expect(result.approved).to.be.equal(true);
+    expect(result["account_path.0"]).to.be.equal("Assets");
+    expect(result["account_path.1"]).to.be.equal("Gold");
   });
 
   it("should handle account array with one item and three path parts correctly", () => {
     const account = ["Assets:Gold:Swiss"];
     const result = parseQuery({ account }, { name: "MyBook" });
-    expect(Object.keys(result)).to.have.lengthOf(5);
+    expect(Object.keys(result)).to.have.lengthOf(3);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);
-    expect(result["account_path.0"]).to.be.equal("Assets");
-    expect(result["account_path.1"]).to.be.equal("Gold");
-    expect(result["account_path.2"]).to.be.equal("Swiss");
+    expect(result["accounts"]).to.be.equal("Assets:Gold:Swiss");
   });
 });
