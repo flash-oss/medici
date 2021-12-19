@@ -52,11 +52,10 @@ export class Book<
       $group: {
         // https://github.com/Automattic/mongoose/pull/11104
         _id: null as any,
-        credit: {
-          $sum: "$credit",
-        },
-        debit: {
-          $sum: "$debit",
+        balance: {
+          $sum: {
+            $subtract: ["$credit", "$debit"],
+          },
         },
         count: {
           $sum: 1,
@@ -87,9 +86,7 @@ export class Book<
           notes: 0,
         }
       : {
-          balance: parseFloat(
-            (result.credit - result.debit).toFixed(this.precision)
-          ),
+          balance: parseFloat(result.balance.toFixed(this.precision)),
           notes: result.count,
         };
   }

@@ -78,7 +78,7 @@ export function setTransactionSchema(
   collection?: string,
   options = {} as { defaultIndexes: boolean }
 ) {
-  const { defaultIndexes: defaultIndexes = true } = options;
+  const { defaultIndexes = true } = options;
 
   delete connection.models["Medici_Transaction"];
 
