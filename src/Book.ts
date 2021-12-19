@@ -23,8 +23,31 @@ export class Book<
   ) {
     this.name = name;
     this.precision =
-      typeof options.precision === "number" ? options.precision : 7;
-    this.maxAccountPath = options.maxAccountPath || 3;
+      typeof options.precision !== "undefined" ? options.precision : 7;
+    this.maxAccountPath =
+      typeof options.maxAccountPath !== "undefined"
+        ? options.maxAccountPath
+        : 3;
+
+    if (typeof this.name !== "string" || this.name.trim().length === 0) {
+      throw new Error("Invalid value for name provided.");
+    }
+
+    if (
+      typeof this.precision !== "number" ||
+      !Number.isInteger(this.precision) ||
+      this.precision < 0
+    ) {
+      throw new Error("Invalid value for precision provided.");
+    }
+
+    if (
+      typeof this.maxAccountPath !== "number" ||
+      !Number.isInteger(this.maxAccountPath) ||
+      this.maxAccountPath < 0
+    ) {
+      throw new Error("Invalid value for maxAccountPath provided.");
+    }
   }
 
   entry(

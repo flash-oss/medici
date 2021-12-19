@@ -7,6 +7,51 @@ import { stub, spy } from "sinon";
 import { transactionModel } from "../src/models/transactions";
 
 describe("book", function () {
+  describe("constructor", () => {
+    it("should throw an error when name of book is not a string", () => {
+      // @ts-expect-error we need a string
+      expect(() => new Book(1337)).to.throw("Invalid value for name provided.");
+    });
+    it("should throw an error when name of book is empty string", () => {
+      expect(() => new Book("")).to.throw("Invalid value for name provided.");
+    });
+    it("should throw an error when name of book is a string with only whitespace", () => {
+      expect(() => new Book(" ")).to.throw("Invalid value for name provided.");
+    });
+    it("should throw an error when maxAccountPath of book is a fraction", () => {
+      expect(() => new Book("MyBook", { maxAccountPath: 3.14 })).to.throw(
+        "Invalid value for maxAccountPath provided."
+      );
+    });
+    it("should throw an error when maxAccountPath of book is a negative number", () => {
+      expect(() => new Book("MyBook", { maxAccountPath: -3 })).to.throw(
+        "Invalid value for maxAccountPath provided."
+      );
+    });
+    it("should throw an error when maxAccountPath of book is not a number", () => {
+      // @ts-expect-error we need a number
+      expect(() => new Book("MyBook", { maxAccountPath: "7" })).to.throw(
+        "Invalid value for maxAccountPath provided."
+      );
+    });
+    it("should throw an error when precision of book is a fraction", () => {
+      expect(() => new Book("MyBook", { precision: 3.14 })).to.throw(
+        "Invalid value for precision provided."
+      );
+    });
+    it("should throw an error when precision of book is a negative number", () => {
+      expect(() => new Book("MyBook", { precision: -3 })).to.throw(
+        "Invalid value for precision provided."
+      );
+    });
+    it("should throw an error when precision of book is not a number", () => {
+      // @ts-expect-error we need a number
+      expect(() => new Book("MyBook", { precision: "7" })).to.throw(
+        "Invalid value for precision provided."
+      );
+    });
+  });
+
   describe("journaling", () => {
     it("should error when trying to use an account with more than three parts", () => {
       expect(() => {
