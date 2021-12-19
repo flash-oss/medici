@@ -314,6 +314,28 @@ db.getCollection("medici_transactions").createIndex({
 }, {background: true})
 ```
 
+Keep in mind, that the order of the fields in the Index is important. Always sort them by cardinality. E.g. If your Accounts are like "Expenses:Salary:Employee1","Expenses:Salary:Employee2" etc. then the cardinality of the last account-path is bigger than from the first part. So you would order the fields in the indexes like this:
+
+```
+    "account_path.2": 1,
+    "account_path.1": 1,
+    "account_path.0": 1,
+    "book": 1,
+    "approved": 1
+```
+
+But if your Accounts are like "Employee1:Expenses:Salary", "Employee2:Expenses:Salary" than the cardinality of the first part is bigger. So you would order the fields in the indexes like this (=default Indexes):
+
+```
+    "account_path.0": 1,
+    "account_path.1": 1,
+    "account_path.2": 1,
+    "book": 1,
+    "approved": 1
+```
+
+For more information, see [Performance Best Practices: Indexing](https://www.mongodb.com/blog/post/performance-best-practices-indexing)
+
 #### Index memory consumption example
 
 For `medici_transactions` collection with 50000 documents:
