@@ -264,6 +264,44 @@ describe("book", function () {
 
       const book = new Book("MyBookPendingTransactions");
 
+      it("should by default not include not approved transactions in ledger", async () => {
+        const book = new Book("MyBookPendingTransactionsLedger");
+        await book
+          .entry("Test Entry")
+          .debit("Foo", 500)
+          .credit("Bar", 500)
+          .setApproved(false)
+          .commit();
+        const fooLedger = await book.ledger({
+          account: "Foo",
+        });
+        expect(fooLedger.results).to.have.lengthOf(0);
+        const barLedger = await book.ledger({
+          account: "Bar",
+        });
+        expect(barLedger.results).to.be.lengthOf(0);
+      });
+
+      it("should by default not include not approved transactions in ledger", async () => {
+        const book = new Book("MyBookPendingTransactionsLedger-2");
+        await book
+          .entry("Test Entry")
+          .debit("Foo", 500)
+          .credit("Bar", 500)
+          .setApproved(false)
+          .commit();
+        const fooLedger = await book.ledger({
+          account: "Foo",
+          approved: false,
+        });
+        expect(fooLedger.results).to.have.lengthOf(1);
+        const barLedger = await book.ledger({
+          account: "Bar",
+          approved: false,
+        });
+        expect(barLedger.results).to.be.lengthOf(1);
+      });
+
       it("should not include pending transactions in balance", async () => {
         pendingJournal = await book
           .entry("Test Entry")
