@@ -81,7 +81,7 @@ const preSave: PreSaveMiddlewareFunction<ITransaction & Document> =
     }
 
     if (
-      this.$locals.lock &&
+      !this.$locals.lock ||
       (this.$locals.lock as string[]).indexOf(this.accounts) === -1
     ) {
       return next();
