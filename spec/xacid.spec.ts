@@ -319,7 +319,7 @@ describe("acid", function () {
       }
     }
 
-    const res = await Promise.allSettled([
+    await Promise.allSettled([
       mongoose.connection.transaction(async (session) => {
         await spendOne(session, "concurrent", 0);
       }),
