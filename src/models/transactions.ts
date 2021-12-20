@@ -94,7 +94,7 @@ const preSave: PreSaveMiddlewareFunction<ITransaction & Document> =
 
     await lockModel.collection.updateOne(
       { account, book },
-      { $inc: { __v: 1 } },
+      { $setOnInsert: { book, account }, $inc: { __v: 1 } },
       { upsert: true, session }
     );
     return next();
