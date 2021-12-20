@@ -352,19 +352,20 @@ For `medici_transactions` collection with 50000 documents:
   - Added support for MongoDB sessions (aka ACID transactions). See `IOptions` type.
   - Added a `mongoTransaction`-method, which is a convenience shortcut for `mongoose.connection.transaction`.
   - Added async helper method `initModels`, which initializes the underlying `transactionModel` and `journalModel`. Use this after you connected to  the MongoDB-Server if you want to use transactions. Or else you could get `Unable to read from a snapshot due to pending collection catalog changes; please retry the operation.`-Error when acquiring a session because the actual database-collection is still being created by the underlying mongoose-instance.
-  - Node.js 12 is the lowest supported version. Although, 10 should still work fine, when using mongoose v5.
-  - Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
+  -  **BREAKING**: Node.js 12 is the lowest supported version. Although, 10 should still work fine, when using mongoose v5.
+  -  **BREAKING**: You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
+Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
   - MongoDB 4 and above is supported. You can still use MongoDB 3, but ACID-sessions could have issues.
-  - You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
-  - Added a new index on the transactionModel to improve paginated ledger queries.
-  - `.ledger()` returns lean Transaction-Objects for better performance. To retrieve hydrated Transaction-Objects, set lean to false in the third parameter of `.ledger()`. It is recommended to not hydrate the transactions, as it implies that the transactions could be manipulated and the data integrity of Medici could be risked. 
+  -  **BREAKING**: You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
+  - Added a new index on the transactionModel to improve the performance of paginated ledger queries.
+  -  **BREAKING**: `.ledger()` returns lean Transaction-Objects for better performance. To retrieve hydrated Transaction-Objects, set lean to false in the third parameter of `.ledger()`. It is recommended to not hydrate the transactions, as it implies that the transactions could be manipulated and the data integrity of Medici could be risked. 
   - You can now specify the `precision`. Book now accepts an optional second parameter, where you can set the `precision` used internally by Medici. Default value is 7 digits precision. Javascript has issues with floating points precision and can only handle 16 digits precision, like 0.1 + 0.2 results in 0.30000000000000004 and not 0.3. The default precision of 7 digits after decimal, results in the correct result of 0.1 + 0.2 = 0.3. The default value is taken from medici version 4.0.2. Be careful, if you use currency, which has more decimal points, e.g. Bitcoin has a precision of 8 digits after the comma. So for Bitcoin you should set the precision to 8. You can enforce an "only-Integer"-mode, by setting the precision to 0. But keep in mind that Javascript has a max safe integer limit of 9007199254740991.
   - Added `maxAccountPath`. You can set the maximum amount of account paths via the second parameter of Book. This can improve the performance of `.balance()` and `.ledger()` calls as it will then use the accounts attribute of the transactions as a filter.
-  - Added validation for `name` of Book, `maxAccountPath` and `precision`. A `name` has to be not an empty string or a string containing only whitespaces. `precision` has to be an integer bigger or equal 0. `maxAccountPath` has to be an integer bigger or equal 0. 
+  -  **BREAKING**: Added validation for `name` of Book, `maxAccountPath` and `precision`. A `name` has to be not an empty string or a string containing only whitespace characters. `precision` has to be an integer bigger or equal 0. `maxAccountPath` has to be an integer bigger or equal 0. 
   - Added `setJournalSchema` and `setTransactionSchema` to use custom Schemas. It will ensure, that all relevant middlewares and methods are also added when using custom Schemas. Use `syncIndexes`-method from medici after setTransactionSchema to enforce the defined indexes on the models.
-  - Added prototype-pollution protection when creating entries. Reserved words like `__proto__` can not be used as properties of a Transaction or a Journal or their meta-Field as they will get silently filtered.
-  - When calling `book.void()` the provided `journal_id` has to belong to the `book`. If the journal does not exist within the book, medici will throw a `JournalNotFoundError`. In medici < 5 you could theoretically void a `journal` of another `book`. 
-  - Added a `trackAccountChanges`-model to make it possible to call `.balance()` while using a mongo-session.
+  -  **BREAKING**: Added prototype-pollution protection when creating entries. Reserved words like `__proto__` can not be used as properties of a Transaction or a Journal or their meta-Field and they will get silently filtered.
+  - **BREAKING**: When calling `book.void()` the provided `journal_id` has to belong to the `book`. If the journal does not exist within the book, medici will throw a `JournalNotFoundError`. In medici < 5 you could theoretically void a `journal` of another `book`. 
+  - Added a `trackAccountChanges`-model to make it possible to call `.balance()` and get a reliable result while using a mongo-session.
 
 - **v4.0.0**
 
