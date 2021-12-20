@@ -287,7 +287,6 @@ describe("acid", function () {
   it("should avoid double spending", async function () {
     const book = new Book("ACID" + Date.now());
 
-    // fill the income account with one credit unit
     await book
       .entry("depth test")
       .credit("Income", 2)
