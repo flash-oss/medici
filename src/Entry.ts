@@ -15,7 +15,7 @@ import { InvalidAccountPathLengthError } from "./errors/InvalidAccountPathLength
 export class Entry<
   U extends ITransaction = ITransaction,
   J extends IJournal = IJournal
-> {
+  > {
   book: Book;
   journal: TJournalDocument<J> & { _original_journal?: Types.ObjectId };
   transactions: U[] = [];
@@ -136,7 +136,7 @@ export class Entry<
     return this.transact(-1, account_path, amount, extra);
   }
 
-  async commit(options = {} as IOptions): Promise<Entry<U, J>["journal"]> {
+  async commit(options = {} as IOptions & { lock?: string[] }): Promise<Entry<U, J>["journal"]> {
     let total = 0.0;
     for (let i = 0, il = this.transactions.length; i < il; i++) {
       // set approved on transactions to approved-value on journal
@@ -158,7 +158,11 @@ export class Entry<
       await this.journal.save(options);
 
       await Promise.all(
-        this.transactions.map((tx) => new transactionModel(tx).save(options))
+        this.transactions.map((tx) => {
+          const tranx = new transactionModel(tx);
+          tranx.$locals.lock = (options.lock) ? options.lock : [];
+          return tranx.save(options)
+        })
       );
 
       return this.journal;
@@ -176,11 +180,12 @@ export class Entry<
             e
           );
         }
+        throw new TransactionError(
+          `Failure to save journal: ${(err as Error).message}`,
+          total
+        );
       }
-      throw new TransactionError(
-        `Failure to save journal: ${(err as Error).message}`,
-        total
-      );
+      throw err;
     }
   }
 }
