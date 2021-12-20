@@ -23,4 +23,7 @@ trackAccountChanges.index(
   { unique: true }
 );
 
-export const trackAccountChangesModel = model<IAccount>("Medici_Track_Account_Changes", trackAccountChanges);
+export const trackAccountChangesModel = model<IAccount>(
+  "Medici_Track_Account_Changes",
+  trackAccountChanges
+);

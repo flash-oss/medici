@@ -84,7 +84,11 @@ const preSave: PreSaveMiddlewareFunction<ITransaction & Document> =
     const book = this.book;
     const account = this.accounts;
 
-    await trackAccountChangesModel.collection.updateOne({ account, book }, { $inc: { __v: 1 } }, { upsert: true, session });
+    await trackAccountChangesModel.collection.updateOne(
+      { account, book },
+      { $inc: { __v: 1 } },
+      { upsert: true, session }
+    );
     return next();
   };
 
