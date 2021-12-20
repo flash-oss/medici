@@ -6,7 +6,7 @@ export interface IAccount {
   __v: number;
 }
 
-const trackAccountChanges = new Schema<IAccount>(
+const lockSchema = new Schema<IAccount>(
   {
     book: String,
     account: String,
@@ -15,7 +15,7 @@ const trackAccountChanges = new Schema<IAccount>(
   { id: false, versionKey: false, timestamps: false }
 );
 
-trackAccountChanges.index(
+lockSchema.index(
   {
     account: 1,
     book: 1,
@@ -23,7 +23,7 @@ trackAccountChanges.index(
   { unique: true }
 );
 
-export const trackAccountChangesModel = model<IAccount>(
-  "Medici_Track_Account_Changes",
-  trackAccountChanges
+export const lockModel = model<IAccount>(
+  "Medici_Lock",
+  lockSchema
 );

@@ -10,7 +10,7 @@ import {
 import { extractObjectIdKeysFromSchema } from "../helper/extractObjectIdKeysFromSchema";
 import type { IAnyObject } from "../IAnyObject";
 import type { IJournal } from "./journals";
-import { trackAccountChangesModel } from "./trackAccountChanges";
+import { lockModel } from "./lock";
 
 export interface ITransaction {
   _id: Types.ObjectId;
@@ -89,7 +89,7 @@ const preSave: PreSaveMiddlewareFunction<ITransaction & Document> =
     const book = this.book;
     const account = this.accounts;
 
-    await trackAccountChangesModel.collection.updateOne(
+    await lockModel.collection.updateOne(
       { account, book },
       { $inc: { __v: 1 } },
       { upsert: true, session }

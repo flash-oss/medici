@@ -365,7 +365,7 @@ Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the
   - Added `setJournalSchema` and `setTransactionSchema` to use custom Schemas. It will ensure, that all relevant middlewares and methods are also added when using custom Schemas. Use `syncIndexes`-method from medici after setTransactionSchema to enforce the defined indexes on the models.
   -  **BREAKING**: Added prototype-pollution protection when creating entries. Reserved words like `__proto__` can not be used as properties of a Transaction or a Journal or their meta-Field and they will get silently filtered.
   - **BREAKING**: When calling `book.void()` the provided `journal_id` has to belong to the `book`. If the journal does not exist within the book, medici will throw a `JournalNotFoundError`. In medici < 5 you could theoretically void a `journal` of another `book`. 
-  - Added a `trackAccountChanges`-model to make it possible to call `.balance()` and get a reliable result while using a mongo-session.
+  - Added a `lockModel` to make it possible to call `.balance()` and get a reliable result while using a mongo-session. Call `.commit()` with lock parameter and add an Array of Accounts, which you want to lock. E.g. `.commit({session, lock: ["Assets:User:User"]})` .
 
 - **v4.0.0**
 
