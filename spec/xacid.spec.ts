@@ -284,7 +284,6 @@ describe("acid", function () {
     expect(result.balance).to.be.equal(0);
   });
 
-
   it("should avoid double spending", async function () {
     const book = new Book("ACID" + Date.now());
 

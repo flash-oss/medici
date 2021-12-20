@@ -23,7 +23,4 @@ lockSchema.index(
   { unique: true }
 );
 
-export const lockModel = model<IAccount>(
-  "Medici_Lock",
-  lockSchema
-);
+export const lockModel = model<IAccount>("Medici_Lock", lockSchema);
