@@ -366,6 +366,7 @@ Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the
   -  **BREAKING**: Added prototype-pollution protection when creating entries. Reserved words like `__proto__` can not be used as properties of a Transaction or a Journal or their meta-Field and they will get silently filtered.
   - **BREAKING**: When calling `book.void()` the provided `journal_id` has to belong to the `book`. If the journal does not exist within the book, medici will throw a `JournalNotFoundError`. In medici < 5 you could theoretically void a `journal` of another `book`. 
   - Added a `trackAccountChanges`-model to make it possible to call `.balance()` and get a reliable result while using a mongo-session.
+  - **BREAKING**: `.balance()` does not support pagination anymore. To get the balance of a page sum up the values of credit and debit of a paginated `.ledger()`-call.
 
 - **v4.0.0**
 

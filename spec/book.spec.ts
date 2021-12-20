@@ -361,29 +361,6 @@ describe("book", function () {
       expect(data.balance).to.be.equal(-1200);
     });
 
-    it("should give you the balance by page", async () => {
-      const data = await book.balance({
-        account: "Assets",
-        perPage: 1,
-        page: 1,
-      });
-      expect(data.balance).to.be.equal(-1200);
-
-      const data1 = await book.balance({
-        account: "Assets",
-        perPage: 1,
-        page: 2,
-      });
-      expect(data1.balance).to.be.equal(-700);
-
-      const data2 = await book.balance({
-        account: "Assets",
-        perPage: 1,
-        page: 3,
-      });
-      expect(data2.balance).to.be.equal(0);
-    });
-
     it("should deal with JavaScript rounding weirdness", async function () {
       const book = new Book("MyBook-balance-rounding");
       await book

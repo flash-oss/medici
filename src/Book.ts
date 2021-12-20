@@ -63,14 +63,9 @@ export class Book<
   }
 
   async balance(
-    query: IParseQuery & IPaginationQuery,
+    query: IParseQuery,
     options = {} as IOptions
   ): Promise<{ balance: number; notes: number }> {
-    let skip: PipelineStage.Skip | undefined = undefined;
-
-    if (query.perPage) {
-      skip = { $skip: (query.page ? query.page - 1 : 0) * query.perPage };
-    }
     const match: PipelineStage.Match = {
       $match: parseQuery(query, this),
     };
@@ -89,24 +84,10 @@ export class Book<
         },
       },
     };
-    let result;
-    if (typeof skip !== "undefined") {
-      const sort: PipelineStage.Sort = {
-        $sort: {
-          datetime: -1,
-          timestamp: -1,
-        },
-      };
-      result = (
-        await transactionModel
-          .aggregate([match, sort, skip, group], options)
-          .exec()
-      )[0];
-    } else {
-      result = (
-        await transactionModel.aggregate([match, group], options).exec()
-      )[0];
-    }
+    const result = (
+      await transactionModel.aggregate([match, group], options).exec()
+    )[0];
+
     return !result
       ? {
           balance: 0,
