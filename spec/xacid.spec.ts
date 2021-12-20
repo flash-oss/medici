@@ -9,6 +9,54 @@ describe("acid", function () {
     await initModels();
   });
 
+  it("should avoid double spending", async function () {
+
+    const book = new Book("ACID" + Date.now());
+
+    // fill the income account with one credit unit
+    await book
+      .entry("depth test")
+      .credit("Income", 1)
+      .debit("Outcome", 1)
+      .commit();
+
+    async function spendOne(
+      session: mongoose.ClientSession,
+      name: string,
+      delay: number
+    ) {
+      await book
+        .entry("depth test")
+        .credit("Savings", 1)
+        .debit("Income", 1)
+        .commit({ session });
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+
+      const result = await book.balance(
+        {
+          account: "Income",
+        },
+        { session }
+      );
+      if (result.balance < 0) {
+        throw new Error("Not enough Balance in " + name + " transaction.");
+      }
+    }
+
+    await Promise.allSettled([
+      mongoose.connection.transaction(async (session) => {
+        await spendOne(session, "delay", 0);
+      }),
+      mongoose.connection.transaction(async (session) => {
+        await spendOne(session, "concurrent", 0);
+      }),
+    ]);
+
+    const result = await book.balance({ account: "Income" });
+    expect(result.balance).to.be.equal(0);
+  });
+
   it("should not persist data when saving journal fails while using a session", async function () {
     const book = new Book("ACID" + Date.now());
 

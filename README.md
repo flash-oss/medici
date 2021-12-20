@@ -364,6 +364,7 @@ For `medici_transactions` collection with 50000 documents:
   - Added `setJournalSchema` and `setTransactionSchema` to use custom Schemas. It will ensure, that all relevant middlewares and methods are also added when using custom Schemas. Use `syncIndexes`-method from medici after setTransactionSchema to enforce the defined indexes on the models.
   - Added prototype-pollution protection when creating entries. Reserved words like `__proto__` can not be used as properties of a Transaction or a Journal or their meta-Field as they will get silently filtered.
   - When calling `book.void()` the provided `journal_id` has to belong to the `book`. If the journal does not exist within the book, medici will throw a `JournalNotFoundError`. In medici < 5 you could theoretically void a `journal` of another `book`. 
+  - Added a `trackAccountChanges`-model to make it possible to call `.balance()` while using a mongo-session.
 
 - **v4.0.0**
 
