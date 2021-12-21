@@ -10,6 +10,7 @@ import type { IOptions } from "./IOptions";
 import type { Document, PipelineStage, Types } from "mongoose";
 import { JournalNotFoundError } from "./errors/JournalNotFoundError";
 import { BookConstructorError } from "./errors/BookConstructorError";
+import { lockModel } from "./models/lock";
 
 export class Book<
   U extends ITransaction = ITransaction,
@@ -200,6 +201,30 @@ export class Book<
     }
 
     return journal.void(this, reason, options);
+  }
+
+  async lockAccounts(
+    accounts: string[],
+    options: Required<Pick<IOptions, "session">>
+  ): Promise<Book<U, J>> {
+    if (!options.session) {
+      return this;
+    }
+
+    // MongoDB Performance Tuning (2021), p. 217
+    // Reduce the Chance of Transient Transaction Errors by moving the
+    // contentious statement to the end of the transaction.
+    for (let i = 0, il = accounts.length; i < il; i++) {
+      await lockModel.collection.updateOne(
+        { account: accounts[i], book: this.name },
+        {
+          $setOnInsert: { book: this.name, account: accounts[i] },
+          $inc: { __v: 1 },
+        },
+        { upsert: true, session: options.session }
+      );
+    }
+    return this;
   }
 
   async listAccounts(options = {} as IOptions): Promise<string[]> {

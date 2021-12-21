@@ -160,7 +160,7 @@ describe("book", function () {
       entry.credit("Income", 99.9, {});
       try {
         await entry.commit();
-        throw new Error("should have thrown");
+        throw new Error("Should have thrown");
       } catch (e) {
         expect((e as Error).message).to.be.equal(
           "INVALID_JOURNAL: can't commit non zero total"
@@ -211,6 +211,7 @@ describe("book", function () {
           // @ts-expect-error mongoose validator should throw error
           .credit("A:B", 1, { credit: 2, timestamp: "asdasd" })
           .commit();
+        throw new Error("Should have thrown.");
       } catch (e) {
         expect((e as Error).message).to.match(
           /Failure to save journal: Medici_Transaction validation failed/
@@ -222,9 +223,7 @@ describe("book", function () {
     });
 
     it("should write an error into the console when reverting in non-mongo-transaction fails", async () => {
-      const book = new Book(
-        "MyBook-Entry-Test" + new Types.ObjectId().toString()
-      );
+      const book = new Book("MyBook-Entry-Test-old-transaction-revert");
 
       const deleteManyStub = stub(transactionModel, "deleteMany").throws(
         new Error()
@@ -238,6 +237,7 @@ describe("book", function () {
           // @ts-expect-error mongoose validator should throw an error
           .credit("A:B", 1, { credit: 2, timestamp: "asdasd" })
           .commit();
+        throw new Error("Should have thrown.");
       } catch (e) {
         expect((e as Error).message).to.match(
           /Failure to save journal: Medici_Transaction validation failed/

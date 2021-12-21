@@ -1,16 +1,7 @@
-import {
-  connection,
-  Schema,
-  model,
-  Model,
-  Types,
-  PreSaveMiddlewareFunction,
-  Document,
-} from "mongoose";
+import { connection, Schema, model, Model, Types } from "mongoose";
 import { extractObjectIdKeysFromSchema } from "../helper/extractObjectIdKeysFromSchema";
 import type { IAnyObject } from "../IAnyObject";
 import type { IJournal } from "./journals";
-import { lockModel } from "./lock";
 
 export interface ITransaction {
   _id: Types.ObjectId;
@@ -69,37 +60,6 @@ let transactionSchemaKeys: Set<string> = new Set(
   Object.keys(transactionSchema.paths)
 );
 
-const preSave: PreSaveMiddlewareFunction<ITransaction & Document> =
-  async function (next) {
-    if (
-      !this.isModified("approved") ||
-      // @ts-ignore
-      (this.$isNew === true && this.approved === false) ||
-      !this.$session()
-    ) {
-      return next();
-    }
-
-    if (
-      !this.$locals.lock ||
-      (this.$locals.lock as string[]).indexOf(this.accounts) === -1
-    ) {
-      return next();
-    }
-
-    const session = this.$session();
-
-    const book = this.book;
-    const account = this.accounts;
-
-    await lockModel.collection.updateOne(
-      { account, book },
-      { $setOnInsert: { book, account }, $inc: { __v: 1 } },
-      { upsert: true, session }
-    );
-    return next();
-  };
-
 export function isValidTransactionKey<T extends ITransaction = ITransaction>(
   value: unknown
 ): value is keyof T {
@@ -150,8 +110,6 @@ export function setTransactionSchema(
       approved: 1,
     });
   }
-
-  schema.pre("save", preSave);
 
   transactionModel = model("Medici_Transaction", schema, collection);
 

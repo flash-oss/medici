@@ -160,11 +160,7 @@ export class Entry<
       await this.journal.save(options);
 
       await Promise.all(
-        this.transactions.map((tx) => {
-          const tranx = new transactionModel(tx);
-          tranx.$locals.lock = options.lock ? options.lock : [];
-          return tranx.save(options);
-        })
+        this.transactions.map((tx) => new transactionModel(tx).save(options))
       );
 
       return this.journal;

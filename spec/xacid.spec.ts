@@ -3,6 +3,7 @@ import { Book } from "../src/Book";
 import { expect } from "chai";
 import * as mongoose from "mongoose";
 import { initModels, mongoTransaction } from "../src";
+import { lockModel } from "../src/models/lock";
 
 describe("acid", function () {
   before(async () => {
@@ -25,7 +26,7 @@ describe("acid", function () {
           .debit("CashAssets", 5)
           .commit({ session });
       });
-      throw new Error("should have thrown");
+      throw new Error("Should have thrown.");
     } catch (e) {
       expect((e as Error).message).match(
         /Medici_Transaction validation failed/
@@ -52,7 +53,7 @@ describe("acid", function () {
           .debit("CashAssets", 5)
           .commit({ session });
       });
-      throw new Error("should have thrown");
+      throw new Error("Should have thrown.");
     } catch (e) {
       expect((e as Error).message).match(
         /Medici_Transaction validation failed/
@@ -315,6 +316,8 @@ describe("acid", function () {
       if (result.balance < 0) {
         throw new Error("Not enough Balance in " + name + " transaction.");
       }
+
+      await book.lockAccounts(["Income"], { session });
     }
 
     await Promise.allSettled([
