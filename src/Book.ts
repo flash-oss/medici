@@ -216,6 +216,7 @@ export class Book<
       await lockModel.collection.updateOne(
         { account: accounts[i], book: this.name },
         {
+          $set: { updatedAt: new Date() },
           $setOnInsert: { book: this.name, account: accounts[i] },
           $inc: { __v: 1 },
         },
