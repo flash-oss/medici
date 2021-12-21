@@ -137,7 +137,7 @@ export class Entry<
   }
 
   async commit(
-    options = {} as IOptions & { writelockAccounts?: string[] | RegExp }
+    options = {} as IOptions
   ): Promise<Entry<U, J>["journal"]> {
     let total = 0.0;
     for (let i = 0, il = this.transactions.length; i < il; i++) {
@@ -162,21 +162,6 @@ export class Entry<
       await Promise.all(
         this.transactions.map((tx) => new transactionModel(tx).save(options))
       );
-
-      if (options.writelockAccounts && options.session) {
-        const writelockAccounts =
-          options.writelockAccounts instanceof RegExp
-            ? this.transactions
-                .filter((tx) =>
-                  (options.writelockAccounts as RegExp).test(tx.accounts)
-                )
-                .map((tx) => tx.accounts)
-            : options.writelockAccounts;
-
-        this.book.writelockAccounts(writelockAccounts, {
-          session: options.session,
-        });
-      }
 
       return this.journal;
     } catch (err) {
