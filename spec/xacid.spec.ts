@@ -3,7 +3,6 @@ import { Book } from "../src/Book";
 import { expect } from "chai";
 import * as mongoose from "mongoose";
 import { initModels, mongoTransaction } from "../src";
-import { lockModel } from "../src/models/lock";
 
 describe("acid", function () {
   before(async () => {
