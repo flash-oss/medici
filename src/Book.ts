@@ -78,8 +78,7 @@ export class Book<
 
     const group: PipelineStage.Group = {
       $group: {
-        // https://github.com/Automattic/mongoose/pull/11104
-        _id: null as any,
+        _id: null,
         balance: {
           $sum: {
             $subtract: ["$credit", "$debit"],
