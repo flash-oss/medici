@@ -1,29 +1,34 @@
 import { Schema, model } from "mongoose";
 
-export interface IAccount {
+export interface ILock {
   account: string;
   book: string;
+  updatedAt: Date;
   __v: number;
 }
 
-const trackAccountChanges = new Schema<IAccount>(
+const lockSchema = new Schema<ILock>(
   {
     book: String,
     account: String,
+    updatedAt: Date,
     __v: Number,
   },
   { id: false, versionKey: false, timestamps: false }
 );
 
-trackAccountChanges.index(
+lockSchema.index(
   {
     account: 1,
     book: 1,
   },
   { unique: true }
 );
-
-export const trackAccountChangesModel = model<IAccount>(
-  "Medici_Track_Account_Changes",
-  trackAccountChanges
+lockSchema.index(
+  {
+    updatedAt: 1,
+  },
+  { expireAfterSeconds: 3600 }
 );
+
+export const lockModel = model<ILock>("Medici_Lock", lockSchema);

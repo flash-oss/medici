@@ -10,6 +10,7 @@ import type { IOptions } from "./IOptions";
 import type { Document, PipelineStage, Types } from "mongoose";
 import { JournalNotFoundError } from "./errors/JournalNotFoundError";
 import { BookConstructorError } from "./errors/BookConstructorError";
+import { lockModel } from "./models/lock";
 
 export class Book<
   U extends ITransaction = ITransaction,
@@ -72,8 +73,7 @@ export class Book<
 
     const group: PipelineStage.Group = {
       $group: {
-        // https://github.com/Automattic/mongoose/pull/11104
-        _id: null as any,
+        _id: null,
         balance: {
           $sum: {
             $subtract: ["$credit", "$debit"],
@@ -181,6 +181,29 @@ export class Book<
     }
 
     return journal.void(this, reason, options);
+  }
+
+  async writelockAccounts(
+    accounts: string[],
+    options: Required<Pick<IOptions, "session">>
+  ): Promise<Book<U, J>> {
+    accounts = Array.from(new Set(accounts));
+
+    // MongoDB Performance Tuning (2021), p. 217
+    // Reduce the Chance of Transient Transaction Errors by moving the
+    // contentious statement to the end of the transaction.
+    for (let i = 0, il = accounts.length; i < il; i++) {
+      await lockModel.collection.updateOne(
+        { account: accounts[i], book: this.name },
+        {
+          $set: { updatedAt: new Date() },
+          $setOnInsert: { book: this.name, account: accounts[i] },
+          $inc: { __v: 1 },
+        },
+        { upsert: true, session: options.session }
+      );
+    }
+    return this;
   }
 
   async listAccounts(options = {} as IOptions): Promise<string[]> {

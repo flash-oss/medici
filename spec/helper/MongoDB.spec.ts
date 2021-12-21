@@ -14,7 +14,7 @@ before(async function () {
   } else {
     replSet = new MongoMemoryReplSet({
       binary: {
-        version: "4.2.5",
+        version: "4.4.0",
       },
       instanceOpts: [
         // Set the expire job in MongoDB to run every second

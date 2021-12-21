@@ -136,7 +136,9 @@ export class Entry<
     return this.transact(-1, account_path, amount, extra);
   }
 
-  async commit(options = {} as IOptions): Promise<Entry<U, J>["journal"]> {
+  async commit(
+    options = {} as IOptions & { writelockAccounts?: string[] | RegExp }
+  ): Promise<Entry<U, J>["journal"]> {
     let total = 0.0;
     for (let i = 0, il = this.transactions.length; i < il; i++) {
       // set approved on transactions to approved-value on journal
@@ -161,6 +163,21 @@ export class Entry<
         this.transactions.map((tx) => new transactionModel(tx).save(options))
       );
 
+      if (options.writelockAccounts && options.session) {
+        const writelockAccounts =
+          options.writelockAccounts instanceof RegExp
+            ? this.transactions
+                .filter((tx) =>
+                  (options.writelockAccounts as RegExp).test(tx.accounts)
+                )
+                .map((tx) => tx.accounts)
+            : options.writelockAccounts;
+
+        await this.book.writelockAccounts(writelockAccounts, {
+          session: options.session,
+        });
+      }
+
       return this.journal;
     } catch (err) {
       if (!options.session) {
@@ -176,11 +193,12 @@ export class Entry<
             e
           );
         }
+        throw new TransactionError(
+          `Failure to save journal: ${(err as Error).message}`,
+          total
+        );
       }
-      throw new TransactionError(
-        `Failure to save journal: ${(err as Error).message}`,
-        total
-      );
+      throw err;
     }
   }
 }

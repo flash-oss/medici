@@ -1,4 +1,6 @@
-export class TransactionError extends Error {
+import { MediciError } from "./MediciError";
+
+export class TransactionError extends MediciError {
   public code = 400;
   public total: number;
 

@@ -106,6 +106,51 @@ await myBook.void("5eadfd84d7d587fb794eaacb", "I made a mistake");
 
 If you do not specify a void reason, the system will set the memo of the new journal to the original journal's memo prepended with "[VOID]".
 
+## Typescript Example
+
+```typescript
+import { Book, mongoTransaction } from "medici";
+
+const mainLedger = new Book("mainLedger");
+
+async function withdraw(walletId: string, amount: number) {
+  return mongoTransaction(session => {
+
+      await mainLedger
+        .entry("Withdraw by User")
+        .credit("Assets", amount)
+        .debit(`Accounts:${walletId}`, amount)
+        .commit({ session });
+
+      // .balance() can be an resource-expensive operation. So we do it after we
+      // created the journal.
+      const balanceAfter = await mainLedger.balance(
+        {
+          account: `Accounts:${walletId}`,
+        },
+        { session }
+      );
+
+      // Avoid spending more than the wallet has
+      if (balanceAfter.balance < 0) {
+        throw new Error("Not enough balance in wallet.");
+      }
+
+      // MongoDB Performance Tuning (2021), p. 217
+      // Reduce the Chance of Transient Transaction Errors by moving the
+      // contentious statement to the end of the transaction.
+
+      // We writelock only the account of the User/Wallet. If we writelock a very 
+      // often used account, like the fictitious Assets account in this example, 
+      // we would slow down the database extremely as the writelocks would make
+      // it impossible to concurrently write in the database.
+      // We only check the balance of the User/Wallet, so only this Account has to
+      // be writelocked.
+      await mainLedger.writelockAccounts([`Accounts:${walletId}`], { session });
+  });
+}
+```
+
 ## Document Schema
 
 Journals are schemed in Mongoose as follows:
@@ -367,6 +412,7 @@ Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the
   - **BREAKING**: When calling `book.void()` the provided `journal_id` has to belong to the `book`. If the journal does not exist within the book, medici will throw a `JournalNotFoundError`. In medici < 5 you could theoretically void a `journal` of another `book`. 
   - Added a `trackAccountChanges`-model to make it possible to call `.balance()` and get a reliable result while using a mongo-session.
   - **BREAKING**: `.balance()` does not support pagination anymore. To get the balance of a page sum up the values of credit and debit of a paginated `.ledger()`-call.
+  - Added a `lockModel` to make it possible to call `.balance()` and get a reliable result while using a mongo-session. Call `.writelockAccounts()` with first parameter being an Array of Accounts, which you want to lock. E.g. `book.writelockAccounts(["Assets:User:User1"], { session })`. For best performance call writelockAccounts as the last operation in the transaction. Also `.commit()` accepts the option `writelockAccounts`, where you can provide an array of accounts or a RegExp. It is recommended to use the `book.writelockAccounts()`.
 
 - **v4.0.0**
 

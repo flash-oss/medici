@@ -1,4 +1,6 @@
-export class InvalidAccountPathLengthError extends Error {
+import { MediciError } from "./MediciError";
+
+export class InvalidAccountPathLengthError extends MediciError {
   public code = 400;
 
   constructor(message: string, code = 400) {
