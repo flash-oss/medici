@@ -28,7 +28,7 @@ lockSchema.index(
   {
     updatedAt: 1,
   },
-  { expireAfterSeconds: 1 }
+  { expireAfterSeconds: 3600 }
 );
 
 export const lockModel = model<ILock>("Medici_Lock", lockSchema);
