@@ -203,13 +203,11 @@ export class Book<
     return journal.void(this, reason, options);
   }
 
-  async lockAccounts(
+  async writelockAccounts(
     accounts: string[],
     options: Required<Pick<IOptions, "session">>
   ): Promise<Book<U, J>> {
-    if (!options.session) {
-      return this;
-    }
+    accounts = Array.from(new Set(accounts));
 
     // MongoDB Performance Tuning (2021), p. 217
     // Reduce the Chance of Transient Transaction Errors by moving the
