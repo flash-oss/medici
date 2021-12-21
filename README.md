@@ -146,7 +146,7 @@ async function withdraw(walletId: string, amount: number) {
       // it impossible to concurrently write in the database.
       // We only check the balance of the User/Wallet, so only this Account has to
       // be writelocked.
-      await mainLedger.writelockAccounts([`Accounts:${walletId}`], options);
+      await mainLedger.writelockAccounts([`Accounts:${walletId}`], { session });
   });
 }
 ```
