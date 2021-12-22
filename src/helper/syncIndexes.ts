@@ -1,5 +1,5 @@
 import { journalModel } from "../models/journals";
-import { lockModel } from "../models/lock";
+import { lockModel } from "../models/locks";
 import { transactionModel } from "../models/transactions";
 
 export async function syncIndexes(options?: { background: boolean }) {

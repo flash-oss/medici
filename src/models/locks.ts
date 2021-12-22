@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, Model, connection } from "mongoose";
 
 export interface ILock {
   account: string;
@@ -31,4 +31,13 @@ lockSchema.index(
   { expireAfterSeconds: 3600 }
 );
 
-export const lockModel = model<ILock>("Medici_Lock", lockSchema);
+export let lockModel: Model<ILock>;
+
+export function setLockSchema(schema: Schema, collection?: string) {
+  delete connection.models["Medici_Transaction"];
+
+  lockModel = model("Medici_Lock", schema, collection);
+}
+
+typeof connection.models["Medici_Lock"] === "undefined" &&
+  setLockSchema(lockSchema);

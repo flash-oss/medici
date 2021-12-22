@@ -10,7 +10,7 @@ import type { IOptions } from "./IOptions";
 import type { Document, PipelineStage, Types } from "mongoose";
 import { JournalNotFoundError } from "./errors/JournalNotFoundError";
 import { BookConstructorError } from "./errors/BookConstructorError";
-import { lockModel } from "./models/lock";
+import { lockModel } from "./models/locks";
 
 export class Book<
   U extends ITransaction = ITransaction,
