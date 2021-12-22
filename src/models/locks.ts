@@ -28,7 +28,7 @@ lockSchema.index(
   {
     updatedAt: 1,
   },
-  { expireAfterSeconds: 3600 }
+  { expireAfterSeconds: 60 * 60 * 24 }
 );
 
 export let lockModel: Model<ILock>;
