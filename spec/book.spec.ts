@@ -370,7 +370,6 @@ describe("book", function () {
     it("should give you the balance", async () => {
       const data = await book.balance({
         account: "Assets",
-        perPage: 1,
       });
       expect(data.balance).to.be.equal(-1200);
     });
