@@ -22,9 +22,9 @@ describe("handleVoidMemo", () => {
     ["should handle no reason and no memo", undefined, undefined, "[VOID]"],
   ];
 
-  for (let i = 0, il = cases.length; i < il; i++) {
-    it(cases[i][0]!, () => {
-      expect(handleVoidMemo(cases[i][1], cases[i][2])).to.be.equal(cases[i][3]);
+  for (const c of cases) {
+    it(c[0]!, () => {
+      expect(handleVoidMemo(c[1], c[2])).to.be.equal(c[3]);
     });
   }
 });

@@ -101,16 +101,12 @@ export class Entry<
     };
 
     if (extra) {
-      const keys = Object.keys(extra).filter(
-        (key) => !isPrototypeAttribute(key)
-      );
-
-      for (let i = 0, il = keys.length; i < il; i++) {
-        const key = keys[i];
+      for (const [key, value] of Object.entries(extra)) {
+        if (isPrototypeAttribute(key)) continue;
         if (isValidTransactionKey(key)) {
-          transaction[key] = extra[key] as never;
+          transaction[key] = value as never;
         } else {
-          transaction.meta[key] = extra[key];
+          transaction.meta[key] = value;
         }
       }
     }
@@ -140,11 +136,11 @@ export class Entry<
     options = {} as IOptions & { writelockAccounts?: string[] | RegExp }
   ): Promise<Entry<U, J>["journal"]> {
     let total = 0.0;
-    for (let i = 0, il = this.transactions.length; i < il; i++) {
+    for (const tx of this.transactions) {
       // set approved on transactions to approved-value on journal
-      this.transactions[i].approved = this.journal.approved;
+      tx.approved = this.journal.approved;
       // sum the value of the transaction
-      total += this.transactions[i].credit - this.transactions[i].debit;
+      total += tx.credit - tx.debit;
     }
 
     total = parseFloat(total.toFixed(this.book.precision));

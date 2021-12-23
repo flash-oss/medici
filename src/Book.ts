@@ -164,9 +164,9 @@ export class Book<
     }
 
     if (populate) {
-      for (let i = 0, il = populate.length; i < il; i++) {
-        if (isValidTransactionKey<U>(populate[i])) {
-          q.populate(populate[i]);
+      for (const p of populate) {
+        if (isValidTransactionKey<U>(p)) {
+          q.populate(p);
         }
       }
     }
@@ -211,12 +211,12 @@ export class Book<
     // ISBN: 978-1-4842-6879-7. MongoDB Performance Tuning (2021), p. 217
     // Reduce the Chance of Transient Transaction Errors by moving the
     // contentious statement to the end of the transaction.
-    for (let i = 0, il = accounts.length; i < il; i++) {
+    for (const account of accounts) {
       await lockModel.collection.updateOne(
-        { account: accounts[i], book: this.name },
+        { account, book: this.name },
         {
           $set: { updatedAt: new Date() },
-          $setOnInsert: { book: this.name, account: accounts[i] },
+          $setOnInsert: { book: this.name, account },
           $inc: { __v: 1 },
         },
         { upsert: true, session: options.session }

@@ -115,6 +115,6 @@ describe("setTransactionSchema", () => {
     );
 
     setTransactionSchema(transactionSchema);
-    syncIndexes({ background: true });
+    await syncIndexes({ background: false });
   });
 });

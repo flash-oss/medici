@@ -16,6 +16,6 @@ const reservedWords: Set<string> = new Set([
 /**
  * Check if a key is a reserved word to avoid any prototype-pollution.
  */
-export function isPrototypeAttribute(value: unknown): boolean {
-  return typeof value === "string" && reservedWords.has(value);
+export function isPrototypeAttribute(value: string): boolean {
+  return reservedWords.has(value);
 }

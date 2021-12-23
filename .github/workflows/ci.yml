@@ -22,11 +22,11 @@ jobs:
         with:
           mongodb-version: ${{ matrix.mongodb-version }}
           mongodb-replica-set: test-rs
-      
+
       # ignoring scripts to not install mongodb-memory-server
-      - run: npm ci --ignore-scripts 
+      - run: npm ci --ignore-scripts
 
       - run: npm run ci
         env:
           CI: true
-          MV: ${{ matrix.mongodb-version }}
+          IS_REPLICASET: true

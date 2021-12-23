@@ -145,7 +145,7 @@ describe("book", function () {
 
       try {
         await entry.commit();
-        throw new Error("Should have thrown");
+        expect.fail("Should have thrown");
       } catch (e) {
         expect((e as Error).message).to.be.equal(
           "INVALID_JOURNAL: can't commit non zero total"
@@ -160,7 +160,7 @@ describe("book", function () {
       entry.credit("Income", 99.9, {});
       try {
         await entry.commit();
-        throw new Error("Should have thrown");
+        expect.fail("Should have thrown");
       } catch (e) {
         expect((e as Error).message).to.be.equal(
           "INVALID_JOURNAL: can't commit non zero total"
@@ -201,22 +201,27 @@ describe("book", function () {
 
     it("should delete transactions when not in transaction and saving the journal fails", async () => {
       const book = new Book(
-        "MyBook-Entry-Test" + new Types.ObjectId().toString()
+        "MyBook-Entry-Test-delete-when-not-in-mongo-transaction"
+      );
+
+      const saveStub = stub(transactionModel.prototype, "save").rejects(
+        new Error()
       );
 
       try {
         await book
           .entry("extra")
           .debit("A:B", 1, { debit: 2, clientId: "Mr. B" })
-          // @ts-expect-error mongoose validator should throw error
-          .credit("A:B", 1, { credit: 2, timestamp: "asdasd" })
+          .credit("A:B", 1, { credit: 2 })
           .commit();
-        throw new Error("Should have thrown.");
+        expect.fail("Should have thrown.");
       } catch (e) {
-        expect((e as Error).message).to.match(
-          /Failure to save journal: Medici_Transaction validation failed/
-        );
+        expect((e as Error).message).to.match(/Failure to save journal: /);
+      } finally {
+        saveStub.restore();
       }
+
+      expect(saveStub.callCount).equal(2); // should attempts saving both transactions in parallel
 
       const { balance } = await book.balance({ account: "A:B" });
       expect(balance).to.be.equal(0);
@@ -228,30 +233,39 @@ describe("book", function () {
       const deleteManyStub = stub(transactionModel, "deleteMany").throws(
         new Error()
       );
+      const saveStub = stub(transactionModel.prototype, "save")
+        .onFirstCall()
+        .rejects(new Error())
+        .callThrough();
       const consoleErrorStub = stub(console, "error");
 
       try {
         await book
           .entry("extra")
           .debit("A:B", 1, { debit: 2, clientId: "Mr. B" })
-          // @ts-expect-error mongoose validator should throw an error
-          .credit("A:B", 1, { credit: 2, timestamp: "asdasd" })
+          .credit("A:B", 1, { credit: 2 })
           .commit();
-        throw new Error("Should have thrown.");
+        expect.fail("Should have thrown.");
       } catch (e) {
-        expect((e as Error).message).to.match(
-          /Failure to save journal: Medici_Transaction validation failed/
-        );
+        expect((e as Error).message).to.match(/Failure to save journal: /);
+      } finally {
+        deleteManyStub.restore();
+        saveStub.restore();
+        consoleErrorStub.restore();
       }
 
       expect(consoleErrorStub.firstCall.args[0]).match(
         /Can't delete txs for journal [a-f0-9]{24}. Medici ledger consistency got harmed./
       );
-      deleteManyStub.restore();
-      consoleErrorStub.restore();
+
+      expect(saveStub.callCount).equal(2); // should attempts saving both transactions in parallel
+      expect(deleteManyStub.callCount).equal(1); // should attempt deleting leftovers
+
+      // Eventual consistency issue. Need to wait until document is saved to the DB.
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const { balance } = await book.balance({ account: "A:B" });
-      expect(balance).to.be.equal(-2);
+      expect(balance).to.be.equal(2); // the deleteMany() didn't work out. Thus we should have a leftover transaction.
     });
 
     describe("approved/pending transactions", function () {
@@ -321,7 +335,7 @@ describe("book", function () {
 
       it("should set all transactions to approved when approving the journal", async () => {
         if (!pendingJournal) {
-          throw new Error("pendingJournal missing.");
+          expect.fail("pendingJournal missing.");
         }
         pendingJournal.approved = true;
         await pendingJournal.save();
@@ -448,7 +462,7 @@ describe("book", function () {
     it("should throw an JournalNotFoundError if journal does not exist", async () => {
       try {
         await book.void(new Types.ObjectId());
-        throw new Error("Should have thrown.");
+        expect.fail("Should have thrown.");
       } catch (e) {
         expect(e).to.be.instanceOf(JournalNotFoundError);
       }
@@ -464,7 +478,7 @@ describe("book", function () {
         .commit();
       try {
         await book.void(anotherJournal._id);
-        throw new Error("Should have thrown.");
+        expect.fail("Should have thrown.");
       } catch (e) {
         expect(e).to.be.instanceOf(JournalNotFoundError);
       }
@@ -472,7 +486,7 @@ describe("book", function () {
 
     it("should allow you to void a journal entry", async () => {
       if (!journal) {
-        throw new Error("journal missing.");
+        expect.fail("journal missing.");
       }
       const data = await book.balance({
         account: "Assets",
@@ -500,11 +514,11 @@ describe("book", function () {
 
     it("should throw an error if journal was already voided", async () => {
       if (!journal) {
-        throw new Error("journal missing.");
+        expect.fail("journal missing.");
       }
       try {
         await book.void(journal._id, "Messed up");
-        throw new Error("Should have thrown.");
+        expect.fail("Should have thrown.");
       } catch (e) {
         expect((e as Error).message).to.be.equal("Journal already voided.");
       }

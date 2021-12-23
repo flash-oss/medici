@@ -5,121 +5,67 @@ import * as mongoose from "mongoose";
 import { initModels, mongoTransaction } from "../src";
 import { lockModel } from "../src/models/locks";
 
-describe("acid", function () {
-  before(async () => {
-    await initModels();
-  });
-
-  it("should not persist data when saving journal fails while using a session", async function () {
-    const book = new Book("ACID" + Date.now());
-
-    try {
-      await mongoose.connection.transaction(async (session) => {
-        await book
-          .entry("depth test")
-          .credit("X:Y:AUD", 1)
-          .credit("X:Y:EUR", 1)
-          .credit("X:Y:USD", 1)
-          .credit("X:Y:INR", 1)
-          // @ts-expect-error mongoose validator should throw an error
-          .credit("X:Y:CHF", 1, { timestamp: "invalid " })
-          .debit("CashAssets", 5)
-          .commit({ session });
-      });
-      throw new Error("Should have thrown.");
-    } catch (e) {
-      expect((e as Error).message).match(
-        /Medici_Transaction validation failed/
-      );
-    }
-
-    const result = await book.balance({ account: "X:Y" });
-    expect(result.balance).to.be.equal(0);
-  });
-
-  it("check if mongoTransaction is working as an alias", async function () {
-    const book = new Book("ACID" + Date.now());
-
-    try {
-      await mongoTransaction(async (session) => {
-        await book
-          .entry("depth test")
-          .credit("X:Y:AUD", 1)
-          .credit("X:Y:EUR", 1)
-          .credit("X:Y:USD", 1)
-          .credit("X:Y:INR", 1)
-          // @ts-expect-error mongoose validator should throw an error
-          .credit("X:Y:CHF", 1, { timestamp: "invalid " })
-          .debit("CashAssets", 5)
-          .commit({ session });
-      });
-      throw new Error("Should have thrown.");
-    } catch (e) {
-      expect((e as Error).message).match(
-        /Medici_Transaction validation failed/
-      );
-    }
-
-    const result = await book.balance({ account: "X:Y" });
-    expect(result.balance).to.be.equal(0);
-  });
-
-  it("should persist data while using a session", async function () {
-    const book = new Book("ACID" + Date.now());
-
-    await mongoose.connection.transaction(async (session) => {
-      await book
-        .entry("depth test")
-        .credit("X:Y:AUD", 1)
-        .credit("X:Y:EUR", 1)
-        .credit("X:Y:USD", 1)
-        .credit("X:Y:INR", 1)
-        .credit("X:Y:CHF", 1)
-        .debit("CashAssets", 5)
-        .commit({ session });
+if (process.env.IS_REPLICASET) {
+  describe("acid", function () {
+    before(async () => {
+      await initModels();
     });
 
-    const result = await book.balance({ account: "X:Y" });
-    expect(result.balance).to.be.equal(5);
-  });
+    it("should not persist data when saving journal fails while using a session", async function () {
+      const book = new Book("ACID" + Date.now());
 
-  it("should not persist data if we throw an Error while using a session", async function () {
-    const book = new Book("ACID" + Date.now());
-
-    try {
-      await mongoose.connection.transaction(async (session) => {
-        await book
-          .entry("depth test")
-          .credit("X:Y:AUD", 1)
-          .credit("X:Y:EUR", 1)
-          .credit("X:Y:USD", 1)
-          .credit("X:Y:INR", 1)
-          .credit("X:Y:CHF", 1)
-          .debit("CashAssets", 5)
-          .commit({ session });
-
-        const { balance } = await book.balance(
-          {
-            account: "X:Y:CHF",
-          },
-          { session }
+      try {
+        await mongoose.connection.transaction(async (session) => {
+          await book
+            .entry("depth test")
+            .credit("X:Y:AUD", 1)
+            .credit("X:Y:EUR", 1)
+            .credit("X:Y:USD", 1)
+            .credit("X:Y:INR", 1)
+            // @ts-expect-error mongoose validator should throw an error
+            .credit("X:Y:CHF", 1, { timestamp: "invalid " })
+            .debit("CashAssets", 5)
+            .commit({ session });
+        });
+        expect.fail("Should have thrown.");
+      } catch (e) {
+        expect((e as Error).message).match(
+          /Medici_Transaction validation failed/
         );
+      }
 
-        if (balance <= 2) {
-          throw new Error("Not enough Balance.");
-        }
-      });
-    } catch (e) {
-      expect((e as Error).message).to.be.equal("Not enough Balance.");
-    }
+      const result = await book.balance({ account: "X:Y" });
+      expect(result.balance).to.be.equal(0);
+    });
 
-    const result = await book.balance({ account: "X:Y" });
-    expect(result.balance).to.be.equal(0);
-  });
+    it("check if mongoTransaction is working as an alias", async function () {
+      const book = new Book("ACID" + Date.now());
 
-  it("should pass a stresstest when persisting data while using a session", async function () {
-    this.timeout(10000);
-    for (let i = 0, il = 100; i < il; i++) {
+      try {
+        await mongoTransaction(async (session) => {
+          await book
+            .entry("depth test")
+            .credit("X:Y:AUD", 1)
+            .credit("X:Y:EUR", 1)
+            .credit("X:Y:USD", 1)
+            .credit("X:Y:INR", 1)
+            // @ts-expect-error mongoose validator should throw an error
+            .credit("X:Y:CHF", 1, { timestamp: "invalid " })
+            .debit("CashAssets", 5)
+            .commit({ session });
+        });
+        expect.fail("Should have thrown.");
+      } catch (e) {
+        expect((e as Error).message).match(
+          /Medici_Transaction validation failed/
+        );
+      }
+
+      const result = await book.balance({ account: "X:Y" });
+      expect(result.balance).to.be.equal(0);
+    });
+
+    it("should persist data while using a session", async function () {
       const book = new Book("ACID" + Date.now());
 
       await mongoose.connection.transaction(async (session) => {
@@ -136,39 +82,11 @@ describe("acid", function () {
 
       const result = await book.balance({ account: "X:Y" });
       expect(result.balance).to.be.equal(5);
-    }
-  });
+    });
 
-  it("should pass a stresstest when voiding while using a session", async function () {
-    this.timeout(10000);
-
-    for (let i = 0, il = 100; i < il; i++) {
+    it("should not persist data if we throw an Error while using a session", async function () {
       const book = new Book("ACID" + Date.now());
 
-      const journal = await book
-        .entry("depth test")
-        .credit("X:Y:AUD", 1)
-        .credit("X:Y:EUR", 1)
-        .credit("X:Y:USD", 1)
-        .credit("X:Y:INR", 1)
-        .credit("X:Y:CHF", 1)
-        .debit("CashAssets", 5)
-        .commit();
-
-      await mongoose.connection.transaction(async (session) => {
-        await journal.void(book, null, { session });
-      });
-
-      const result = await book.balance({ account: "X:Y" });
-      expect(result.balance).to.be.equal(0);
-    }
-  });
-
-  it("should pass a stresstest for erroring when commiting", async function () {
-    this.timeout(10000);
-    const book = new Book("ACID" + Date.now());
-
-    for (let i = 0, il = 100; i < il; i++) {
       try {
         await mongoose.connection.transaction(async (session) => {
           await book
@@ -195,47 +113,99 @@ describe("acid", function () {
       } catch (e) {
         expect((e as Error).message).to.be.equal("Not enough Balance.");
       }
-    }
 
-    const result = await book.balance({ account: "X:Y" });
-    expect(result.balance).to.be.equal(0);
-  });
+      const result = await book.balance({ account: "X:Y" });
+      expect(result.balance).to.be.equal(0);
+    });
 
-  it("should pass a stresstest for erroring when voiding", async function () {
-    this.timeout(10000);
-    const book = new Book("ACID" + Date.now());
+    it("should pass a stresstest when persisting data while using a session", async function () {
+      this.timeout(10000);
+      for (let i = 0; i < 100; i++) {
+        const book = new Book("ACID" + Date.now());
 
-    const journal = await book
-      .entry("depth test")
-      .credit("X:Y:AUD", 1)
-      .credit("X:Y:EUR", 1)
-      .credit("X:Y:USD", 1)
-      .credit("X:Y:INR", 1)
-      .credit("X:Y:CHF", 1)
-      .debit("CashAssets", 5)
-      .commit();
+        await mongoose.connection.transaction(async (session) => {
+          await book
+            .entry("depth test")
+            .credit("X:Y:AUD", 1)
+            .credit("X:Y:EUR", 1)
+            .credit("X:Y:USD", 1)
+            .credit("X:Y:INR", 1)
+            .credit("X:Y:CHF", 1)
+            .debit("CashAssets", 5)
+            .commit({ session });
+        });
 
-    for (let i = 0, il = 100; i < il; i++) {
-      try {
+        const result = await book.balance({ account: "X:Y" });
+        expect(result.balance).to.be.equal(5);
+      }
+    });
+
+    it("should pass a stresstest when voiding while using a session", async function () {
+      this.timeout(10000);
+
+      for (let i = 0; i < 100; i++) {
+        const book = new Book("ACID" + Date.now());
+
+        const journal = await book
+          .entry("depth test")
+          .credit("X:Y:AUD", 1)
+          .credit("X:Y:EUR", 1)
+          .credit("X:Y:USD", 1)
+          .credit("X:Y:INR", 1)
+          .credit("X:Y:CHF", 1)
+          .debit("CashAssets", 5)
+          .commit();
+
         await mongoose.connection.transaction(async (session) => {
           await journal.void(book, null, { session });
-          throw new Error("Journaling failed.");
         });
-      } catch (e) {
-        expect((e as Error).message).to.be.equal("Journaling failed.");
+
+        const result = await book.balance({ account: "X:Y" });
+        expect(result.balance).to.be.equal(0);
       }
-      journal.voided = false;
-    }
+    });
 
-    const result = await book.balance({ account: "X:Y" });
-    expect(result.balance).to.be.equal(5);
-  });
+    it("should pass a stresstest for erroring when commiting", async function () {
+      this.timeout(10000);
+      const book = new Book("ACID" + Date.now());
 
-  it("should pass a stresstest for approving", async function () {
-    this.timeout(10000);
-    const book = new Book("ACID" + Date.now());
+      for (let i = 0; i < 100; i++) {
+        try {
+          await mongoose.connection.transaction(async (session) => {
+            await book
+              .entry("depth test")
+              .credit("X:Y:AUD", 1)
+              .credit("X:Y:EUR", 1)
+              .credit("X:Y:USD", 1)
+              .credit("X:Y:INR", 1)
+              .credit("X:Y:CHF", 1)
+              .debit("CashAssets", 5)
+              .commit({ session });
 
-    for (let i = 0, il = 100; i < il; i++) {
+            const { balance } = await book.balance(
+              {
+                account: "X:Y:CHF",
+              },
+              { session }
+            );
+
+            if (balance <= 2) {
+              throw new Error("Not enough Balance.");
+            }
+          });
+        } catch (e) {
+          expect((e as Error).message).to.be.equal("Not enough Balance.");
+        }
+      }
+
+      const result = await book.balance({ account: "X:Y" });
+      expect(result.balance).to.be.equal(0);
+    });
+
+    it("should pass a stresstest for erroring when voiding", async function () {
+      this.timeout(10000);
+      const book = new Book("ACID" + Date.now());
+
       const journal = await book
         .entry("depth test")
         .credit("X:Y:AUD", 1)
@@ -244,395 +214,427 @@ describe("acid", function () {
         .credit("X:Y:INR", 1)
         .credit("X:Y:CHF", 1)
         .debit("CashAssets", 5)
-        .setApproved(false)
         .commit();
 
-      await mongoose.connection.transaction(async (session) => {
-        journal.approved = true;
-        await journal.save({ session });
-      });
-    }
-    const result = await book.balance({ account: "X:Y" });
-    expect(result.balance).to.be.equal(500);
-  });
+      for (let i = 0; i < 100; i++) {
+        try {
+          await mongoose.connection.transaction(async (session) => {
+            await journal.void(book, null, { session });
+            throw new Error("Journaling failed.");
+          });
+        } catch (e) {
+          expect((e as Error).message).to.be.equal("Journaling failed.");
+        }
+        journal.voided = false;
+      }
 
-  it("should pass a stresstest for erroring when approving", async function () {
-    this.timeout(10000);
-    const book = new Book("ACID" + Date.now());
+      const result = await book.balance({ account: "X:Y" });
+      expect(result.balance).to.be.equal(5);
+    });
 
-    for (let i = 0, il = 100; i < il; i++) {
-      const journal = await book
-        .entry("depth test")
-        .credit("X:Y:AUD", 1)
-        .credit("X:Y:EUR", 1)
-        .credit("X:Y:USD", 1)
-        .credit("X:Y:INR", 1)
-        .credit("X:Y:CHF", 1)
-        .debit("CashAssets", 5)
-        .setApproved(false)
-        .commit();
-      try {
+    it("should pass a stresstest for approving", async function () {
+      this.timeout(10000);
+      const book = new Book("ACID" + Date.now());
+
+      for (let i = 0; i < 100; i++) {
+        const journal = await book
+          .entry("depth test")
+          .credit("X:Y:AUD", 1)
+          .credit("X:Y:EUR", 1)
+          .credit("X:Y:USD", 1)
+          .credit("X:Y:INR", 1)
+          .credit("X:Y:CHF", 1)
+          .debit("CashAssets", 5)
+          .setApproved(false)
+          .commit();
+
         await mongoose.connection.transaction(async (session) => {
           journal.approved = true;
           await journal.save({ session });
-          throw new Error("Approving Failed.");
         });
-      } catch (e) {
-        expect((e as Error).message).to.be.equal("Approving Failed.");
       }
-    }
-    const result = await book.balance({ account: "X:Y" });
-    expect(result.balance).to.be.equal(0);
-  });
+      const result = await book.balance({ account: "X:Y" });
+      expect(result.balance).to.be.equal(500);
+    });
 
-  it("should avoid double spending, commit() using writelockAccounts", async function () {
-    const book = new Book("ACID" + Date.now());
+    it("should pass a stresstest for erroring when approving", async function () {
+      this.timeout(10000);
+      const book = new Book("ACID" + Date.now());
 
-    await book
-      .entry("depth test")
-      .credit("Income", 2)
-      .debit("Outcome", 2)
-      .commit();
+      for (let i = 0; i < 100; i++) {
+        const journal = await book
+          .entry("depth test")
+          .credit("X:Y:AUD", 1)
+          .credit("X:Y:EUR", 1)
+          .credit("X:Y:USD", 1)
+          .credit("X:Y:INR", 1)
+          .credit("X:Y:CHF", 1)
+          .debit("CashAssets", 5)
+          .setApproved(false)
+          .commit();
+        try {
+          await mongoose.connection.transaction(async (session) => {
+            journal.approved = true;
+            await journal.save({ session });
+            throw new Error("Approving Failed.");
+          });
+        } catch (e) {
+          expect((e as Error).message).to.be.equal("Approving Failed.");
+        }
+      }
+      const result = await book.balance({ account: "X:Y" });
+      expect(result.balance).to.be.equal(0);
+    });
 
-    async function spendOne(
-      session: mongoose.ClientSession,
-      name: string,
-      delay: number
-    ) {
+    it("should avoid double spending, commit() using writelockAccounts", async function () {
+      const book = new Book("ACID" + Date.now());
+
       await book
         .entry("depth test")
-        .credit("Savings", 1)
-        .debit("Income", 1)
-        .commit({ session, writelockAccounts: ["Income"] });
+        .credit("Income", 2)
+        .debit("Outcome", 2)
+        .commit();
 
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      async function spendOne(
+        session: mongoose.ClientSession,
+        name: string,
+        delay: number
+      ) {
+        await book
+          .entry("depth test")
+          .credit("Savings", 1)
+          .debit("Income", 1)
+          .commit({ session, writelockAccounts: ["Income"] });
 
-      const result = await book.balance(
-        {
-          account: "Income",
-        },
-        { session }
-      );
-      if (result.balance < 0) {
-        throw new Error("Not enough Balance in " + name + " transaction.");
+        await new Promise((resolve) => setTimeout(resolve, delay));
+
+        const result = await book.balance(
+          {
+            account: "Income",
+          },
+          { session }
+        );
+        if (result.balance < 0) {
+          throw new Error("Not enough Balance in " + name + " transaction.");
+        }
       }
-    }
 
-    await Promise.allSettled([
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-    ]);
+      await Promise.allSettled([
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+      ]);
 
-    const result = await book.balance({ account: "Income" });
-    expect(result.balance).to.be.equal(0);
-  });
+      const result = await book.balance({ account: "Income" });
+      expect(result.balance).to.be.equal(0);
+    });
 
-  it("should avoid double spending, commit() using writelockAccounts with a Regex", async function () {
-    const book = new Book("ACID" + Date.now());
+    it("should avoid double spending, commit() using writelockAccounts with a Regex", async function () {
+      const book = new Book("ACID" + Date.now());
 
-    await book
-      .entry("depth test")
-      .credit("Income", 2)
-      .debit("Outcome", 2)
-      .commit();
-
-    async function spendOne(
-      session: mongoose.ClientSession,
-      name: string,
-      delay: number
-    ) {
       await book
         .entry("depth test")
-        .credit("Savings", 1)
-        .debit("Income", 1)
-        .commit({ session, writelockAccounts: /Income/ });
+        .credit("Income", 2)
+        .debit("Outcome", 2)
+        .commit();
 
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      async function spendOne(
+        session: mongoose.ClientSession,
+        name: string,
+        delay: number
+      ) {
+        await book
+          .entry("depth test")
+          .credit("Savings", 1)
+          .debit("Income", 1)
+          .commit({ session, writelockAccounts: /Income/ });
 
-      const result = await book.balance(
-        {
-          account: "Income",
-        },
-        { session }
-      );
-      if (result.balance < 0) {
-        throw new Error("Not enough Balance in " + name + " transaction.");
+        await new Promise((resolve) => setTimeout(resolve, delay));
+
+        const result = await book.balance(
+          {
+            account: "Income",
+          },
+          { session }
+        );
+        if (result.balance < 0) {
+          throw new Error("Not enough Balance in " + name + " transaction.");
+        }
       }
-    }
 
-    await Promise.allSettled([
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-    ]);
+      await Promise.allSettled([
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+      ]);
 
-    const result = await book.balance({ account: "Income" });
-    expect(result.balance).to.be.equal(0);
-  });
+      const result = await book.balance({ account: "Income" });
+      expect(result.balance).to.be.equal(0);
+    });
 
-  it("should avoid double spending, using book.writelockAccounts", async function () {
-    const book = new Book("ACID" + Date.now());
+    it("should avoid double spending, using book.writelockAccounts", async function () {
+      const book = new Book("ACID" + Date.now());
 
-    await book
-      .entry("depth test")
-      .credit("Income", 2)
-      .debit("Outcome", 2)
-      .commit();
-
-    async function spendOne(
-      session: mongoose.ClientSession,
-      name: string,
-      delay: number
-    ) {
       await book
         .entry("depth test")
-        .credit("Savings", 1)
-        .debit("Income", 1)
-        .commit({ session });
+        .credit("Income", 2)
+        .debit("Outcome", 2)
+        .commit();
 
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      async function spendOne(
+        session: mongoose.ClientSession,
+        name: string,
+        delay: number
+      ) {
+        await book
+          .entry("depth test")
+          .credit("Savings", 1)
+          .debit("Income", 1)
+          .commit({ session });
 
-      const result = await book.balance(
-        {
-          account: "Income",
-        },
-        { session }
-      );
-      if (result.balance < 0) {
-        throw new Error("Not enough Balance in " + name + " transaction.");
+        await new Promise((resolve) => setTimeout(resolve, delay));
+
+        const result = await book.balance(
+          {
+            account: "Income",
+          },
+          { session }
+        );
+        if (result.balance < 0) {
+          throw new Error("Not enough Balance in " + name + " transaction.");
+        }
+
+        await book.writelockAccounts(["Income"], { session });
       }
 
-      await book.writelockAccounts(["Income"], { session });
-    }
+      await Promise.allSettled([
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+      ]);
 
-    await Promise.allSettled([
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-    ]);
+      const result = await book.balance({ account: "Income" });
+      expect(result.balance).to.be.equal(0);
+    });
 
-    const result = await book.balance({ account: "Income" });
-    expect(result.balance).to.be.equal(0);
-  });
+    it("should create correct locks", async function () {
+      const book = new Book("ACID" + Date.now());
 
-  it("should create correct locks", async function () {
-    const book = new Book("ACID" + Date.now());
+      await lockModel.deleteMany({}).exec();
 
-    await lockModel.deleteMany({}).exec();
+      const beginDate = new Date();
 
-    const beginDate = new Date();
-
-    await book
-      .entry("depth test")
-      .credit("Income", 2)
-      .debit("Outcome", 2)
-      .commit();
-
-    async function spendOne(
-      session: mongoose.ClientSession,
-      name: string,
-      delay: number
-    ) {
       await book
         .entry("depth test")
-        .credit("Savings", 1)
-        .debit("Income", 1)
-        .commit({ session });
+        .credit("Income", 2)
+        .debit("Outcome", 2)
+        .commit();
 
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      async function spendOne(
+        session: mongoose.ClientSession,
+        name: string,
+        delay: number
+      ) {
+        await book
+          .entry("depth test")
+          .credit("Savings", 1)
+          .debit("Income", 1)
+          .commit({ session });
 
-      const result = await book.balance(
-        {
-          account: "Income",
-        },
-        { session }
-      );
-      if (result.balance < 0) {
-        throw new Error("Not enough Balance in " + name + " transaction.");
+        await new Promise((resolve) => setTimeout(resolve, delay));
+
+        const result = await book.balance(
+          {
+            account: "Income",
+          },
+          { session }
+        );
+        if (result.balance < 0) {
+          throw new Error("Not enough Balance in " + name + " transaction.");
+        }
+
+        await book.writelockAccounts(["Income"], { session });
       }
 
-      await book.writelockAccounts(["Income"], { session });
-    }
+      await Promise.allSettled([
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+        mongoose.connection.transaction(async (session) => {
+          await spendOne(session, "concurrent", 0);
+        }),
+      ]);
 
-    await Promise.allSettled([
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-      mongoose.connection.transaction(async (session) => {
-        await spendOne(session, "concurrent", 0);
-      }),
-    ]);
+      const locks = await lockModel.find({}).lean().exec();
 
-    const locks = await lockModel.find({}).lean().exec();
-
-    expect(locks).to.have.lengthOf(1);
-    expect(locks[0].book).to.be.equal(book.name);
-    expect(locks[0].account).to.be.equal("Income");
-    expect(locks[0].__v).to.be.equal(2);
-    expect(locks[0].updatedAt.getTime()).gt(beginDate.getTime());
-    expect(locks[0].updatedAt.getTime()).lt(Date.now());
+      expect(locks).to.have.lengthOf(1);
+      expect(locks[0].book).to.be.equal(book.name);
+      expect(locks[0].account).to.be.equal("Income");
+      expect(locks[0].__v).to.be.equal(2);
+      expect(locks[0].updatedAt.getTime()).gt(beginDate.getTime());
+      expect(locks[0].updatedAt.getTime()).lt(Date.now());
+    });
   });
-});
+}

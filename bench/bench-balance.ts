@@ -1,6 +1,6 @@
 import * as mongoose from "mongoose";
 import { MongoMemoryReplSet } from "mongodb-memory-server";
-import Book, { initModels } from "../src";
+import { Book, initModels } from "../src";
 
 let replSet: MongoMemoryReplSet;
 
@@ -42,7 +42,7 @@ let replSet: MongoMemoryReplSet;
   }
 
   console.log("start benchmark");
-  let start = Date.now();
+  const start = Date.now();
   for (let i = 0; i < 1000; i++) {
     await book.balance({
       account: "Income:Rent",

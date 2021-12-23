@@ -17,6 +17,7 @@ import { handleVoidMemo } from "../helper/handleVoidMemo";
 import type { IAnyObject } from "../IAnyObject";
 import type { IOptions } from "../IOptions";
 import { JournalAlreadyVoidedError } from "../errors/JournalAlreadyVoidedError";
+import { isPrototypeAttribute } from "../helper/isPrototypeAttribute";
 
 export interface IJournal {
   _id: Types.ObjectId;
@@ -57,7 +58,8 @@ const journalSchema = new Schema<IJournal>(
 );
 
 function processMetaField(key: string, val: unknown, meta: IAnyObject): void {
-  isValidTransactionKey(key) ? undefined : (meta[key] = val);
+  if (isPrototypeAttribute(key)) return;
+  if (!isValidTransactionKey(key)) meta[key] = val;
 }
 
 const voidJournal = async function (
@@ -65,7 +67,7 @@ const voidJournal = async function (
   reason: undefined | null | string,
   options: IOptions
 ) {
-  if (this.voided === true) {
+  if (this.voided) {
     throw new JournalAlreadyVoidedError();
   }
 
@@ -78,18 +80,12 @@ const voidJournal = async function (
   await this.save(options);
 
   const transactions = await transactionModel
-    .find(
-      {
-        _journal: this._id,
-      },
-      undefined,
-      options
-    )
+    .find({ _journal: this._id }, undefined, options)
     .exec();
 
-  for (let i = 0, il = transactions.length; i < il; i++) {
-    transactions[i].voided = true;
-    transactions[i].void_reason = this.void_reason;
+  for (const tx of transactions) {
+    tx.voided = true;
+    tx.void_reason = this.void_reason;
   }
 
   await Promise.all(
@@ -100,15 +96,15 @@ const voidJournal = async function (
 
   for (const trans of transactions) {
     const meta: IAnyObject = {};
-    Object.keys(trans.toObject()).forEach((key) => {
+    for (const key of Object.keys(trans.toObject())) {
       if (key === "meta") {
-        Object.keys(trans["meta"]).forEach((keyMeta) => {
-          processMetaField(keyMeta, trans["meta"][keyMeta], meta);
-        });
+        for (const [keyMeta, valueMeta] of Object.entries(trans["meta"])) {
+          processMetaField(keyMeta, valueMeta, meta);
+        }
       } else {
         processMetaField(key, trans[key as keyof ITransaction], meta);
       }
-    });
+    }
 
     if (trans.credit) {
       entry.debit(trans.account_path, trans.credit, meta);
@@ -128,7 +124,7 @@ const voidJournal = async function (
 const preSave: PreSaveMiddlewareFunction<IJournal & Document> = async function (
   next
 ) {
-  if (!(this.isModified("approved") && this.approved === true)) {
+  if (!(this.isModified("approved") && this.approved)) {
     return next();
   }
 
@@ -142,8 +138,8 @@ const preSave: PreSaveMiddlewareFunction<IJournal & Document> = async function (
     return next();
   }
 
-  for (let i = 0, il = transactions.length; i < il; i++) {
-    transactions[i].approved = true;
+  for (const tx of transactions) {
+    tx.approved = true;
   }
 
   await Promise.all(transactions.map((tx) => tx.save({ session })));

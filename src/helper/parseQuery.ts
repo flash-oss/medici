@@ -33,8 +33,6 @@ export function parseQuery(
   query: IParseQuery & IPaginationQuery,
   book: Pick<Book, "name"> & Partial<Pick<Book, "maxAccountPath">>
 ): FilterQuery<ITransaction> {
-  let i, il;
-
   const { approved, account, start_date, end_date, ...extra } = query;
 
   delete extra.perPage;
@@ -57,11 +55,8 @@ export function parseQuery(
     }
   }
 
-  const keys = Object.keys(extra).filter((key) => !isPrototypeAttribute(key));
-
-  for (i = 0, il = keys.length; i < il; i++) {
-    const key = keys[i];
-    const value = extra[key];
+  for (const [key, value] of Object.entries(extra)) {
+    if (isPrototypeAttribute(key)) continue;
     filterQuery[isValidTransactionKey(key) ? key : `meta.${key}`] =
       (referenceRE.test(key) && isValidObjectId(value)) ||
       isTransactionObjectIdKey(key)

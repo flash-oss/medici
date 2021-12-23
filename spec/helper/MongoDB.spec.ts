@@ -11,6 +11,12 @@ before(async function () {
     await mongoose.connect("mongodb://localhost/medici_test", {
       serverSelectionTimeoutMS: 2500,
     });
+
+    // Cleanup if there are any leftovers from the previous runs. Useful in local development.
+    const db = mongoose.connection.db;
+    await db.collection("medici_transactions").deleteMany({});
+    await db.collection("medici_journals").deleteMany({});
+    await db.collection("medici_locks").deleteMany({});
   } else {
     replSet = new MongoMemoryReplSet({
       binary: {
@@ -25,16 +31,17 @@ before(async function () {
         storageEngine: "wiredTiger",
       },
     });
-    replSet.start();
+    await replSet.start();
     await replSet.waitUntilRunning();
     const connectionString = replSet.getUri();
     await mongoose.connect(connectionString);
+    process.env.IS_REPLICASET = "true";
   }
 });
 
-after(() => {
-  mongoose.disconnect();
+after(async () => {
+  await mongoose.disconnect();
   if (replSet) {
-    replSet.stop();
+    await replSet.stop();
   }
 });
