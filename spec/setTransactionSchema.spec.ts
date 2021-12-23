@@ -3,12 +3,12 @@ import { expect } from "chai";
 import { Schema, Types } from "mongoose";
 import { Book } from "../src/Book";
 import { IAnyObject } from "../src/IAnyObject";
-import { IJournal } from "../src/models/journals";
+import { IJournal } from "../src/models/journal";
 import {
   setTransactionSchema,
   transactionModel,
   transactionSchema,
-} from "../src/models/transactions";
+} from "../src/models/transaction";
 import { syncIndexes } from "../src/helper/syncIndexes";
 
 export interface ITransactionNew {

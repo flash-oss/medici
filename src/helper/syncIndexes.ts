@@ -1,6 +1,6 @@
-import { journalModel } from "../models/journals";
-import { lockModel } from "../models/locks";
-import { transactionModel } from "../models/transactions";
+import { journalModel } from "../models/journal";
+import { lockModel } from "../models/lock";
+import { transactionModel } from "../models/transaction";
 
 export async function syncIndexes(options?: { background: boolean }) {
   await journalModel.syncIndexes(options);

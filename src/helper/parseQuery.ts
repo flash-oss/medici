@@ -4,7 +4,7 @@ import {
   isTransactionObjectIdKey,
   isValidTransactionKey,
   ITransaction,
-} from "../models/transactions";
+} from "../models/transaction";
 import { isPrototypeAttribute } from "./isPrototypeAttribute";
 import { parseAccountField } from "./parseAccountField";
 import { parseDateField } from "./parseDateField";

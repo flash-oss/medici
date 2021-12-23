@@ -4,9 +4,9 @@ import {
   isValidTransactionKey,
   ITransaction,
   transactionModel,
-} from "./models/transactions";
+} from "./models/transaction";
 import { TransactionError } from "./errors/TransactionError";
-import { IJournal, journalModel, TJournalDocument } from "./models/journals";
+import { IJournal, journalModel, TJournalDocument } from "./models/journal";
 import { isPrototypeAttribute } from "./helper/isPrototypeAttribute";
 import type { IOptions } from "./IOptions";
 import type { IAnyObject } from "./IAnyObject";

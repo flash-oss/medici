@@ -1,7 +1,7 @@
 import { connection, Schema, model, Model, Types } from "mongoose";
 import { extractObjectIdKeysFromSchema } from "../helper/extractObjectIdKeysFromSchema";
 import type { IAnyObject } from "../IAnyObject";
-import type { IJournal } from "./journals";
+import type { IJournal } from "./journal";
 
 export interface ITransaction {
   _id: Types.ObjectId;

@@ -3,7 +3,7 @@ import { Book } from "../src/Book";
 import { expect } from "chai";
 import * as mongoose from "mongoose";
 import { initModels, mongoTransaction } from "../src";
-import { lockModel } from "../src/models/locks";
+import { lockModel } from "../src/models/lock";
 
 if (process.env.IS_REPLICASET) {
   describe("acid", function () {

@@ -7,7 +7,7 @@ import BookESM, {
   setTransactionSchema,
 } from "../../types/index";
 import { Types, Document, ClientSession } from "mongoose";
-import { ITransaction } from "../../src/models/transactions";
+import { ITransaction } from "../../src/models/transaction";
 
 expectType<Book>(new BookESM("MyBook"));
 expectType<Book>(new Book("MyBook"));

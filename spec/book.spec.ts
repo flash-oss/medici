@@ -1,10 +1,10 @@
 /* eslint sonarjs/no-duplicate-string: off, @typescript-eslint/no-non-null-assertion: off, no-prototype-builtins: off*/
 import { Book } from "../src/Book";
 import { Document, Types } from "mongoose";
-import { IJournal } from "../src/models/journals";
+import { IJournal } from "../src/models/journal";
 import { expect } from "chai";
 import { stub, spy } from "sinon";
-import { transactionModel } from "../src/models/transactions";
+import { transactionModel } from "../src/models/transaction";
 import { JournalNotFoundError } from "../src/errors/JournalNotFoundError";
 
 describe("book", function () {

@@ -11,7 +11,7 @@ import {
   isValidTransactionKey,
   ITransaction,
   transactionModel,
-} from "./transactions";
+} from "./transaction";
 import type { Book } from "../Book";
 import { handleVoidMemo } from "../helper/handleVoidMemo";
 import type { IAnyObject } from "../IAnyObject";

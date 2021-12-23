@@ -1,16 +1,16 @@
 import { Entry } from "./Entry";
 import { IPaginationQuery, IParseQuery, parseQuery } from "./helper/parseQuery";
-import { IJournal, journalModel } from "./models/journals";
+import { IJournal, journalModel } from "./models/journal";
 import {
   isValidTransactionKey,
   ITransaction,
   transactionModel,
-} from "./models/transactions";
+} from "./models/transaction";
 import type { IOptions } from "./IOptions";
 import type { Document, PipelineStage, Types } from "mongoose";
 import { JournalNotFoundError } from "./errors/JournalNotFoundError";
 import { BookConstructorError } from "./errors/BookConstructorError";
-import { lockModel } from "./models/locks";
+import { lockModel } from "./models/lock";
 
 export class Book<
   U extends ITransaction = ITransaction,
