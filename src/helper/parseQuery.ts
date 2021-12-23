@@ -35,9 +35,6 @@ export function parseQuery(
 ): FilterQuery<ITransaction> {
   const { approved, account, start_date, end_date, ...extra } = query;
 
-  delete extra.perPage;
-  delete extra.page;
-
   const filterQuery: FilterQuery<ITransaction> = {
     book: book.name,
     approved: approved !== false,

@@ -124,6 +124,8 @@ export class Book<
     if (query.perPage) {
       skip = (query.page ? query.page - 1 : 0) * query.perPage;
       limit = query.perPage;
+      delete query.perPage;
+      delete query.page;
     }
     const filterQuery = parseQuery(query, this);
     const q = transactionModel
