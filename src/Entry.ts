@@ -1,10 +1,6 @@
 import { Types } from "mongoose";
 import type { Book } from "./Book";
-import {
-  isValidTransactionKey,
-  ITransaction,
-  transactionModel,
-} from "./models/transaction";
+import { isValidTransactionKey, ITransaction, transactionModel } from "./models/transaction";
 import { TransactionError } from "./errors/TransactionError";
 import { IJournal, journalModel, TJournalDocument } from "./models/journal";
 import { isPrototypeAttribute } from "./helper/isPrototypeAttribute";
@@ -12,10 +8,7 @@ import type { IOptions } from "./IOptions";
 import type { IAnyObject } from "./IAnyObject";
 import { InvalidAccountPathLengthError } from "./errors/InvalidAccountPathLengthError";
 
-export class Entry<
-  U extends ITransaction = ITransaction,
-  J extends IJournal = IJournal
-> {
+export class Entry<U extends ITransaction = ITransaction, J extends IJournal = IJournal> {
   book: Book;
   journal: TJournalDocument<J> & { _original_journal?: Types.ObjectId };
   transactions: U[] = [];
@@ -29,12 +22,7 @@ export class Entry<
     return new this(book, memo, date, original_journal);
   }
 
-  constructor(
-    book: Book,
-    memo: string,
-    date: Date | null,
-    original_journal: string | Types.ObjectId | null
-  ) {
+  constructor(book: Book, memo: string, date: Date | null, original_journal: string | Types.ObjectId | null) {
     this.book = book;
     this.journal = new journalModel() as TJournalDocument<J> & {
       _original_journal?: Types.ObjectId;
@@ -43,9 +31,7 @@ export class Entry<
 
     if (original_journal) {
       this.journal._original_journal =
-        typeof original_journal === "string"
-          ? new Types.ObjectId(original_journal)
-          : original_journal;
+        typeof original_journal === "string" ? new Types.ObjectId(original_journal) : original_journal;
     }
 
     if (!date) {
@@ -73,9 +59,7 @@ export class Entry<
     }
 
     if (account_path.length > this.book.maxAccountPath) {
-      throw new InvalidAccountPathLengthError(
-        `Account path is too deep (maximum ${this.book.maxAccountPath})`
-      );
+      throw new InvalidAccountPathLengthError(`Account path is too deep (maximum ${this.book.maxAccountPath})`);
     }
 
     amount = typeof amount === "string" ? parseFloat(amount) : amount;
@@ -132,9 +116,7 @@ export class Entry<
     return this.transact(-1, account_path, amount, extra);
   }
 
-  async commit(
-    options = {} as IOptions & { writelockAccounts?: string[] | RegExp }
-  ): Promise<Entry<U, J>["journal"]> {
+  async commit(options = {} as IOptions & { writelockAccounts?: string[] | RegExp }): Promise<Entry<U, J>["journal"]> {
     let total = 0.0;
     for (const tx of this.transactions) {
       // set approved on transactions to approved-value on journal
@@ -146,26 +128,19 @@ export class Entry<
     total = parseFloat(total.toFixed(this.book.precision));
 
     if (total !== 0) {
-      throw new TransactionError(
-        "INVALID_JOURNAL: can't commit non zero total",
-        total
-      );
+      throw new TransactionError("INVALID_JOURNAL: can't commit non zero total", total);
     }
 
     try {
       await this.journal.save(options);
 
-      await Promise.all(
-        this.transactions.map((tx) => new transactionModel(tx).save(options))
-      );
+      await Promise.all(this.transactions.map((tx) => new transactionModel(tx).save(options)));
 
       if (options.writelockAccounts && options.session) {
         const writelockAccounts =
           options.writelockAccounts instanceof RegExp
             ? this.transactions
-                .filter((tx) =>
-                  (options.writelockAccounts as RegExp).test(tx.accounts)
-                )
+                .filter((tx) => (options.writelockAccounts as RegExp).test(tx.accounts))
                 .map((tx) => tx.accounts)
             : options.writelockAccounts;
 
@@ -184,15 +159,9 @@ export class Entry<
             })
             .exec();
         } catch (e) {
-          console.error(
-            `Can't delete txs for journal ${this.journal._id}. Medici ledger consistency got harmed.`,
-            e
-          );
+          console.error(`Can't delete txs for journal ${this.journal._id}. Medici ledger consistency got harmed.`, e);
         }
-        throw new TransactionError(
-          `Failure to save journal: ${(err as Error).message}`,
-          total
-        );
+        throw new TransactionError(`Failure to save journal: ${(err as Error).message}`, total);
       }
       throw err;
     }

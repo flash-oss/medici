@@ -8,9 +8,7 @@ before(async function () {
   this.timeout(40000);
 
   if (process.env.CI) {
-    await mongoose.connect("mongodb://localhost/medici_test", {
-      serverSelectionTimeoutMS: 2500,
-    });
+    await mongoose.connect("mongodb://localhost/medici_test", { serverSelectionTimeoutMS: 2500 });
 
     // Cleanup if there are any leftovers from the previous runs. Useful in local development.
     const db = mongoose.connection.db;

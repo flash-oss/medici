@@ -106,10 +106,7 @@ describe("parseQuery", () => {
 
   it("should handle account with two path parts and maxAccountPath = 2 correctly", () => {
     const account = "Assets:Gold";
-    const result = parseQuery(
-      { account },
-      { name: "MyBook", maxAccountPath: 2 }
-    );
+    const result = parseQuery({ account }, { name: "MyBook", maxAccountPath: 2 });
     expect(Object.keys(result)).to.have.lengthOf(3);
     expect(result.book).to.be.equal("MyBook");
     expect(result.approved).to.be.equal(true);

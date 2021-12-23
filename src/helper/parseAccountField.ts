@@ -30,10 +30,7 @@ export function parseAccountField(
         }
       }
     }
-  } else if (
-    typeof account === "string" &&
-    account.split(":").length === maxAccountPath
-  ) {
+  } else if (typeof account === "string" && account.split(":").length === maxAccountPath) {
     filterQuery.accounts = account;
   } else if (typeof account === "string") {
     const accounts = account.split(":");

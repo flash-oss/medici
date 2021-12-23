@@ -4,11 +4,7 @@ import { Schema, Types } from "mongoose";
 import { Book } from "../src/Book";
 import { IAnyObject } from "../src/IAnyObject";
 import { IJournal } from "../src/models/journal";
-import {
-  setTransactionSchema,
-  transactionModel,
-  transactionSchema,
-} from "../src/models/transaction";
+import { setTransactionSchema, transactionModel, transactionSchema } from "../src/models/transaction";
 import { syncIndexes } from "../src/helper/syncIndexes";
 
 export interface ITransactionNew {
@@ -107,12 +103,8 @@ describe("setTransactionSchema", () => {
     expect(res.results).to.have.lengthOf(2);
     expect(res.results[0]._journal2._id).to.be.instanceof(Types.ObjectId);
     expect(res.results[1]._journal2._id).to.be.instanceof(Types.ObjectId);
-    expect(res.results[0]._journal2._id.toString()).to.be.equal(
-      journal._id.toString()
-    );
-    expect(res.results[1]._journal2._id.toString()).to.be.equal(
-      journal._id.toString()
-    );
+    expect(res.results[0]._journal2._id.toString()).to.be.equal(journal._id.toString());
+    expect(res.results[1]._journal2._id.toString()).to.be.equal(journal._id.toString());
 
     setTransactionSchema(transactionSchema);
     await syncIndexes({ background: false });

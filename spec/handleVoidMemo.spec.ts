@@ -5,20 +5,10 @@ import { handleVoidMemo } from "../src/helper/handleVoidMemo";
 describe("handleVoidMemo", () => {
   const cases = [
     ["should passthrough reason", "reason", "memo", "reason"],
-    [
-      "should handle no specially tagged memo when no reason was provided",
-      undefined,
-      "memo",
-      "[VOID] memo",
-    ],
+    ["should handle no specially tagged memo when no reason was provided", undefined, "memo", "[VOID] memo"],
     ["should handle unvoiding", undefined, "[VOID] memo", "[UNVOID] memo"],
     ["should handle revoiding", undefined, "[UNVOID] memo", "[REVOID] memo"],
-    [
-      "should handle unvoiding a revoided memo",
-      undefined,
-      "[REVOID] memo",
-      "[UNVOID] memo",
-    ],
+    ["should handle unvoiding a revoided memo", undefined, "[REVOID] memo", "[UNVOID] memo"],
     ["should handle no reason and no memo", undefined, undefined, "[VOID]"],
   ];
 

@@ -1,17 +1,5 @@
-import {
-  connection,
-  Schema,
-  Document,
-  Model,
-  model,
-  Types,
-  PreSaveMiddlewareFunction,
-} from "mongoose";
-import {
-  isValidTransactionKey,
-  ITransaction,
-  transactionModel,
-} from "./transaction";
+import { connection, Schema, Document, Model, model, Types, PreSaveMiddlewareFunction } from "mongoose";
+import { isValidTransactionKey, ITransaction, transactionModel } from "./transaction";
 import type { Book } from "../Book";
 import { handleVoidMemo } from "../helper/handleVoidMemo";
 import type { IAnyObject } from "../IAnyObject";
@@ -62,11 +50,7 @@ function processMetaField(key: string, val: unknown, meta: IAnyObject): void {
   if (!isValidTransactionKey(key)) meta[key] = val;
 }
 
-const voidJournal = async function (
-  book: Book,
-  reason: undefined | null | string,
-  options: IOptions
-) {
+const voidJournal = async function (book: Book, reason: undefined | null | string, options: IOptions) {
   if (this.voided) {
     throw new JournalAlreadyVoidedError();
   }
@@ -79,18 +63,14 @@ const voidJournal = async function (
 
   await this.save(options);
 
-  const transactions = await transactionModel
-    .find({ _journal: this._id }, undefined, options)
-    .exec();
+  const transactions = await transactionModel.find({ _journal: this._id }, undefined, options).exec();
 
   for (const tx of transactions) {
     tx.voided = true;
     tx.void_reason = this.void_reason;
   }
 
-  await Promise.all(
-    transactions.map((tx) => new transactionModel(tx).save(options))
-  );
+  await Promise.all(transactions.map((tx) => new transactionModel(tx).save(options)));
 
   const entry = book.entry(reason, null, this._id);
 
@@ -114,16 +94,9 @@ const voidJournal = async function (
     }
   }
   return entry.commit(options);
-} as (
-  this: TJournalDocument,
-  book: Book,
-  reason?: undefined | string,
-  options?: IOptions
-) => Promise<TJournalDocument>;
+} as (this: TJournalDocument, book: Book, reason?: undefined | string, options?: IOptions) => Promise<TJournalDocument>;
 
-const preSave: PreSaveMiddlewareFunction<IJournal & Document> = async function (
-  next
-) {
+const preSave: PreSaveMiddlewareFunction<IJournal & Document> = async function (next) {
   if (!(this.isModified("approved") && this.approved)) {
     return next();
   }
@@ -147,27 +120,16 @@ const preSave: PreSaveMiddlewareFunction<IJournal & Document> = async function (
   return next();
 };
 
-export type TJournalDocument<T extends IJournal = IJournal> = Omit<
-  Document,
-  "__v" | "id"
-> &
+export type TJournalDocument<T extends IJournal = IJournal> = Omit<Document, "__v" | "id"> &
   T & {
-    void: (
-      book: Book,
-      reason?: undefined | null | string,
-      options?: IOptions
-    ) => Promise<TJournalDocument<T>>;
+    void: (book: Book, reason?: undefined | null | string, options?: IOptions) => Promise<TJournalDocument<T>>;
   };
 
 type TJournalModel<T extends IJournal = IJournal> = Model<
   T,
   unknown,
   {
-    void: (
-      book: Book,
-      reason?: undefined | null | string,
-      options?: IOptions
-    ) => Promise<TJournalDocument<T>>;
+    void: (book: Book, reason?: undefined | null | string, options?: IOptions) => Promise<TJournalDocument<T>>;
   }
 >;
 
@@ -182,5 +144,4 @@ export function setJournalSchema(schema: Schema, collection?: string) {
   journalModel = model("Medici_Journal", schema, collection) as TJournalModel;
 }
 
-typeof connection.models["Medici_Journal"] === "undefined" &&
-  setJournalSchema(journalSchema);
+typeof connection.models["Medici_Journal"] === "undefined" && setJournalSchema(journalSchema);

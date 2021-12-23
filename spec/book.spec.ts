@@ -20,36 +20,24 @@ describe("book", function () {
       expect(() => new Book(" ")).to.throw("Invalid value for name provided.");
     });
     it("should throw an error when maxAccountPath of book is a fraction", () => {
-      expect(() => new Book("MyBook", { maxAccountPath: 3.14 })).to.throw(
-        "Invalid value for maxAccountPath provided."
-      );
+      expect(() => new Book("MyBook", { maxAccountPath: 3.14 })).to.throw("Invalid value for maxAccountPath provided.");
     });
     it("should throw an error when maxAccountPath of book is a negative number", () => {
-      expect(() => new Book("MyBook", { maxAccountPath: -3 })).to.throw(
-        "Invalid value for maxAccountPath provided."
-      );
+      expect(() => new Book("MyBook", { maxAccountPath: -3 })).to.throw("Invalid value for maxAccountPath provided.");
     });
     it("should throw an error when maxAccountPath of book is not a number", () => {
       // @ts-expect-error we need a number
-      expect(() => new Book("MyBook", { maxAccountPath: "7" })).to.throw(
-        "Invalid value for maxAccountPath provided."
-      );
+      expect(() => new Book("MyBook", { maxAccountPath: "7" })).to.throw("Invalid value for maxAccountPath provided.");
     });
     it("should throw an error when precision of book is a fraction", () => {
-      expect(() => new Book("MyBook", { precision: 3.14 })).to.throw(
-        "Invalid value for precision provided."
-      );
+      expect(() => new Book("MyBook", { precision: 3.14 })).to.throw("Invalid value for precision provided.");
     });
     it("should throw an error when precision of book is a negative number", () => {
-      expect(() => new Book("MyBook", { precision: -3 })).to.throw(
-        "Invalid value for precision provided."
-      );
+      expect(() => new Book("MyBook", { precision: -3 })).to.throw("Invalid value for precision provided.");
     });
     it("should throw an error when precision of book is not a number", () => {
       // @ts-expect-error we need a number
-      expect(() => new Book("MyBook", { precision: "7" })).to.throw(
-        "Invalid value for precision provided."
-      );
+      expect(() => new Book("MyBook", { precision: "7" })).to.throw("Invalid value for precision provided.");
     });
   });
 
@@ -132,9 +120,7 @@ describe("book", function () {
         .commit();
 
       expect(journal._original_journal).to.be.instanceOf(Types.ObjectId);
-      expect(journal._original_journal!.toString()).to.be.equal(
-        "012345678901234567890123"
-      );
+      expect(journal._original_journal!.toString()).to.be.equal("012345678901234567890123");
     });
 
     it("should throw INVALID_JOURNAL if an entry total is !=0 and <0", async () => {
@@ -147,9 +133,7 @@ describe("book", function () {
         await entry.commit();
         expect.fail("Should have thrown");
       } catch (e) {
-        expect((e as Error).message).to.be.equal(
-          "INVALID_JOURNAL: can't commit non zero total"
-        );
+        expect((e as Error).message).to.be.equal("INVALID_JOURNAL: can't commit non zero total");
       }
     });
 
@@ -162,16 +146,12 @@ describe("book", function () {
         await entry.commit();
         expect.fail("Should have thrown");
       } catch (e) {
-        expect((e as Error).message).to.be.equal(
-          "INVALID_JOURNAL: can't commit non zero total"
-        );
+        expect((e as Error).message).to.be.equal("INVALID_JOURNAL: can't commit non zero total");
       }
     });
 
     it("should handle extra data when creating an Entry", async () => {
-      const book = new Book(
-        "MyBook-Entry-Test" + new Types.ObjectId().toString()
-      );
+      const book = new Book("MyBook-Entry-Test" + new Types.ObjectId().toString());
 
       await book
         .entry("extra")
@@ -200,13 +180,9 @@ describe("book", function () {
     });
 
     it("should delete transactions when not in transaction and saving the journal fails", async () => {
-      const book = new Book(
-        "MyBook-Entry-Test-delete-when-not-in-mongo-transaction"
-      );
+      const book = new Book("MyBook-Entry-Test-delete-when-not-in-mongo-transaction");
 
-      const saveStub = stub(transactionModel.prototype, "save").rejects(
-        new Error()
-      );
+      const saveStub = stub(transactionModel.prototype, "save").rejects(new Error());
 
       try {
         await book
@@ -230,13 +206,8 @@ describe("book", function () {
     it("should write an error into the console when reverting in non-mongo-transaction fails", async () => {
       const book = new Book("MyBook-Entry-Test-old-transaction-revert");
 
-      const deleteManyStub = stub(transactionModel, "deleteMany").throws(
-        new Error()
-      );
-      const saveStub = stub(transactionModel.prototype, "save")
-        .onFirstCall()
-        .rejects(new Error())
-        .callThrough();
+      const deleteManyStub = stub(transactionModel, "deleteMany").throws(new Error());
+      const saveStub = stub(transactionModel.prototype, "save").onFirstCall().rejects(new Error()).callThrough();
       const consoleErrorStub = stub(console, "error");
 
       try {
@@ -280,12 +251,7 @@ describe("book", function () {
 
       it("should by default not include not approved transactions in ledger", async () => {
         const book = new Book("MyBookPendingTransactionsLedger");
-        await book
-          .entry("Test Entry")
-          .debit("Foo", 500)
-          .credit("Bar", 500)
-          .setApproved(false)
-          .commit();
+        await book.entry("Test Entry").debit("Foo", 500).credit("Bar", 500).setApproved(false).commit();
         const fooLedger = await book.ledger({
           account: "Foo",
         });
@@ -298,12 +264,7 @@ describe("book", function () {
 
       it("should by default not include not approved transactions in ledger", async () => {
         const book = new Book("MyBookPendingTransactionsLedger-2");
-        await book
-          .entry("Test Entry")
-          .debit("Foo", 500)
-          .credit("Bar", 500)
-          .setApproved(false)
-          .commit();
+        await book.entry("Test Entry").debit("Foo", 500).credit("Bar", 500).setApproved(false).commit();
         const fooLedger = await book.ledger({
           account: "Foo",
           approved: false,
@@ -355,11 +316,7 @@ describe("book", function () {
     const book = new Book("MyBook-balance");
 
     before(async () => {
-      await book
-        .entry("Test Entry")
-        .debit("Assets:Receivable", 700)
-        .credit("Income:Rent", 700)
-        .commit();
+      await book.entry("Test Entry").debit("Assets:Receivable", 700).credit("Income:Rent", 700).commit();
       await book
         .entry("Test Entry")
         .debit("Assets:Receivable", 500, { clientId: "12345" })
@@ -376,12 +333,7 @@ describe("book", function () {
 
     it("should deal with JavaScript rounding weirdness", async function () {
       const book = new Book("MyBook-balance-rounding");
-      await book
-        .entry("Rounding Test")
-        .credit("A:B", 1005)
-        .debit("A:B", 994.95)
-        .debit("A:B", 10.05)
-        .commit();
+      await book.entry("Rounding Test").credit("A:B", 1005).debit("A:B", 994.95).debit("A:B", 10.05).commit();
       const result1 = await book.balance({ account: "A:B" });
       const { balance } = result1;
       expect(balance).to.be.equal(0);
@@ -423,11 +375,7 @@ describe("book", function () {
       | null = null;
 
     before(async () => {
-      await book
-        .entry("Test Entry")
-        .debit("Assets:Receivable", 700)
-        .credit("Income:Rent", 700)
-        .commit();
+      await book.entry("Test Entry").debit("Assets:Receivable", 700).credit("Income:Rent", 700).commit();
       journal = await book
         .entry("Test Entry")
         .debit("Assets:Receivable", 500, { clientId: "12345" })
@@ -509,8 +457,7 @@ describe("book", function () {
 
       const voidedJournal = await book.void(journal._id, "Void reason");
 
-      const updatedJournal = (await book.ledger({ _journal: journal._id }))
-        .results[0];
+      const updatedJournal = (await book.ledger({ _journal: journal._id })).results[0];
 
       expect(updatedJournal.memo).to.be.equal("Test Entry");
       expect(updatedJournal.void_reason).to.be.equal("Void reason");
@@ -528,8 +475,7 @@ describe("book", function () {
 
       const voidedJournal = await book.void(journal._id);
 
-      const updatedJournal = (await book.ledger({ _journal: journal._id }))
-        .results[0];
+      const updatedJournal = (await book.ledger({ _journal: journal._id })).results[0];
 
       expect(updatedJournal.memo).to.be.equal("Test Entry");
       expect(updatedJournal.void_reason).to.be.equal("[VOID] Test Entry");
@@ -543,11 +489,7 @@ describe("book", function () {
     const book = new Book("MyBook-listAccounts");
 
     before(async () => {
-      await book
-        .entry("depth test")
-        .credit("Assets:Receivable", 1)
-        .debit("Income:Rent", 1)
-        .commit();
+      await book.entry("depth test").credit("Assets:Receivable", 1).debit("Income:Rent", 1).commit();
     });
 
     it("should list all accounts", async () => {
@@ -563,23 +505,11 @@ describe("book", function () {
   describe("ledger", () => {
     const book = new Book("MyBook-ledger");
     before(async () => {
-      await book
-        .entry("ledger test 1")
-        .credit("Assets:Receivable", 1)
-        .debit("Income:Rent", 1)
-        .commit();
+      await book.entry("ledger test 1").credit("Assets:Receivable", 1).debit("Income:Rent", 1).commit();
 
-      await book
-        .entry("ledger test 2")
-        .debit("Income:Rent", 1)
-        .credit("Assets:Receivable", 1)
-        .commit();
+      await book.entry("ledger test 2").debit("Income:Rent", 1).credit("Assets:Receivable", 1).commit();
 
-      await book
-        .entry("ledger test 3")
-        .debit("Income:Rent", 1)
-        .credit("Assets:Receivable", 1)
-        .commit();
+      await book.entry("ledger test 3").debit("Income:Rent", 1).credit("Assets:Receivable", 1).commit();
     });
 
     it("should return full ledger", async () => {

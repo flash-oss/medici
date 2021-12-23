@@ -1,10 +1,6 @@
 import { FilterQuery, isValidObjectId, Types } from "mongoose";
 import type { Book } from "../Book";
-import {
-  isTransactionObjectIdKey,
-  isValidTransactionKey,
-  ITransaction,
-} from "../models/transaction";
+import { isTransactionObjectIdKey, isValidTransactionKey, ITransaction } from "../models/transaction";
 import { isPrototypeAttribute } from "./isPrototypeAttribute";
 import { parseAccountField } from "./parseAccountField";
 import { parseDateField } from "./parseDateField";
@@ -55,8 +51,7 @@ export function parseQuery(
   for (const [key, value] of Object.entries(extra)) {
     if (isPrototypeAttribute(key)) continue;
     filterQuery[isValidTransactionKey(key) ? key : `meta.${key}`] =
-      (referenceRE.test(key) && isValidObjectId(value)) ||
-      isTransactionObjectIdKey(key)
+      (referenceRE.test(key) && isValidObjectId(value)) || isTransactionObjectIdKey(key)
         ? new Types.ObjectId(value as string)
         : value;
   }

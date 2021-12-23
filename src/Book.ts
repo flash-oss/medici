@@ -1,57 +1,33 @@
 import { Entry } from "./Entry";
 import { IPaginationQuery, IParseQuery, parseQuery } from "./helper/parseQuery";
 import { IJournal, journalModel } from "./models/journal";
-import {
-  isValidTransactionKey,
-  ITransaction,
-  transactionModel,
-} from "./models/transaction";
+import { isValidTransactionKey, ITransaction, transactionModel } from "./models/transaction";
 import type { IOptions } from "./IOptions";
 import type { Document, PipelineStage, Types } from "mongoose";
 import { JournalNotFoundError } from "./errors/JournalNotFoundError";
 import { BookConstructorError } from "./errors/BookConstructorError";
 import { lockModel } from "./models/lock";
 
-export class Book<
-  U extends ITransaction = ITransaction,
-  J extends IJournal = IJournal
-> {
+export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJournal> {
   name: string;
   precision: number;
   maxAccountPath: number;
 
-  constructor(
-    name: string,
-    options = {} as { precision?: number; maxAccountPath?: number }
-  ) {
+  constructor(name: string, options = {} as { precision?: number; maxAccountPath?: number }) {
     this.name = name;
-    this.precision =
-      typeof options.precision !== "undefined" ? options.precision : 7;
-    this.maxAccountPath =
-      typeof options.maxAccountPath !== "undefined"
-        ? options.maxAccountPath
-        : 3;
+    this.precision = typeof options.precision !== "undefined" ? options.precision : 7;
+    this.maxAccountPath = typeof options.maxAccountPath !== "undefined" ? options.maxAccountPath : 3;
 
     if (typeof this.name !== "string" || this.name.trim().length === 0) {
       throw new BookConstructorError("Invalid value for name provided.");
     }
 
-    if (
-      typeof this.precision !== "number" ||
-      !Number.isInteger(this.precision) ||
-      this.precision < 0
-    ) {
+    if (typeof this.precision !== "number" || !Number.isInteger(this.precision) || this.precision < 0) {
       throw new BookConstructorError("Invalid value for precision provided.");
     }
 
-    if (
-      typeof this.maxAccountPath !== "number" ||
-      !Number.isInteger(this.maxAccountPath) ||
-      this.maxAccountPath < 0
-    ) {
-      throw new BookConstructorError(
-        "Invalid value for maxAccountPath provided."
-      );
+    if (typeof this.maxAccountPath !== "number" || !Number.isInteger(this.maxAccountPath) || this.maxAccountPath < 0) {
+      throw new BookConstructorError("Invalid value for maxAccountPath provided.");
     }
   }
 
@@ -63,10 +39,7 @@ export class Book<
     return Entry.write<U, J>(this, memo, date, original_journal);
   }
 
-  async balance(
-    query: IParseQuery,
-    options = {} as IOptions
-  ): Promise<{ balance: number; notes: number }> {
+  async balance(query: IParseQuery, options = {} as IOptions): Promise<{ balance: number; notes: number }> {
     const match: PipelineStage.Match = {
       $match: parseQuery(query, this),
     };
@@ -84,9 +57,7 @@ export class Book<
         },
       },
     };
-    const result = (
-      await transactionModel.aggregate([match, group], options).exec()
-    )[0];
+    const result = (await transactionModel.aggregate([match, group], options).exec())[0];
     return !result
       ? {
           balance: 0,
@@ -128,13 +99,10 @@ export class Book<
       delete query.page;
     }
     const filterQuery = parseQuery(query, this);
-    const q = transactionModel
-      .find(filterQuery, undefined, options)
-      .lean(lean)
-      .sort({
-        datetime: -1,
-        timestamp: -1,
-      });
+    const q = transactionModel.find(filterQuery, undefined, options).lean(lean).sort({
+      datetime: -1,
+      timestamp: -1,
+    });
 
     let count = Promise.resolve(0);
     if (typeof skip !== "undefined") {
@@ -161,11 +129,7 @@ export class Book<
     };
   }
 
-  async void(
-    journal_id: string | Types.ObjectId,
-    reason?: undefined | string,
-    options = {} as IOptions
-  ) {
+  async void(journal_id: string | Types.ObjectId, reason?: undefined | string, options = {} as IOptions) {
     const journal = await journalModel
       .findOne(
         {
@@ -184,10 +148,7 @@ export class Book<
     return journal.void(this, reason, options);
   }
 
-  async writelockAccounts(
-    accounts: string[],
-    options: Required<Pick<IOptions, "session">>
-  ): Promise<Book<U, J>> {
+  async writelockAccounts(accounts: string[], options: Required<Pick<IOptions, "session">>): Promise<Book<U, J>> {
     accounts = Array.from(new Set(accounts));
 
     // ISBN: 978-1-4842-6879-7. MongoDB Performance Tuning (2021), p. 217

@@ -29,9 +29,7 @@ if (process.env.IS_REPLICASET) {
         });
         expect.fail("Should have thrown.");
       } catch (e) {
-        expect((e as Error).message).match(
-          /Medici_Transaction validation failed/
-        );
+        expect((e as Error).message).match(/Medici_Transaction validation failed/);
       }
 
       const result = await book.balance({ account: "X:Y" });
@@ -56,9 +54,7 @@ if (process.env.IS_REPLICASET) {
         });
         expect.fail("Should have thrown.");
       } catch (e) {
-        expect((e as Error).message).match(
-          /Medici_Transaction validation failed/
-        );
+        expect((e as Error).message).match(/Medici_Transaction validation failed/);
       }
 
       const result = await book.balance({ account: "X:Y" });
@@ -289,17 +285,9 @@ if (process.env.IS_REPLICASET) {
     it("should avoid double spending, commit() using writelockAccounts", async function () {
       const book = new Book("ACID" + Date.now());
 
-      await book
-        .entry("depth test")
-        .credit("Income", 2)
-        .debit("Outcome", 2)
-        .commit();
+      await book.entry("depth test").credit("Income", 2).debit("Outcome", 2).commit();
 
-      async function spendOne(
-        session: mongoose.ClientSession,
-        name: string,
-        delay: number
-      ) {
+      async function spendOne(session: mongoose.ClientSession, name: string, delay: number) {
         await book
           .entry("depth test")
           .credit("Savings", 1)
@@ -383,17 +371,9 @@ if (process.env.IS_REPLICASET) {
     it("should avoid double spending, commit() using writelockAccounts with a Regex", async function () {
       const book = new Book("ACID" + Date.now());
 
-      await book
-        .entry("depth test")
-        .credit("Income", 2)
-        .debit("Outcome", 2)
-        .commit();
+      await book.entry("depth test").credit("Income", 2).debit("Outcome", 2).commit();
 
-      async function spendOne(
-        session: mongoose.ClientSession,
-        name: string,
-        delay: number
-      ) {
+      async function spendOne(session: mongoose.ClientSession, name: string, delay: number) {
         await book
           .entry("depth test")
           .credit("Savings", 1)
@@ -477,22 +457,10 @@ if (process.env.IS_REPLICASET) {
     it("should avoid double spending, using book.writelockAccounts", async function () {
       const book = new Book("ACID" + Date.now());
 
-      await book
-        .entry("depth test")
-        .credit("Income", 2)
-        .debit("Outcome", 2)
-        .commit();
+      await book.entry("depth test").credit("Income", 2).debit("Outcome", 2).commit();
 
-      async function spendOne(
-        session: mongoose.ClientSession,
-        name: string,
-        delay: number
-      ) {
-        await book
-          .entry("depth test")
-          .credit("Savings", 1)
-          .debit("Income", 1)
-          .commit({ session });
+      async function spendOne(session: mongoose.ClientSession, name: string, delay: number) {
+        await book.entry("depth test").credit("Savings", 1).debit("Income", 1).commit({ session });
 
         await new Promise((resolve) => setTimeout(resolve, delay));
 
@@ -577,22 +545,10 @@ if (process.env.IS_REPLICASET) {
 
       const beginDate = new Date();
 
-      await book
-        .entry("depth test")
-        .credit("Income", 2)
-        .debit("Outcome", 2)
-        .commit();
+      await book.entry("depth test").credit("Income", 2).debit("Outcome", 2).commit();
 
-      async function spendOne(
-        session: mongoose.ClientSession,
-        name: string,
-        delay: number
-      ) {
-        await book
-          .entry("depth test")
-          .credit("Savings", 1)
-          .debit("Income", 1)
-          .commit({ session });
+      async function spendOne(session: mongoose.ClientSession, name: string, delay: number) {
+        await book.entry("depth test").credit("Savings", 1).debit("Income", 1).commit({ session });
 
         await new Promise((resolve) => setTimeout(resolve, delay));
 

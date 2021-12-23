@@ -56,28 +56,19 @@ export const transactionSchema = new Schema<ITransaction>(
 
 export let transactionModel: Model<ITransaction>;
 
-let transactionSchemaKeys: Set<string> = new Set(
-  Object.keys(transactionSchema.paths)
-);
+let transactionSchemaKeys: Set<string> = new Set(Object.keys(transactionSchema.paths));
 
-export function isValidTransactionKey<T extends ITransaction = ITransaction>(
-  value: unknown
-): value is keyof T {
+export function isValidTransactionKey<T extends ITransaction = ITransaction>(value: unknown): value is keyof T {
   return typeof value === "string" && transactionSchemaKeys.has(value);
 }
 
-let transactionSchemaObjectIdKeys: Set<string> =
-  extractObjectIdKeysFromSchema(transactionSchema);
+let transactionSchemaObjectIdKeys: Set<string> = extractObjectIdKeysFromSchema(transactionSchema);
 
 export function isTransactionObjectIdKey(value: unknown): boolean {
   return typeof value === "string" && transactionSchemaObjectIdKeys.has(value);
 }
 
-export function setTransactionSchema(
-  schema: Schema,
-  collection?: string,
-  options = {} as { defaultIndexes: boolean }
-) {
+export function setTransactionSchema(schema: Schema, collection?: string, options = {} as { defaultIndexes: boolean }) {
   const { defaultIndexes = true } = options;
 
   delete connection.models["Medici_Transaction"];
@@ -117,5 +108,4 @@ export function setTransactionSchema(
   transactionSchemaObjectIdKeys = extractObjectIdKeysFromSchema(schema);
 }
 
-typeof connection.models["Medici_Transaction"] === "undefined" &&
-  setTransactionSchema(transactionSchema);
+typeof connection.models["Medici_Transaction"] === "undefined" && setTransactionSchema(transactionSchema);
