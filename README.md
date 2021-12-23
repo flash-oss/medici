@@ -106,7 +106,9 @@ await myBook.void("5eadfd84d7d587fb794eaacb", "I made a mistake");
 
 If you do not specify a void reason, the system will set the memo of the new journal to the original journal's memo prepended with "[VOID]".
 
-## Typescript Example
+## ACID checks of an account balance
+
+Sometimes you need to guarantee that an account balance never goes negative. You can employ MongoDB ACID transactions for that. As of 2022 the recommended way is to use special Medici writelock mechanism. See comments in the code example below.
 
 ```typescript
 import { Book, mongoTransaction } from "medici";
@@ -114,7 +116,7 @@ import { Book, mongoTransaction } from "medici";
 const mainLedger = new Book("mainLedger");
 
 async function withdraw(walletId: string, amount: number) {
-  return mongoTransaction(session => {
+  return mongoTransaction(async session => {
 
       await mainLedger
         .entry("Withdraw by User")
@@ -122,7 +124,7 @@ async function withdraw(walletId: string, amount: number) {
         .debit(`Accounts:${walletId}`, amount)
         .commit({ session });
 
-      // .balance() can be an resource-expensive operation. So we do it after we
+      // .balance() can be a resource-expensive operation. So we do it after we
       // created the journal.
       const balanceAfter = await mainLedger.balance(
         {
@@ -131,12 +133,13 @@ async function withdraw(walletId: string, amount: number) {
         { session }
       );
 
-      // Avoid spending more than the wallet has
+      // Avoid spending more than the wallet has.
+      // Reject the ACID transaction by throwing this exception.
       if (balanceAfter.balance < 0) {
         throw new Error("Not enough balance in wallet.");
       }
 
-      // MongoDB Performance Tuning (2021), p. 217
+      // ISBN: 978-1-4842-6879-7. MongoDB Performance Tuning (2021), p. 217
       // Reduce the Chance of Transient Transaction Errors by moving the
       // contentious statement to the end of the transaction.
 

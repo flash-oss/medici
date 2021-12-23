@@ -208,7 +208,7 @@ export class Book<
   ): Promise<Book<U, J>> {
     accounts = Array.from(new Set(accounts));
 
-    // MongoDB Performance Tuning (2021), p. 217
+    // ISBN: 978-1-4842-6879-7. MongoDB Performance Tuning (2021), p. 217
     // Reduce the Chance of Transient Transaction Errors by moving the
     // contentious statement to the end of the transaction.
     for (let i = 0, il = accounts.length; i < il; i++) {
