@@ -30,13 +30,13 @@ In theory, the account names are entirely arbitrary, but you will likely want to
 
 ## Limitations:
 
- * You can safely add values up to 9007199254740991 (Number.MAX_SAFE_INTEGER) and by default down to 0.000001 (precision: 7).
- * Anything more than 9007199254740991 or less than 0.000001 (precision: 7) is not guaranteed to be handled properly.
+- You can safely add values up to 9007199254740991 (Number.MAX_SAFE_INTEGER) and by default down to 0.00000001 (precision: 8).
+- Anything more than 9007199254740991 or less than 0.00000001 (precision: 8) is not guaranteed to be handled properly.
 
-You can set the floating point precision as follows: 
+You can set the floating point precision as follows:
 
 ```javascript
-const myBook = new Book("MyBook", { precision: 8 });
+const myBook = new Book("MyBook", { precision: 7 });
 ```
 
 ## Writing journal entries
@@ -87,11 +87,15 @@ To retrieve transactions, use the `book.ledger()` method (here I'm using moment.
 const startDate = moment().subtract("months", 1).toDate(); // One month ago
 const endDate = new Date(); // today
 
-const { results, total } = await myBook.ledger({
-  account: "Income",
-  start_date: startDate,
-  end_date: endDate,
-}, null, { lean: true });
+const { results, total } = await myBook.ledger(
+  {
+    account: "Income",
+    start_date: startDate,
+    end_date: endDate,
+  },
+  null,
+  { lean: true }
+);
 ```
 
 ## Voiding Journal Entries
@@ -116,40 +120,39 @@ import { Book, mongoTransaction } from "medici";
 const mainLedger = new Book("mainLedger");
 
 async function withdraw(walletId: string, amount: number) {
-  return mongoTransaction(async session => {
+  return mongoTransaction(async (session) => {
+    await mainLedger
+      .entry("Withdraw by User")
+      .credit("Assets", amount)
+      .debit(`Accounts:${walletId}`, amount)
+      .commit({ session });
 
-      await mainLedger
-        .entry("Withdraw by User")
-        .credit("Assets", amount)
-        .debit(`Accounts:${walletId}`, amount)
-        .commit({ session });
+    // .balance() can be a resource-expensive operation. So we do it after we
+    // created the journal.
+    const balanceAfter = await mainLedger.balance(
+      {
+        account: `Accounts:${walletId}`,
+      },
+      { session }
+    );
 
-      // .balance() can be a resource-expensive operation. So we do it after we
-      // created the journal.
-      const balanceAfter = await mainLedger.balance(
-        {
-          account: `Accounts:${walletId}`,
-        },
-        { session }
-      );
+    // Avoid spending more than the wallet has.
+    // Reject the ACID transaction by throwing this exception.
+    if (balanceAfter.balance < 0) {
+      throw new Error("Not enough balance in wallet.");
+    }
 
-      // Avoid spending more than the wallet has.
-      // Reject the ACID transaction by throwing this exception.
-      if (balanceAfter.balance < 0) {
-        throw new Error("Not enough balance in wallet.");
-      }
+    // ISBN: 978-1-4842-6879-7. MongoDB Performance Tuning (2021), p. 217
+    // Reduce the Chance of Transient Transaction Errors by moving the
+    // contentious statement to the end of the transaction.
 
-      // ISBN: 978-1-4842-6879-7. MongoDB Performance Tuning (2021), p. 217
-      // Reduce the Chance of Transient Transaction Errors by moving the
-      // contentious statement to the end of the transaction.
-
-      // We writelock only the account of the User/Wallet. If we writelock a very 
-      // often used account, like the fictitious Assets account in this example, 
-      // we would slow down the database extremely as the writelocks would make
-      // it impossible to concurrently write in the database.
-      // We only check the balance of the User/Wallet, so only this Account has to
-      // be writelocked.
-      await mainLedger.writelockAccounts([`Accounts:${walletId}`], { session });
+    // We writelock only the account of the User/Wallet. If we writelock a very
+    // often used account, like the fictitious Assets account in this example,
+    // we would slow down the database extremely as the writelocks would make
+    // it impossible to concurrently write in the database.
+    // We only check the balance of the User/Wallet, so only this Account has to
+    // be writelocked.
+    await mainLedger.writelockAccounts([`Accounts:${walletId}`], { session });
   });
 }
 ```
@@ -399,21 +402,25 @@ For `medici_transactions` collection with 50000 documents:
   - The project was rewritten with TypeScript. Types are provided within the package now.
   - Added support for MongoDB sessions (aka ACID transactions). See `IOptions` type.
   - Added a `mongoTransaction`-method, which is a convenience shortcut for `mongoose.connection.transaction`.
-  - Added async helper method `initModels`, which initializes the underlying `transactionModel` and `journalModel`. Use this after you connected to  the MongoDB-Server if you want to use transactions. Or else you could get `Unable to read from a snapshot due to pending collection catalog changes; please retry the operation.`-Error when acquiring a session because the actual database-collection is still being created by the underlying mongoose-instance.
-  - **BREAKING**: Node.js 12 is the lowest supported version. Although, 10 should still work fine, when using mongoose v5.
-  - **BREAKING**: You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
-Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
-  - MongoDB 4 and above is supported. You can still use MongoDB 3, but ACID-sessions could have issues.
+  - Added async helper method `initModels`, which initializes the underlying `transactionModel` and `journalModel`. Use this after you connected to the MongoDB-Server if you want to use transactions. Or else you could get `Unable to read from a snapshot due to pending collection catalog changes; please retry the operation.`-Error when acquiring a session because the actual database-collection is still being created by the underlying mongoose-instance.
+  - **POTENTIALLY BREAKING**: Node.js 12 is the lowest supported version. Although, 10 should still work fine.
+  - MongoDB v4 and above is supported. You can still try using MongoDB v3, but it's not recommended.
   - Added a new index on the transactionModel to improve the performance of paginated ledger queries.
-  - **BREAKING**: `.ledger()` returns lean Transaction-Objects for better performance. To retrieve hydrated Transaction-Objects, set lean to false in the third parameter of `.ledger()`. It is recommended to not hydrate the transactions, as it implies that the transactions could be manipulated and the data integrity of Medici could be risked. 
-  - You can now specify the `precision`. Book now accepts an optional second parameter, where you can set the `precision` used internally by Medici. Default value is 7 digits precision. Javascript has issues with floating points precision and can only handle 16 digits precision, like 0.1 + 0.2 results in 0.30000000000000004 and not 0.3. The default precision of 7 digits after decimal, results in the correct result of 0.1 + 0.2 = 0.3. The default value is taken from medici version 4.0.2. Be careful, if you use currency, which has more decimal points, e.g. Bitcoin has a precision of 8 digits after the comma. So for Bitcoin you should set the precision to 8. You can enforce an "only-Integer"-mode, by setting the precision to 0. But keep in mind that Javascript has a max safe integer limit of 9007199254740991.
+  - **POTENTIALLY BREAKING**: `.ledger()` returns lean Transaction-Objects for better performance. To retrieve hydrated mongoose models set `lean` to `false` in the third parameter of `.ledger()`. It is recommended to not hydrate the transactions, as it implies that the transactions could be manipulated and the data integrity of Medici could be risked.
+  - **POTENTIALLY BREAKING**: Rounding precision was changed from 7 to 8 floating point digits.
+    - You can now specify the `precision`. The `Book` now accepts an optional second parameter `precision` used internally by Medici. Javascript has issues with floating points precision and can only handle 16 digits precision, like 0.1 + 0.2 results in 0.30000000000000004 and not 0.3. The default precision of 8 digits after decimal results in the correct sum of 0.1 + 0.2 = 0.3. The medici v4 had it 7 by default. Be careful if you are using values which have more than 8 digits after the comma. You can enforce an "only-Integer"-mode, by setting the precision to 0. But keep in mind that Javascript has a max safe integer limit of 9007199254740991.
   - Added `maxAccountPath`. You can set the maximum amount of account paths via the second parameter of Book. This can improve the performance of `.balance()` and `.ledger()` calls as it will then use the accounts attribute of the transactions as a filter.
-  - **BREAKING**: Added validation for `name` of Book, `maxAccountPath` and `precision`. A `name` has to be not an empty string or a string containing only whitespace characters. `precision` has to be an integer bigger or equal 0. `maxAccountPath` has to be an integer bigger or equal 0. 
+  - **POTENTIALLY BREAKING**: Added validation for `name` of Book, `maxAccountPath` and `precision`.
+    - The `name` has to be not an empty string or a string containing only whitespace characters.
+    - `precision` has to be an integer bigger or equal 0.
+    - `maxAccountPath` has to be an integer bigger or equal 0.
   - Added `setJournalSchema` and `setTransactionSchema` to use custom Schemas. It will ensure, that all relevant middlewares and methods are also added when using custom Schemas. Use `syncIndexes`-method from medici after setTransactionSchema to enforce the defined indexes on the models.
-  - **BREAKING**: Added prototype-pollution protection when creating entries. Reserved words like `__proto__` can not be used as properties of a Transaction or a Journal or their meta-Field and they will get silently filtered.
-  - **BREAKING**: When calling `book.void()` the provided `journal_id` has to belong to the `book`. If the journal does not exist within the book, medici will throw a `JournalNotFoundError`. In medici < 5 you could theoretically void a `journal` of another `book`. 
-  - **BREAKING**: `.balance()` does not support pagination anymore. To get the balance of a page sum up the values of credit and debit of a paginated `.ledger()`-call.
+  - **POTENTIALLY BREAKING**: Added prototype-pollution protection when creating entries. Reserved words like `__proto__` can not be used as properties of a Transaction or a Journal or their meta-Field. They will get silently filtered out.
+  - **POTENTIALLY BREAKING**: When calling `book.void()` the provided `journal_id` has to belong to the `book`. If the journal does not exist within the book, medici will throw a `JournalNotFoundError`. In medici < 5 you could theoretically void a `journal` of another `book`.
   - Added a `lockModel` to make it possible to call `.balance()` and get a reliable result while using a mongo-session. Call `.writelockAccounts()` with first parameter being an Array of Accounts, which you want to lock. E.g. `book.writelockAccounts(["Assets:User:User1"], { session })`. For best performance call writelockAccounts as the last operation in the transaction. Also `.commit()` accepts the option `writelockAccounts`, where you can provide an array of accounts or a RegExp. It is recommended to use the `book.writelockAccounts()`.
+  - **BREAKING**: `.balance()` does not support pagination anymore. To get the balance of a page sum up the values of credit and debit of a paginated `.ledger()`-call.
+  - **BREAKING**: You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
+  - **BREAKING**: Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
 
 - **v4.0.0**
 

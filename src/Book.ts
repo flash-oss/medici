@@ -15,7 +15,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
 
   constructor(name: string, options = {} as { precision?: number; maxAccountPath?: number }) {
     this.name = name;
-    this.precision = typeof options.precision !== "undefined" ? options.precision : 7;
+    this.precision = typeof options.precision !== "undefined" ? options.precision : 8;
     this.maxAccountPath = typeof options.maxAccountPath !== "undefined" ? options.maxAccountPath : 3;
 
     if (typeof this.name !== "string" || this.name.trim().length === 0) {

@@ -7,11 +7,11 @@ import { ITransaction } from "../../src/models/transaction";
 expectType<Book>(new BookESM("MyBook"));
 expectType<Book>(new Book("MyBook"));
 expectType<Book>(new Book("MyBook", {}));
-expectType<Book>(new Book("MyBook", { precision: 8 }));
+expectType<Book>(new Book("MyBook", { precision: 7 }));
 expectError(new Book());
 expectError(new Book("MyBook", ""));
 expectError(new Book("MyBook", 7));
-expectError(new Book("MyBook", { precision: "8" }));
+expectError(new Book("MyBook", { precision: "7" }));
 expectError(new Book("MyBook", { precision: true }));
 
 expectError(setJournalSchema());
