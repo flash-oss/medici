@@ -3,7 +3,7 @@ import { IPaginationQuery, IParseQuery, parseQuery } from "./helper/parseQuery";
 import { IJournal, journalModel } from "./models/journal";
 import { isValidTransactionKey, ITransaction, transactionModel } from "./models/transaction";
 import type { IOptions } from "./IOptions";
-import type { Document, PipelineStage, Types } from "mongoose";
+import type { Document, Types } from "mongoose";
 import { JournalNotFoundError } from "./errors/JournalNotFoundError";
 import { BookConstructorError } from "./errors/BookConstructorError";
 import { lockModel } from "./models/lock";
@@ -40,11 +40,11 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
   }
 
   async balance(query: IParseQuery, options = {} as IOptions): Promise<{ balance: number; notes: number }> {
-    const match: PipelineStage.Match = {
+    const match = {
       $match: parseQuery(query, this),
     };
 
-    const group: PipelineStage.Group = {
+    const group = {
       $group: {
         _id: null,
         balance: {
