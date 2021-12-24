@@ -27,6 +27,3 @@ jobs:
       - run: npm ci --ignore-scripts
 
       - run: npm run ci
-        env:
-          CI: true
-          IS_REPLICASET: true

@@ -5,7 +5,7 @@ import * as mongoose from "mongoose";
 import { initModels, mongoTransaction } from "../src";
 import { lockModel } from "../src/models/lock";
 
-if (process.env.IS_REPLICASET) {
+if (process.env.ACID_AVAILABLE) {
   describe("acid", function () {
     before(async () => {
       await initModels();

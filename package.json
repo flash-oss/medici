@@ -18,7 +18,7 @@
     "test": "npm run test:code && npm run test:types",
     "test:code": "ts-mocha --recursive './spec/*.ts' --preserve-symlinks",
     "test:types": "tsd",
-    "test:coverage": "npm run clean && nyc ts-mocha --recursive './spec/**/*.spec.ts'"
+    "test:coverage": "npm run clean && USE_MEMORY_REPL_SET=true nyc --reporter html ts-mocha --recursive './spec/**/*.spec.ts'"
   },
   "files": [
     "build/",

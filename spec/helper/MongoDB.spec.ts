@@ -4,10 +4,19 @@ import { MongoMemoryReplSet } from "mongodb-memory-server";
 
 let replSet: MongoMemoryReplSet;
 
+if (process.env.USE_MEMORY_REPL_SET !== "true") {
+  if (process.env.CI) {
+    // The GitHub's MongoDB server is a Replica Set. Thus supports ACID.
+    process.env.ACID_AVAILABLE = "true";
+  }
+} else {
+  process.env.ACID_AVAILABLE = "true";
+}
+
 before(async function () {
   this.timeout(40000);
 
-  if (process.env.CI) {
+  if (process.env.USE_MEMORY_REPL_SET !== "true") {
     await mongoose.connect("mongodb://localhost/medici_test", { serverSelectionTimeoutMS: 2500 });
 
     // Cleanup if there are any leftovers from the previous runs. Useful in local development.
@@ -33,7 +42,6 @@ before(async function () {
     await replSet.waitUntilRunning();
     const connectionString = replSet.getUri();
     await mongoose.connect(connectionString);
-    process.env.IS_REPLICASET = "true";
   }
 });
 
