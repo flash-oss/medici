@@ -24,6 +24,6 @@ jobs:
           mongodb-replica-set: test-rs
 
       # ignoring scripts to not install mongodb-memory-server
-      - run: npm ci --ignore-scripts
+      - run: npm i --ignore-scripts
 
       - run: npm run ci
