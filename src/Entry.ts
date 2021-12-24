@@ -67,7 +67,7 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
     const debit = type === -1 ? amount : 0.0;
 
     const transaction: ITransaction = {
-      _id: new Types.ObjectId(),
+      // _id: new Types.ObjectId(),
       _journal: this.journal._id,
       _original_journal: this.journal._original_journal,
       account_path,
@@ -95,7 +95,6 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
       }
     }
     this.transactions.push(transaction as U);
-    (this.journal._transactions as Types.ObjectId[]).push(transaction._id);
 
     return this;
   }
@@ -132,9 +131,30 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
     }
 
     try {
-      await this.journal.save(options);
+      const txModels = this.transactions.map((tx) => new transactionModel(tx));
+      for (const txModel of txModels) {
+        const err = txModel.validateSync();
+        if (err) throw err;
+      }
 
-      await Promise.all(this.transactions.map((tx) => new transactionModel(tx).save(options)));
+      const result = await transactionModel.collection.insertMany(this.transactions, {
+        forceServerObjectId: true, // This improves ordering of the entries on high load.
+        ordered: true, // Ensure items are inserted in the order provided.
+        session: options.session, // We must provide either session or writeConcern, but not both.
+        writeConcern: options.session ? undefined : { w: 1, j: true }, // Ensure at least ONE node wrote to JOURNAL (disk)
+      });
+      let insertedIds = Object.values(result.insertedIds) as Types.ObjectId[];
+
+      if (insertedIds.length === this.transactions.length && !insertedIds[0]) {
+        // Mongo returns `undefined` as the insertedIds when forceServerObjectId=true. Let's re-read it.
+        const txs = await transactionModel.collection
+          .find({ _journal: this.transactions[0]._journal }, { projection: { _id: 1 }, session: options.session })
+          .toArray();
+        insertedIds = txs.map((tx) => tx._id as Types.ObjectId);
+      }
+
+      (this.journal._transactions as Types.ObjectId[]).push(...insertedIds);
+      await this.journal.save(options);
 
       if (options.writelockAccounts && options.session) {
         const writelockAccounts =
@@ -152,15 +172,6 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
       return this.journal;
     } catch (err) {
       if (!options.session) {
-        try {
-          await transactionModel
-            .deleteMany({
-              _journal: this.journal._id,
-            })
-            .exec();
-        } catch (e) {
-          console.error(`Can't delete txs for journal ${this.journal._id}. Medici ledger consistency got harmed.`, e);
-        }
         throw new TransactionError(`Failure to save journal: ${(err as Error).message}`, total);
       }
       throw err;

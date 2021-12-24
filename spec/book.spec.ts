@@ -3,7 +3,7 @@ import { Book } from "../src/Book";
 import { Document, Types } from "mongoose";
 import { IJournal } from "../src/models/journal";
 import { expect } from "chai";
-import { stub, spy } from "sinon";
+import { spy } from "sinon";
 import { transactionModel } from "../src/models/transaction";
 import { JournalNotFoundError } from "../src/errors/JournalNotFoundError";
 
@@ -179,10 +179,11 @@ describe("book", function () {
       }
     });
 
-    it("should delete transactions when not in transaction and saving the journal fails", async () => {
-      const book = new Book("MyBook-Entry-Test-delete-when-not-in-mongo-transaction");
+    it("should save all transactions in bulk and mitigate mongodb 'insertedIds' bug", async () => {
+      const book = new Book("MyBook-Entry-Test-bulk-saving");
 
-      const saveStub = stub(transactionModel.prototype, "save").rejects(new Error());
+      const saveSpy = spy(transactionModel.collection, "insertMany");
+      const findSpy = spy(transactionModel.collection, "find");
 
       try {
         await book
@@ -190,53 +191,22 @@ describe("book", function () {
           .debit("A:B", 1, { debit: 2, clientId: "Mr. B" })
           .credit("A:B", 1, { credit: 2 })
           .commit();
-        expect.fail("Should have thrown.");
-      } catch (e) {
-        expect((e as Error).message).to.match(/Failure to save journal: /);
       } finally {
-        saveStub.restore();
+        saveSpy.restore();
+        findSpy.restore();
       }
 
-      expect(saveStub.callCount).equal(2); // should attempts saving both transactions in parallel
+      expect(saveSpy.callCount).equal(1); // should attempts saving both transactions in parallel
+      expect(saveSpy.firstCall.args[1]).include({
+        forceServerObjectId: true,
+        ordered: true,
+      });
+
+      expect(findSpy.firstCall.args[0]).have.property("_journal");
+      expect(findSpy.firstCall.args[1]!.projection).have.property("_id", 1);
 
       const { balance } = await book.balance({ account: "A:B" });
       expect(balance).to.be.equal(0);
-    });
-
-    it("should write an error into the console when reverting in non-mongo-transaction fails", async () => {
-      const book = new Book("MyBook-Entry-Test-old-transaction-revert");
-
-      const deleteManyStub = stub(transactionModel, "deleteMany").throws(new Error());
-      const saveStub = stub(transactionModel.prototype, "save").onFirstCall().rejects(new Error()).callThrough();
-      const consoleErrorStub = stub(console, "error");
-
-      try {
-        await book
-          .entry("extra")
-          .debit("A:B", 1, { debit: 2, clientId: "Mr. B" })
-          .credit("A:B", 1, { credit: 2 })
-          .commit();
-        expect.fail("Should have thrown.");
-      } catch (e) {
-        expect((e as Error).message).to.match(/Failure to save journal: /);
-      } finally {
-        deleteManyStub.restore();
-        saveStub.restore();
-        consoleErrorStub.restore();
-      }
-
-      expect(consoleErrorStub.firstCall.args[0]).match(
-        /Can't delete txs for journal [a-f0-9]{24}. Medici ledger consistency got harmed./
-      );
-
-      expect(saveStub.callCount).equal(2); // should attempts saving both transactions in parallel
-      expect(deleteManyStub.callCount).equal(1); // should attempt deleting leftovers
-
-      // Eventual consistency issue. Need to wait until document is saved to the DB.
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      const { balance } = await book.balance({ account: "A:B" });
-      expect(balance).to.be.equal(2); // the deleteMany() didn't work out. Thus we should have a leftover transaction.
     });
 
     describe("approved/pending transactions", function () {
