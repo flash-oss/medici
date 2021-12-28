@@ -50,9 +50,6 @@ const voidJournal = async function (book: Book, reason: undefined | null | strin
 
   reason = handleVoidMemo(reason, this.memo);
 
-  this.void = true;
-  this.void_reason = reason;
-
   await journalModel.updateOne(
     { _id: this._id },
     { $set: { voided: true, void_reason: reason } },
@@ -64,7 +61,7 @@ const voidJournal = async function (book: Book, reason: undefined | null | strin
 
   const result = await transactionModel.collection.updateMany(
     { _journal: this._id },
-    { $set: { voided: true, void_reason: this.void_reason } },
+    { $set: { voided: true, void_reason: reason } },
     {
       session: options.session, // We must provide either session or writeConcern, but not both.
       writeConcern: options.session ? undefined : { w: 1, j: true }, // Ensure at least ONE node wrote to JOURNAL (disk)
