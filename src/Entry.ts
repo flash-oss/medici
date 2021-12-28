@@ -124,7 +124,7 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
           .map(tx =>
             new Promise<void>(
               (resolve, reject) => new transactionModel(tx)
-                 .validate(err => err ? reject(err) : resolve()
+                 .validate(err => err ? reject(err) : resolve())
             )
           )
       );
