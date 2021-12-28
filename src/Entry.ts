@@ -17,12 +17,12 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
     book: Book,
     memo: string,
     date: Date | null,
-    original_journal: string | Types.ObjectId | null
+    original_journal?: string | Types.ObjectId
   ): Entry<U, J> {
     return new this(book, memo, date, original_journal);
   }
 
-  constructor(book: Book, memo: string, date: Date | null, original_journal: string | Types.ObjectId | null) {
+  constructor(book: Book, memo: string, date: Date | null, original_journal?: string | Types.ObjectId) {
     this.book = book;
     this.journal = new journalModel() as TJournalDocument<J> & {
       _original_journal?: Types.ObjectId;
@@ -34,10 +34,7 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
         typeof original_journal === "string" ? new Types.ObjectId(original_journal) : original_journal;
     }
 
-    if (!date) {
-      date = new Date();
-    }
-    this.journal.datetime = date;
+    this.journal.datetime = date || new Date();
     this.journal.book = this.book.name;
     this.transactions = [];
   }
@@ -61,9 +58,8 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
     const debit = type === -1 ? amount : 0.0;
 
     const transaction: ITransaction = {
-      // _id: new Types.ObjectId(),
+      // _id: keys are generated on the database side for better consistency
       _journal: this.journal._id,
-      _original_journal: this.journal._original_journal,
       account_path,
       accounts: account_path.join(":"),
       book: this.book.name,
@@ -71,11 +67,11 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
       datetime: this.journal.datetime,
       debit,
       memo: this.journal.memo,
-      meta: {},
       timestamp: new Date(),
-      void_reason: undefined,
-      voided: false,
     };
+    if (this.journal._original_journal) {
+      transaction._original_journal = this.journal._original_journal;
+    }
 
     if (extra) {
       for (const [key, value] of Object.entries(extra)) {
@@ -83,6 +79,7 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
         if (isValidTransactionKey(key)) {
           transaction[key] = value as never;
         } else {
+          if (!transaction.meta) transaction.meta = {};
           transaction.meta[key] = value;
         }
       }

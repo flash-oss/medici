@@ -13,8 +13,8 @@ export interface IJournal {
   memo: string;
   _transactions: Types.ObjectId[] | ITransaction[];
   book: string;
-  voided: boolean;
-  void_reason: string;
+  voided?: boolean;
+  void_reason?: string;
 }
 
 const journalSchema = new Schema<IJournal>(
@@ -31,16 +31,13 @@ const journalSchema = new Schema<IJournal>(
       },
     ],
     book: String,
-    voided: {
-      type: Boolean,
-      default: false,
-    },
+    voided: Boolean,
     void_reason: String,
   },
   { id: false, versionKey: false, timestamps: false }
 );
 
-function processMetaField(key: string, val: unknown, meta: IAnyObject): void {
+function safeSetKeyToMetaObject(key: string, val: unknown, meta: IAnyObject): void {
   if (isPrototypeAttribute(key)) return;
   if (!isValidTransactionKey(key)) meta[key] = val;
 }
@@ -65,27 +62,28 @@ const voidJournal = async function (book: Book, reason: undefined | null | strin
     tx.void_reason = this.void_reason;
   }
 
+  // TODO: replace with updateMany
   await Promise.all(transactions.map((tx) => new transactionModel(tx).save(options)));
 
   const entry = book.entry(reason, null, this._id);
 
-  for (const trans of transactions) {
-    const meta: IAnyObject = {};
-    for (const key of Object.keys(trans.toObject())) {
+  for (const transaction of transactions) {
+    const newMeta: IAnyObject = {};
+    for (const [key, value] of Object.entries(transaction.toObject())) {
       if (key === "meta") {
-        for (const [keyMeta, valueMeta] of Object.entries(trans["meta"])) {
-          processMetaField(keyMeta, valueMeta, meta);
+        for (const [keyMeta, valueMeta] of Object.entries(value)) {
+          safeSetKeyToMetaObject(keyMeta, valueMeta, newMeta);
         }
       } else {
-        processMetaField(key, trans[key as keyof ITransaction], meta);
+        safeSetKeyToMetaObject(key, value, newMeta);
       }
     }
 
-    if (trans.credit) {
-      entry.debit(trans.account_path, trans.credit, meta);
+    if (transaction.credit) {
+      entry.debit(transaction.account_path, transaction.credit, newMeta);
     }
-    if (trans.debit) {
-      entry.credit(trans.account_path, trans.debit, meta);
+    if (transaction.debit) {
+      entry.credit(transaction.account_path, transaction.debit, newMeta);
     }
   }
   return entry.commit(options);
@@ -114,4 +112,4 @@ export function setJournalSchema(schema: Schema, collection?: string) {
   journalModel = model("Medici_Journal", schema, collection) as TJournalModel;
 }
 
-typeof connection.models["Medici_Journal"] === "undefined" && setJournalSchema(journalSchema);
+if (!connection.models["Medici_Journal"]) setJournalSchema(journalSchema);

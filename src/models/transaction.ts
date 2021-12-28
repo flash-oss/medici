@@ -7,7 +7,7 @@ export interface ITransaction {
   _id?: Types.ObjectId;
   credit: number;
   debit: number;
-  meta: IAnyObject;
+  meta?: IAnyObject;
   datetime: Date;
   account_path: string[];
   accounts: string;
@@ -15,7 +15,7 @@ export interface ITransaction {
   memo: string;
   _journal: Types.ObjectId | IJournal;
   timestamp: Date;
-  voided: boolean;
+  voided?: boolean;
   void_reason?: string;
   _original_journal?: Types.ObjectId | IJournal;
 }
@@ -35,10 +35,7 @@ export const transactionSchema = new Schema<ITransaction>(
       ref: "Medici_Journal",
     },
     timestamp: Date,
-    voided: {
-      type: Boolean,
-      default: false,
-    },
+    voided: Boolean,
     void_reason: String,
     // The journal that this is voiding, if any
     _original_journal: {
@@ -100,4 +97,4 @@ export function setTransactionSchema(schema: Schema, collection?: string, option
   transactionSchemaObjectIdKeys = extractObjectIdKeysFromSchema(schema);
 }
 
-typeof connection.models["Medici_Transaction"] === "undefined" && setTransactionSchema(transactionSchema);
+if (!connection.models["Medici_Transaction"]) setTransactionSchema(transactionSchema);

@@ -15,8 +15,8 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
 
   constructor(name: string, options = {} as { precision?: number; maxAccountPath?: number }) {
     this.name = name;
-    this.precision = typeof options.precision !== "undefined" ? options.precision : 8;
-    this.maxAccountPath = typeof options.maxAccountPath !== "undefined" ? options.maxAccountPath : 3;
+    this.precision = options.precision != null ? options.precision : 8;
+    this.maxAccountPath = options.maxAccountPath != null ? options.maxAccountPath : 3;
 
     if (typeof this.name !== "string" || this.name.trim().length === 0) {
       throw new BookConstructorError("Invalid value for name provided.");
@@ -31,11 +31,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     }
   }
 
-  entry(
-    memo: string,
-    date = null as Date | null,
-    original_journal = null as string | Types.ObjectId | null
-  ): Entry<U, J> {
+  entry(memo: string, date = null as Date | null, original_journal?: string | Types.ObjectId): Entry<U, J> {
     return Entry.write<U, J>(this, memo, date, original_journal);
   }
 
@@ -105,7 +101,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     });
 
     let count = Promise.resolve(0);
-    if (typeof skip !== "undefined") {
+    if (skip) {
       count = transactionModel
         .countDocuments(filterQuery)
         .session(options.session || null)
