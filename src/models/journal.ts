@@ -6,6 +6,7 @@ import type { IAnyObject } from "../IAnyObject";
 import type { IOptions } from "../IOptions";
 import { JournalAlreadyVoidedError } from "../errors/JournalAlreadyVoidedError";
 import { isPrototypeAttribute } from "../helper/isPrototypeAttribute";
+import { MediciError } from "../errors/MediciError";
 
 export interface IJournal {
   _id: Types.ObjectId;
@@ -55,21 +56,25 @@ const voidJournal = async function (book: Book, reason: undefined | null | strin
 
   await this.save(options);
 
-  const transactions = await transactionModel.find({ _journal: this._id }, undefined, options).exec();
+  const result = await transactionModel.collection.updateMany(
+    { _journal: this._id },
+    { $set: { voided: true, void_reason: this.void_reason } },
+    {
+      session: options.session, // We must provide either session or writeConcern, but not both.
+      writeConcern: options.session ? undefined : { w: 1, j: true }, // Ensure at least ONE node wrote to JOURNAL (disk)
+    }
+  );
+  if (!result.acknowledged) throw new MediciError(`Failed to void ${this.memo} journal on book ${this.book}`);
 
-  for (const tx of transactions) {
-    tx.voided = true;
-    tx.void_reason = this.void_reason;
-  }
-
-  // TODO: replace with updateMany
-  await Promise.all(transactions.map((tx) => new transactionModel(tx).save(options)));
+  const transactions = await transactionModel.collection
+    .find({ _journal: this._id }, { session: options.session })
+    .toArray();
 
   const entry = book.entry(reason, null, this._id);
 
   for (const transaction of transactions) {
     const newMeta: IAnyObject = {};
-    for (const [key, value] of Object.entries(transaction.toObject())) {
+    for (const [key, value] of Object.entries(transaction)) {
       if (key === "meta") {
         for (const [keyMeta, valueMeta] of Object.entries(value)) {
           safeSetKeyToMetaObject(keyMeta, valueMeta, newMeta);

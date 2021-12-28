@@ -166,16 +166,16 @@ describe("book", function () {
         account: "A:B",
       });
 
-      if (res.results[0].meta.clientId === "Mr. A") {
+      if (res.results[0].meta!.clientId === "Mr. A") {
         expect(res.results[0].credit).to.be.equal(2);
-        expect(res.results[0].meta.clientId).to.be.equal("Mr. A");
+        expect(res.results[0].meta!.clientId).to.be.equal("Mr. A");
         expect(res.results[1].debit).to.be.equal(2);
-        expect(res.results[1].meta.clientId).to.be.equal("Mr. B");
+        expect(res.results[1].meta!.clientId).to.be.equal("Mr. B");
       } else {
         expect(res.results[1].credit).to.be.equal(2);
-        expect(res.results[1].meta.clientId).to.be.equal("Mr. A");
+        expect(res.results[1].meta!.clientId).to.be.equal("Mr. A");
         expect(res.results[0].debit).to.be.equal(2);
-        expect(res.results[0].meta.clientId).to.be.equal("Mr. B");
+        expect(res.results[0].meta!.clientId).to.be.equal("Mr. B");
       }
     });
 
