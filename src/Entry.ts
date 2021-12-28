@@ -142,10 +142,10 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
 
       if (!insertedIds[0]) {
         // Mongo returns `undefined` as the insertedIds when forceServerObjectId=true. Let's re-read it.
-        insertedIds = await transactionModel
+        insertedIds = (await transactionModel
           .collection
           .find({ _journal: this.transactions[0]._journal }, { projection: { _id: 1 }, session: options.session })
-          .toArray()
+          .toArray())
           .map((transaction) => transaction._id as Types.ObjectId);
       }
 
