@@ -403,6 +403,7 @@ Technical changes of the release.
   - `maxAccountPath` has to be an integer bigger or equal 0.
 - **POTENTIALLY BREAKING**: Added prototype-pollution protection when creating entries. Reserved words like `__proto__` can not be used as properties of a Transaction or a Journal or their meta-Field. They will get silently filtered out.
 - **POTENTIALLY BREAKING**: When calling `book.void()` the provided `journal_id` has to belong to the `book`. If the journal does not exist within the book, medici will throw a `JournalNotFoundError`. In medici < 5 you could theoretically void a `journal` of another `book`.
+- **POTENTIALLY BREAKING**: Transaction document properties `meta`, `voided`, `void_reason`, `_original_journal` won't be stored to the database when have no data. In medici v4 they were `{}`, `false`, `null`, `null` correspondingly.
 - **BREAKING**: Transactions are now committed using native `insertMany` instead of mongoose `.save()` method. If you had any "pre save" middlewares on the `medici_transactions` they won't be working anymore.
 - **BREAKING**: `.balance()` does not support pagination anymore. To get the balance of a page sum up the values of credit and debit of a paginated `.ledger()`-call.
 - **BREAKING**: You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.

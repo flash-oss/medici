@@ -101,7 +101,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     });
 
     let count = Promise.resolve(0);
-    if (skip) {
+    if (skip != null) {
       count = transactionModel
         .countDocuments(filterQuery)
         .session(options.session || null)
