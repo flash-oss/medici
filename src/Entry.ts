@@ -149,7 +149,7 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
           .map((transaction) => transaction._id as Types.ObjectId);
       }
 
-      (this.journal._transactions as Types.ObjectId[]).push(...insertedIds);
+      this.journal._transactions = insertedIds as Types.ObjectId[];
       await this.journal.save(options);
 
       if (options.writelockAccounts && options.session) {
