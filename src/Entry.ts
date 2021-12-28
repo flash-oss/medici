@@ -145,7 +145,14 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
       });
       let insertedIds = Object.values(result.insertedIds) as Types.ObjectId[];
 
-      if (insertedIds.length === this.transactions.length && !insertedIds[0]) {
+      if (insertedIds.length !== this.transactions.length) {
+        throw new TransactionError(
+          `Saved only ${insertedIds.length} of ${this.transactions.length} transactions`,
+          total
+        );
+      }
+
+      if (!insertedIds[0]) {
         // Mongo returns `undefined` as the insertedIds when forceServerObjectId=true. Let's re-read it.
         const txs = await transactionModel.collection
           .find({ _journal: this.transactions[0]._journal }, { projection: { _id: 1 }, session: options.session })
