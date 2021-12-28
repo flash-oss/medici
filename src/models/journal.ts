@@ -1,4 +1,4 @@
-import { connection, Schema, Document, Model, model, Types, PreSaveMiddlewareFunction } from "mongoose";
+import { connection, Schema, Document, Model, model, Types } from "mongoose";
 import { isValidTransactionKey, ITransaction, transactionModel } from "./transaction";
 import type { Book } from "../Book";
 import { handleVoidMemo } from "../helper/handleVoidMemo";
@@ -15,7 +15,6 @@ export interface IJournal {
   book: string;
   voided: boolean;
   void_reason: string;
-  approved: boolean;
 }
 
 const journalSchema = new Schema<IJournal>(
@@ -37,10 +36,6 @@ const journalSchema = new Schema<IJournal>(
       default: false,
     },
     void_reason: String,
-    approved: {
-      type: Boolean,
-      default: true,
-    },
   },
   { id: false, versionKey: false, timestamps: false }
 );
@@ -96,30 +91,6 @@ const voidJournal = async function (book: Book, reason: undefined | null | strin
   return entry.commit(options);
 } as (this: TJournalDocument, book: Book, reason?: undefined | string, options?: IOptions) => Promise<TJournalDocument>;
 
-const preSave: PreSaveMiddlewareFunction<IJournal & Document> = async function (next) {
-  if (!(this.isModified("approved") && this.approved)) {
-    return next();
-  }
-
-  const session = this.$session();
-
-  const transactions = (await transactionModel
-    .find({ _journal: this._id, approved: false }, undefined, { session })
-    .exec()) as (Document & ITransaction)[];
-
-  if (transactions.length === 0) {
-    return next();
-  }
-
-  for (const tx of transactions) {
-    tx.approved = true;
-  }
-
-  await Promise.all(transactions.map((tx) => tx.save({ session })));
-
-  return next();
-};
-
 export type TJournalDocument<T extends IJournal = IJournal> = Omit<Document, "__v" | "id"> &
   T & {
     void: (book: Book, reason?: undefined | null | string, options?: IOptions) => Promise<TJournalDocument<T>>;
@@ -139,7 +110,6 @@ export function setJournalSchema(schema: Schema, collection?: string) {
   delete connection.models["Medici_Journal"];
 
   schema.methods.void = voidJournal;
-  schema.pre("save", preSave);
 
   journalModel = model("Medici_Journal", schema, collection) as TJournalModel;
 }

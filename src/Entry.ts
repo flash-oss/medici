@@ -40,12 +40,6 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
     this.journal.datetime = date;
     this.journal.book = this.book.name;
     this.transactions = [];
-    this.journal.approved = true;
-  }
-
-  setApproved(value: boolean): Entry<U, J> {
-    this.journal.approved = value;
-    return this;
   }
 
   private transact(
@@ -72,7 +66,6 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
       _original_journal: this.journal._original_journal,
       account_path,
       accounts: account_path.join(":"),
-      approved: true,
       book: this.book.name,
       credit,
       datetime: this.journal.datetime,
@@ -118,8 +111,6 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
   async commit(options = {} as IOptions & { writelockAccounts?: string[] | RegExp }): Promise<Entry<U, J>["journal"]> {
     let total = 0.0;
     for (const tx of this.transactions) {
-      // set approved on transactions to approved-value on journal
-      tx.approved = this.journal.approved;
       // sum the value of the transaction
       total += tx.credit - tx.debit;
     }

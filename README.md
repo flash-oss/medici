@@ -180,10 +180,6 @@ JournalSchema = {
     default: false,
   },
   void_reason: String,
-  approved: {
-    type: Boolean,
-    default: true,
-  },
 };
 ```
 
@@ -211,10 +207,6 @@ TransactionSchema = {
   void_reason: String,
   // The journal that this is voiding, if any
   _original_journal: Schema.Types.ObjectId,
-  approved: {
-    type: Boolean,
-    default: true,
-  },
 };
 ```
 
@@ -250,10 +242,6 @@ MyTransactionSchema = {
     default: false,
   },
   void_reason: String,
-  approved: {
-    type: Boolean,
-    default: true,
-  },
 };
 
 // add an index to the Schema
@@ -279,7 +267,6 @@ Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [fol
 ```
     "accounts": 1,
     "book": 1,
-    "approved": 1,
     "datetime": -1,
     "timestamp": -1
 ```
@@ -287,14 +274,12 @@ Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [fol
 ```
     "account_path.0": 1,
     "book": 1,
-    "approved": 1
 ```
 
 ```
     "account_path.0": 1,
     "account_path.1": 1,
     "book": 1,
-    "approved": 1
 ```
 
 ```
@@ -302,7 +287,6 @@ Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [fol
     "account_path.1": 1,
     "account_path.2": 1,
     "book": 1,
-    "approved": 1
 ```
 
 Added in version 5:
@@ -317,7 +301,6 @@ However, if you are doing lots of queries using the `meta` data (which is a typi
 ```
     "meta.myCustomProperty": 1,
     "book": 1,
-    "approved": 1,
     "datetime": -1,
     "timestamp": -1
 ```
@@ -328,7 +311,6 @@ and/or
     "meta.myCustomProperty": 1,
     "account_path.0": 1,
     "book": 1,
-    "approved": 1
 ```
 
 and/or
@@ -338,7 +320,6 @@ and/or
     "account_path.0": 1,
     "account_path.1": 1,
     "book": 1,
-    "approved": 1
 ```
 
 and/or
@@ -349,7 +330,6 @@ and/or
     "account_path.1": 1,
     "account_path.2": 1,
     "book": 1,
-    "approved": 1
 ```
 
 Here is how to add an index manually via MongoDB CLI or other tool:
@@ -359,7 +339,6 @@ db = db.getSiblingDB("my_db_name")
 db.getCollection("medici_transactions").createIndex({
     "meta.myCustomProperty": 1,
     "book": 1,
-    "approved": 1,
     "datetime": -1,
     "timestamp": -1
 }, {background: true})
@@ -372,7 +351,6 @@ Keep in mind, that the order of the fields in the Index is important. Always sor
     "account_path.1": 1,
     "account_path.0": 1,
     "book": 1,
-    "approved": 1
 ```
 
 But if your Accounts are like "Employee1:Expenses:Salary", "Employee2:Expenses:Salary" than the cardinality of the first part is bigger. So you would order the fields in the indexes like this (=default Indexes):
@@ -382,7 +360,6 @@ But if your Accounts are like "Employee1:Expenses:Salary", "Employee2:Expenses:S
     "account_path.1": 1,
     "account_path.2": 1,
     "book": 1,
-    "approved": 1
 ```
 
 For more information, see [Performance Best Practices: Indexing](https://www.mongodb.com/blog/post/performance-best-practices-indexing)
@@ -421,6 +398,7 @@ For `medici_transactions` collection with 50000 documents:
   - **BREAKING**: `.balance()` does not support pagination anymore. To get the balance of a page sum up the values of credit and debit of a paginated `.ledger()`-call.
   - **BREAKING**: You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
   - **BREAKING**: Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
+  - **BREAKING**: The approving functionality (`approved` and `setApproved()`) was removed. It's complicating code, bloating the DB, not used by anyone maintainers know. Please, implemented approvals outside the ledger. If you still need it to be part of the ledger then you're out of luck and would have to (re)implement it yourself. Sorry about that.
 
 - **v4.0.0**
 

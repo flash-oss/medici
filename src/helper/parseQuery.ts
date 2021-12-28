@@ -10,7 +10,6 @@ export type IParseQuery = {
   _journal?: Types.ObjectId | string;
   start_date?: Date | string | number;
   end_date?: Date | string | number;
-  approved?: boolean;
 } & {
   [key: string]: string[] | number | string | Date | boolean | Types.ObjectId;
 };
@@ -29,11 +28,10 @@ export function parseQuery(
   query: IParseQuery & IPaginationQuery,
   book: Pick<Book, "name"> & Partial<Pick<Book, "maxAccountPath">>
 ): FilterQuery<ITransaction> {
-  const { approved, account, start_date, end_date, ...extra } = query;
+  const { account, start_date, end_date, ...extra } = query;
 
   const filterQuery: FilterQuery<ITransaction> = {
     book: book.name,
-    approved: approved !== false,
     ...parseAccountField(account, book.maxAccountPath),
   };
 

@@ -17,7 +17,6 @@ export interface ITransaction {
   timestamp: Date;
   voided: boolean;
   void_reason?: string;
-  approved: boolean;
   _original_journal?: Types.ObjectId | IJournal;
 }
 
@@ -45,10 +44,6 @@ export const transactionSchema = new Schema<ITransaction>(
     _original_journal: {
       type: Schema.Types.ObjectId,
       ref: "Medici_Journal",
-    },
-    approved: {
-      type: Boolean,
-      default: true,
     },
   },
   { id: false, versionKey: false, timestamps: false }
@@ -78,7 +73,6 @@ export function setTransactionSchema(schema: Schema, collection?: string, option
     schema.index({
       accounts: 1,
       book: 1,
-      approved: 1,
       datetime: -1,
       timestamp: -1,
     });
@@ -86,19 +80,17 @@ export function setTransactionSchema(schema: Schema, collection?: string, option
       datetime: -1,
       timestamp: -1,
     });
-    schema.index({ "account_path.0": 1, book: 1, approved: 1 });
+    schema.index({ "account_path.0": 1, book: 1 });
     schema.index({
       "account_path.0": 1,
       "account_path.1": 1,
       book: 1,
-      approved: 1,
     });
     schema.index({
       "account_path.0": 1,
       "account_path.1": 1,
       "account_path.2": 1,
       book: 1,
-      approved: 1,
     });
   }
 

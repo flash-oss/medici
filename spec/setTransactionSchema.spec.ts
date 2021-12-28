@@ -22,14 +22,15 @@ export interface ITransactionNew {
   timestamp: Date;
   voided: boolean;
   void_reason?: string;
-  approved: boolean;
   _original_journal?: Types.ObjectId;
 }
 
 describe("setTransactionSchema", () => {
   it("should return full ledger with populated _journal2", async function () {
+    this.timeout(10000);
+    await syncIndexes({ background: false });
+
     try {
-      this.timeout(10000);
       const newTransactionSchema = new Schema<ITransactionNew>(
         {
           credit: Number,
@@ -56,10 +57,6 @@ describe("setTransactionSchema", () => {
           void_reason: String,
           // The journal that this is voiding, if any
           _original_journal: Schema.Types.ObjectId,
-          approved: {
-            type: Boolean,
-            default: true,
-          },
         },
         { id: false, versionKey: false, timestamps: false }
       );

@@ -29,7 +29,7 @@ expectType<Entry>(book.entry("a memo", new Date(), "123456789012345678901234"));
 expectError(book.entry("a memo").credit());
 expectError(book.entry("a memo").credit("Assets"));
 expectType<Entry>(book.entry("a memo").credit("Assets", 200));
-expectType<Entry>(book.entry("a memo").credit("Assets", 200, { approved: true }));
+expectType<Entry>(book.entry("a memo").credit("Assets", 200, {}));
 expectError(book.entry("a memo").credit("Assets", 200, "invalid"));
 expectType<Entry>(book.entry("a memo").credit("Assets", 200, { fieldA: "aaa" }));
 expectError(book.entry("a memo").credit("Assets", 200, { credit: "aaa" }));
