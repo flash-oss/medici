@@ -50,6 +50,9 @@ const voidJournal = async function (book: Book, reason: undefined | null | strin
 
   reason = handleVoidMemo(reason, this.memo);
 
+  this.void = true;
+  this.void_reason = reason;
+
   await journalModel.updateOne(
     { _id: this._id },
     { $set: { voided: true, void_reason: reason } },
