@@ -374,55 +374,67 @@ For `medici_transactions` collection with 50000 documents:
 
 ## Changelog
 
-- **v5.0.0**
+### v5.0.0
 
-  - The project was rewritten with TypeScript. Types are provided within the package now.
-  - Added support for MongoDB sessions (aka ACID transactions). See `IOptions` type.
-  - Added a `mongoTransaction`-method, which is a convenience shortcut for `mongoose.connection.transaction`.
-  - Added async helper method `initModels`, which initializes the underlying `transactionModel` and `journalModel`. Use this after you connected to the MongoDB-Server if you want to use transactions. Or else you could get `Unable to read from a snapshot due to pending collection catalog changes; please retry the operation.`-Error when acquiring a session because the actual database-collection is still being created by the underlying mongoose-instance.
-  - **POTENTIALLY BREAKING**: Node.js 12 is the lowest supported version. Although, 10 should still work fine.
-  - MongoDB v4 and above is supported. You can still try using MongoDB v3, but it's not recommended.
-  - Added a new index on the transactionModel to improve the performance of paginated ledger queries.
-  - **POTENTIALLY BREAKING**: `.ledger()` returns lean Transaction-Objects for better performance. To retrieve hydrated mongoose models set `lean` to `false` in the third parameter of `.ledger()`. It is recommended to not hydrate the transactions, as it implies that the transactions could be manipulated and the data integrity of Medici could be risked.
-  - **POTENTIALLY BREAKING**: Rounding precision was changed from 7 to 8 floating point digits.
-    - You can now specify the `precision`. The `Book` now accepts an optional second parameter `precision` used internally by Medici. Javascript has issues with floating points precision and can only handle 16 digits precision, like 0.1 + 0.2 results in 0.30000000000000004 and not 0.3. The default precision of 8 digits after decimal results in the correct sum of 0.1 + 0.2 = 0.3. The medici v4 had it 7 by default. Be careful if you are using values which have more than 8 digits after the comma. You can enforce an "only-Integer"-mode, by setting the precision to 0. But keep in mind that Javascript has a max safe integer limit of 9007199254740991.
-  - Added `maxAccountPath`. You can set the maximum amount of account paths via the second parameter of Book. This can improve the performance of `.balance()` and `.ledger()` calls as it will then use the accounts attribute of the transactions as a filter.
-  - **POTENTIALLY BREAKING**: Added validation for `name` of Book, `maxAccountPath` and `precision`.
-    - The `name` has to be not an empty string or a string containing only whitespace characters.
-    - `precision` has to be an integer bigger or equal 0.
-    - `maxAccountPath` has to be an integer bigger or equal 0.
-  - Added `setJournalSchema` and `setTransactionSchema` to use custom Schemas. It will ensure, that all relevant middlewares and methods are also added when using custom Schemas. Use `syncIndexes`-method from medici after setTransactionSchema to enforce the defined indexes on the models.
-  - **POTENTIALLY BREAKING**: Added prototype-pollution protection when creating entries. Reserved words like `__proto__` can not be used as properties of a Transaction or a Journal or their meta-Field. They will get silently filtered out.
-  - **POTENTIALLY BREAKING**: When calling `book.void()` the provided `journal_id` has to belong to the `book`. If the journal does not exist within the book, medici will throw a `JournalNotFoundError`. In medici < 5 you could theoretically void a `journal` of another `book`.
-  - Added a `lockModel` to make it possible to call `.balance()` and get a reliable result while using a mongo-session. Call `.writelockAccounts()` with first parameter being an Array of Accounts, which you want to lock. E.g. `book.writelockAccounts(["Assets:User:User1"], { session })`. For best performance call writelockAccounts as the last operation in the transaction. Also `.commit()` accepts the option `writelockAccounts`, where you can provide an array of accounts or a RegExp. It is recommended to use the `book.writelockAccounts()`.
-  - **BREAKING**: `.balance()` does not support pagination anymore. To get the balance of a page sum up the values of credit and debit of a paginated `.ledger()`-call.
-  - **BREAKING**: You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
-  - **BREAKING**: Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
-  - **BREAKING**: The approving functionality (`approved` and `setApproved()`) was removed. It's complicating code, bloating the DB, not used by anyone maintainers know. Please, implemented approvals outside the ledger. If you still need it to be part of the ledger then you're out of luck and would have to (re)implement it yourself. Sorry about that.
+High level overview.
 
-- **v4.0.0**
+- The project was rewritten with **TypeScript**. Types are provided within the package now.
+- Added support for MongoDB sessions (aka **ACID** transactions). See `IOptions` type.
+- Did number of consistency, stability, server disk space, and speed improvements.
 
-  - Node.js 8 is required now.
-  - Drop support of Mongoose v4. Only v5 is supported now. (But v4 should just work, even though not tested.)
-  - No API changes.
+Technical changes of the release.
 
-- **v3.0.0**
+- Added a `mongoTransaction`-method, which is a convenience shortcut for `mongoose.connection.transaction`.
+- Added async helper method `initModels`, which initializes the underlying `transactionModel` and `journalModel`. Use this after you connected to the MongoDB-Server if you want to use transactions. Or else you could get `Unable to read from a snapshot due to pending collection catalog changes; please retry the operation.` error when acquiring a session because the actual database-collection is still being created by the underlying mongoose-instance.
+- Added `setJournalSchema` and `setTransactionSchema` to use custom Schemas. It will ensure, that all relevant middlewares and methods are also added when using custom Schemas. Use `syncIndexes`-method from medici after setTransactionSchema to enforce the defined indexes on the models.
+- Added `maxAccountPath`. You can set the maximum amount of account paths via the second parameter of Book. This can improve the performance of `.balance()` and `.ledger()` calls as it will then use the accounts attribute of the transactions as a filter.
+- MongoDB v4 and above is supported. You can still try using MongoDB v3, but it's not recommended.
+- Added a new `timestamp+datetime` index on the transactionModel to improve the performance of paginated ledger queries.
+- Added a `lockModel` to make it possible to call `.balance()` and **get a reliable result while using a mongo-session**. Call `.writelockAccounts()` with first parameter being an Array of Accounts, which you want to lock. E.g. `book.writelockAccounts(["Assets:User:User1"], { session })`. For best performance call writelockAccounts as the last operation in the transaction. Also `.commit()` accepts the option `writelockAccounts`, where you can provide an array of accounts or a RegExp. It is recommended to use the `book.writelockAccounts()`.
+- **POTENTIALLY BREAKING**: Node.js 12 is the lowest supported version. Although, 10 should still work fine.
+- **POTENTIALLY BREAKING**: `.ledger()` returns lean Transaction-Objects for better performance. To retrieve hydrated mongoose models set `lean` to `false` in the third parameter of `.ledger()`. It is recommended to not hydrate the transactions, as it implies that the transactions could be manipulated and the data integrity of Medici could be risked.
+- **POTENTIALLY BREAKING**: Rounding precision was changed from 7 to 8 floating point digits.
+  - You can now specify the `precision`. The `Book` now accepts an optional second parameter `precision` used internally by Medici. Javascript has issues with floating points precision and can only handle 16 digits precision, like 0.1 + 0.2 results in 0.30000000000000004 and not 0.3.
+  - The new default precision of 8 digits after decimal results in the correct sum of 0.1 + 0.2 = 0.3. The medici v4 had it 7 by default. Be careful if you are using values which have more than 8 digits after the comma.
+  - Also, you can enforce an "only-Integer"-mode, by setting the precision to 0. But keep in mind that Javascript has a max safe integer limit of 9007199254740991.
+- **POTENTIALLY BREAKING**: Added validation for `name` of Book, `maxAccountPath` and `precision`.
+  - The `name` has to be not an empty string or a string containing only whitespace characters.
+  - `precision` has to be an integer bigger or equal 0.
+  - `maxAccountPath` has to be an integer bigger or equal 0.
+- **POTENTIALLY BREAKING**: Added prototype-pollution protection when creating entries. Reserved words like `__proto__` can not be used as properties of a Transaction or a Journal or their meta-Field. They will get silently filtered out.
+- **POTENTIALLY BREAKING**: When calling `book.void()` the provided `journal_id` has to belong to the `book`. If the journal does not exist within the book, medici will throw a `JournalNotFoundError`. In medici < 5 you could theoretically void a `journal` of another `book`.
+- **BREAKING**: Transactions are now committed using native `insertMany` instead of mongoose `.save()` method. If you had any "pre save" middlewares on the `medici_transactions` they won't be working anymore.
+- **BREAKING**: `.balance()` does not support pagination anymore. To get the balance of a page sum up the values of credit and debit of a paginated `.ledger()`-call.
+- **BREAKING**: You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
+- **BREAKING**: Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
+- **BREAKING**: The approving functionality (`approved` and `setApproved()`) was removed. It's complicating code, bloating the DB, not used by anyone maintainers know. Please, implemented approvals outside the ledger. If you still need it to be part of the ledger then you're out of luck and would have to (re)implement it yourself. Sorry about that.
 
-  - Add 4 mandatory indexes, otherwise queries get very slow when transactions collection grows.
-  - No API changes.
+### v4.0.0
 
-- **v2.0.0**
+- Node.js 8 is required now.
+- Drop support of Mongoose v4. Only v5 is supported now. (But v4 should just work, even though not tested.)
+- No API changes.
 
-  - Upgrade to use mongoose v5. To use with mongoose v4 just `npm i medici@1`.
-  - Support node.js v10.
-  - No API changes.
+### v3.0.0
 
-- **v1.0.0** _See [this PR](https://github.com/flash-oss/medici/pull/5) for more details_
-  - **BREAKING**: Dropped support of node.js v0.10, v0.12, v4, and io.js. Node.js >= v6 is supported only. This allowed to drop several production dependencies. Also, few bugs were automatically fixed.
-  - **BREAKING**: Upgraded `mongoose` to v4. This allows `medici` to be used with wider mongodb versions.
-  - Dropped production dependencies: `moment`, `q`, `underscore`.
-  - Dropped dev dependencies: `grunt`, `grunt-exec`, `grunt-contrib-coffee`, `grunt-sed`, `grunt-contrib-watch`, `semver`.
-  - No `.coffee` any more. Using node.js v6 compatible JavaScript only.
-  - There are no API changes.
-  - Fixed a [bug](https://github.com/flash-oss/medici/issues/4). Transaction meta data was not voided correctly.
-  - This module maintainer is now [flash-oss](https://github.com/flash-oss) instead of the original author [jraede](http://github.com/jraede).
+- Add 4 mandatory indexes, otherwise queries get very slow when transactions collection grows.
+- No API changes.
+
+### v2.0.0
+
+- Upgrade to use mongoose v5. To use with mongoose v4 just `npm i medici@1`.
+- Support node.js v10.
+- No API changes.
+
+### v1.0.0
+
+_See [this PR](https://github.com/flash-oss/medici/pull/5) for more details_
+
+- **BREAKING**: Dropped support of node.js v0.10, v0.12, v4, and io.js. Node.js >= v6 is supported only. This allowed to drop several production dependencies. Also, few bugs were automatically fixed.
+- **BREAKING**: Upgraded `mongoose` to v4. This allows `medici` to be used with wider mongodb versions.
+- Dropped production dependencies: `moment`, `q`, `underscore`.
+- Dropped dev dependencies: `grunt`, `grunt-exec`, `grunt-contrib-coffee`, `grunt-sed`, `grunt-contrib-watch`, `semver`.
+- No `.coffee` any more. Using node.js v6 compatible JavaScript only.
+- There are no API changes.
+- Fixed a [bug](https://github.com/flash-oss/medici/issues/4). Transaction meta data was not voided correctly.
+- This module maintainer is now [flash-oss](https://github.com/flash-oss) instead of the original author [jraede](http://github.com/jraede).
