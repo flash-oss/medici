@@ -52,7 +52,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     let accountForBalanceSnapshot: string | undefined;
     let needToDoBalanceSnapshot = true;
     if (this.balanceSnapshotSec) {
-      accountForBalanceSnapshot = query.account ? ([] as string[]).concat(query.account).join() : query.account;
+      accountForBalanceSnapshot = query.account ? [].concat(query.account as never).join() : undefined;
       balanceSnapshot = await getBestSnapshot(
         {
           book: parsedQuery.book,
