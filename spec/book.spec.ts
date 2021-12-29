@@ -6,6 +6,8 @@ import { expect } from "chai";
 import { spy } from "sinon";
 import { transactionModel } from "../src/models/transaction";
 import { JournalNotFoundError } from "../src/errors/JournalNotFoundError";
+import { balanceModel } from "../src/models/balance";
+import delay from "./helper/delay";
 
 describe("book", function () {
   describe("constructor", () => {
@@ -38,6 +40,17 @@ describe("book", function () {
     it("should throw an error when precision of book is not a number", () => {
       // @ts-expect-error we need a number
       expect(() => new Book("MyBook", { precision: "7" })).to.throw("Invalid value for precision provided.");
+    });
+    it("should throw an error when balanceSnapshotSec of book is not a number", () => {
+      // @ts-expect-error we need a number
+      expect(() => new Book("MyBook", { balanceSnapshotSec: "999" })).to.throw(
+        "Invalid value for balanceSnapshotSec provided."
+      );
+    });
+    it("should throw an error when balanceSnapshotSec of book is a negative number", () => {
+      expect(() => new Book("MyBook", { balanceSnapshotSec: -3 })).to.throw(
+        "Invalid value for balanceSnapshotSec provided."
+      );
     });
   });
 
@@ -211,22 +224,141 @@ describe("book", function () {
   });
 
   describe("balance", () => {
-    const book = new Book("MyBook-balance");
-
-    before(async () => {
-      await book.entry("Test Entry").debit("Assets:Receivable", 700).credit("Income:Rent", 700).commit();
+    async function addBalance(book: Book) {
+      await book
+        .entry("Test Entry")
+        .debit("Assets:Receivable", 700, { clientId: "67890" })
+        .credit("Income:Rent", 700)
+        .commit();
       await book
         .entry("Test Entry")
         .debit("Assets:Receivable", 500, { clientId: "12345" })
         .credit("Income:Rent", 500)
         .commit();
-    });
+    }
 
     it("should give you the balance", async () => {
-      const data = await book.balance({
-        account: "Assets",
-      });
+      const book = new Book("MyBook-balance");
+      await addBalance(book);
+
+      const data = await book.balance({ account: "Assets" });
       expect(data.balance).to.be.equal(-1200);
+    });
+
+    it("should give you the balance without providing the account", async () => {
+      const book = new Book("MyBook-balance-no-account");
+      await addBalance(book);
+
+      const data = await book.balance({});
+      expect(data.balance).to.be.equal(0);
+
+      const snapshots = await balanceModel.find({ book: book.name });
+      expect(snapshots).to.have.length(1);
+      expect(snapshots[0].balance).to.equal(0);
+    });
+
+    it("should give you the total balance for multiple accounts", async () => {
+      const book = new Book("MyBook-balance-multiple");
+      await addBalance(book);
+
+      const data = await book.balance({ account: ["Assets", "Income"] });
+      expect(data.balance).to.be.equal(0);
+    });
+
+    it("should reuse the snapshot balance", async () => {
+      const book = new Book("MyBook-balance-snapshot");
+      await addBalance(book);
+
+      await book.balance({ account: "Assets" });
+
+      const snapshots = await balanceModel.find({ account: "Assets", book: book.name });
+      expect(snapshots).to.have.length(1);
+      expect(snapshots[0].balance).to.equal(-1200);
+
+      snapshots[0].balance = 999;
+      await snapshots[0].save();
+
+      const data = await book.balance({ account: "Assets" });
+      expect(data.balance).to.equal(999);
+    });
+
+    it("should reuse the snapshot balance when meta is in the query", async () => {
+      const book = new Book("MyBook-balance-snapshot-with-meta");
+      await addBalance(book);
+
+      await book.balance({ account: "Assets", clientId: "12345" });
+
+      const snapshots = await balanceModel.find({ account: "Assets", book: book.name, meta: { clientId: "12345" } });
+      expect(snapshots).to.have.length(1);
+      expect(snapshots[0].balance).to.equal(-500);
+      expect(snapshots[0].meta.clientId).to.equal("12345");
+
+      snapshots[0].balance = 999;
+      await snapshots[0].save();
+
+      const data = await book.balance({ account: "Assets", clientId: "12345" });
+      expect(data.balance).to.equal(999);
+    });
+
+    it("should do only one snapshot document", async () => {
+      const book = new Book("MyBook-balance-snapshot-count");
+      await addBalance(book);
+
+      await book.balance({ account: "Assets", clientId: "12345" });
+      await book.balance({ account: "Assets", clientId: "12345" });
+      await book.balance({ account: "Assets", clientId: "12345" });
+
+      const snapshots = await balanceModel.find({ account: "Assets", book: book.name, meta: { clientId: "12345" } });
+      expect(snapshots).to.have.length(1);
+      expect(snapshots[0].balance).to.equal(-500);
+      expect(snapshots[0].meta.clientId).to.equal("12345");
+    });
+
+    it("should do periodic balance snapshot document", async () => {
+      const book = new Book("MyBook-balance-snapshot-periodic", { balanceSnapshotSec: 0.05 });
+
+      await addBalance(book);
+      await book.balance({ account: "Assets" });
+      // Should be one snapshot.
+      let snapshots = await balanceModel.find({ account: "Assets", book: book.name });
+      expect(snapshots.length).to.equal(1);
+      expect(snapshots[0].balance).to.equal(-1200);
+
+      await delay(51);
+      await addBalance(book);
+      await book.balance({ account: "Assets" });
+      // Should be two snapshots now.
+      snapshots = await balanceModel.find({ account: "Assets", book: book.name });
+      expect(snapshots.length).to.equal(2);
+      expect(snapshots[0].balance).to.equal(-1200);
+      expect(snapshots[1].balance).to.equal(-2400);
+    });
+
+    it("should not do balance snapshots if turned off", async () => {
+      const book = new Book("MyBook-balance-snapshot-off", { balanceSnapshotSec: 0 });
+      await addBalance(book);
+
+      await book.balance({ account: "Assets" });
+
+      const snapshots = await balanceModel.find({ account: "Assets", book: book.name });
+      expect(snapshots).to.have.length(0);
+    });
+
+    it("should reuse the snapshot balance in multi account query", async () => {
+      const book = new Book("MyBook-balance-multiple-snapshot");
+      await addBalance(book);
+
+      await book.balance({ account: ["Assets", "Income"] });
+
+      const snapshots = await balanceModel.find({ account: ["Assets", "Income"].join(), book: book.name });
+      expect(snapshots).to.have.length(1);
+      expect(snapshots[0].balance).to.equal(0);
+
+      snapshots[0].balance = 999;
+      await snapshots[0].save();
+
+      const data = await book.balance({ account: ["Assets", "Income"] });
+      expect(data.balance).to.equal(999);
     });
 
     it("should deal with JavaScript rounding weirdness", async function () {
@@ -238,6 +370,9 @@ describe("book", function () {
     });
 
     it("should have updated the balance for assets and income and accurately give balance for subaccounts", async () => {
+      const book = new Book("MyBook-balance-sub");
+      await addBalance(book);
+
       {
         const data = await book.balance({
           account: "Assets",

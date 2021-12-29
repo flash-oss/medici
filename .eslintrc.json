@@ -17,7 +17,8 @@
     "require-await": 2,
     "no-return-await": 2,
     "sonarjs/cognitive-complexity": ["warn", 20],
-    "@typescript-eslint/ban-ts-comment": 1
+    "@typescript-eslint/ban-ts-comment": 1,
+    "security/detect-object-injection": 0
   },
   "extends": [
     "plugin:import/typescript",

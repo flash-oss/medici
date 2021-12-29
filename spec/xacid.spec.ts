@@ -4,6 +4,7 @@ import { expect } from "chai";
 import * as mongoose from "mongoose";
 import { initModels, mongoTransaction } from "../src";
 import { lockModel } from "../src/models/lock";
+import delay from "./helper/delay";
 
 if (process.env.ACID_AVAILABLE) {
   describe("acid", function () {
@@ -116,6 +117,7 @@ if (process.env.ACID_AVAILABLE) {
 
     it("should pass a stresstest when persisting data while using a session", async function () {
       this.timeout(10000);
+
       for (let i = 0; i < 100; i++) {
         const book = new Book("ACID" + Date.now());
 
@@ -161,8 +163,9 @@ if (process.env.ACID_AVAILABLE) {
       }
     });
 
-    it("should pass a stresstest for erroring when commiting", async function () {
+    it("should pass a stresstest for erroring when committing", async function () {
       this.timeout(10000);
+
       const book = new Book("ACID" + Date.now());
 
       for (let i = 0; i < 100; i++) {
@@ -200,6 +203,7 @@ if (process.env.ACID_AVAILABLE) {
 
     it("should pass a stresstest for erroring when voiding", async function () {
       this.timeout(10000);
+
       const book = new Book("ACID" + Date.now());
 
       const journal = await book
@@ -233,14 +237,14 @@ if (process.env.ACID_AVAILABLE) {
 
       await book.entry("depth test").credit("Income", 2).debit("Outcome", 2).commit();
 
-      async function spendOne(session: mongoose.ClientSession, name: string, delay: number) {
+      async function spendOne(session: mongoose.ClientSession, name: string, pause: number) {
         await book
           .entry("depth test")
           .credit("Savings", 1)
           .debit("Income", 1)
           .commit({ session, writelockAccounts: ["Income"] });
 
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await delay(pause);
 
         const result = await book.balance(
           {
@@ -319,14 +323,14 @@ if (process.env.ACID_AVAILABLE) {
 
       await book.entry("depth test").credit("Income", 2).debit("Outcome", 2).commit();
 
-      async function spendOne(session: mongoose.ClientSession, name: string, delay: number) {
+      async function spendOne(session: mongoose.ClientSession, name: string, pause: number) {
         await book
           .entry("depth test")
           .credit("Savings", 1)
           .debit("Income", 1)
           .commit({ session, writelockAccounts: /Income/ });
 
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await delay(pause);
 
         const result = await book.balance(
           {
@@ -405,10 +409,10 @@ if (process.env.ACID_AVAILABLE) {
 
       await book.entry("depth test").credit("Income", 2).debit("Outcome", 2).commit();
 
-      async function spendOne(session: mongoose.ClientSession, name: string, delay: number) {
+      async function spendOne(session: mongoose.ClientSession, name: string, pause: number) {
         await book.entry("depth test").credit("Savings", 1).debit("Income", 1).commit({ session });
 
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await delay(pause);
 
         const result = await book.balance(
           {
@@ -493,10 +497,10 @@ if (process.env.ACID_AVAILABLE) {
 
       await book.entry("depth test").credit("Income", 2).debit("Outcome", 2).commit();
 
-      async function spendOne(session: mongoose.ClientSession, name: string, delay: number) {
+      async function spendOne(session: mongoose.ClientSession, name: string, pause: number) {
         await book.entry("depth test").credit("Savings", 1).debit("Income", 1).commit({ session });
 
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await delay(pause);
 
         const result = await book.balance(
           {

@@ -1,4 +1,4 @@
-import { FilterQuery, isValidObjectId, Types } from "mongoose";
+import { FilterQuery, Types } from "mongoose";
 import type { Book } from "../Book";
 import { isTransactionObjectIdKey, isValidTransactionKey, ITransaction } from "../models/transaction";
 import { isPrototypeAttribute } from "./isPrototypeAttribute";
@@ -18,8 +18,6 @@ export interface IPaginationQuery {
   perPage?: number;
   page?: number;
 }
-
-const referenceRE = /(?:^_|_id$)/;
 
 /**
  * Turn query into an object readable by MongoDB.
@@ -48,10 +46,18 @@ export function parseQuery(
 
   for (const [key, value] of Object.entries(extra)) {
     if (isPrototypeAttribute(key)) continue;
-    filterQuery[isValidTransactionKey(key) ? key : `meta.${key}`] =
-      (referenceRE.test(key) && isValidObjectId(value)) || isTransactionObjectIdKey(key)
-        ? new Types.ObjectId(value as string)
-        : value;
+
+    let newValue = value;
+    if (typeof value === "string" && isTransactionObjectIdKey(key)) {
+      newValue = new Types.ObjectId(value);
+    }
+
+    if (isValidTransactionKey(key)) {
+      filterQuery[key] = newValue;
+    } else {
+      if (!filterQuery.meta) filterQuery.meta = {};
+      filterQuery.meta[key] = newValue;
+    }
   }
 
   return filterQuery;

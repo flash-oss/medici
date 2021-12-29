@@ -13,30 +13,30 @@ describe("parseQuery", () => {
   it("should handle _journal string correctly", () => {
     const _journal = new Types.ObjectId().toString();
     const result = parseQuery({ _journal }, { name: "MyBook" });
-    expect(Object.keys(result)).to.have.lengthOf(2);
-    expect(result.book).to.be.equal("MyBook");
-    expect(result._journal).to.be.instanceOf(Types.ObjectId);
-    expect(result._journal.toString()).to.be.equal(_journal);
+    expect(result).to.deep.equal({
+      book: "MyBook",
+      _journal: new Types.ObjectId(_journal),
+    });
   });
 
   it("should handle _journal ObjectId correctly", () => {
     const _journal = new Types.ObjectId();
     const result = parseQuery({ _journal }, { name: "MyBook" });
-    expect(Object.keys(result)).to.have.lengthOf(2);
-    expect(result.book).to.be.equal("MyBook");
-    expect(result._journal).to.be.instanceOf(Types.ObjectId);
-    expect(result._journal.toString()).to.be.equal(_journal.toString());
+    expect(result).to.deep.equal({
+      book: "MyBook",
+      _journal: new Types.ObjectId(_journal),
+    });
   });
 
   it("should handle start_date correctly", () => {
     const start_date = new Date(666);
     const result = parseQuery({ start_date }, { name: "MyBook" });
-    expect(Object.keys(result)).to.have.lengthOf(2);
-    expect(result.book).to.be.equal("MyBook");
-    expect(result.datetime).to.have.property("$gte");
-    expect(result.datetime["$gte"]).to.be.instanceOf(Date);
-    expect(result.datetime["$gte"].getTime()).to.be.equal(666);
-    expect(result.datetime).to.not.have.property("$lte");
+    expect(result).to.deep.equal({
+      book: "MyBook",
+      datetime: {
+        $gte: new Date(666),
+      },
+    });
   });
 
   it("should handle end_date correctly", () => {
@@ -63,12 +63,13 @@ describe("parseQuery", () => {
   });
 
   it("should handle meta correctly", () => {
-    const clientId = "Jack Black";
-    const result = parseQuery({ clientId }, { name: "MyBook" });
-    expect(Object.keys(result)).to.have.lengthOf(2);
-    expect(result.book).to.be.equal("MyBook");
-    expect(result).to.have.property("meta.clientId");
-    expect(result["meta.clientId"]).to.be.equal("Jack Black");
+    const clientId = "619af485cd56547936847584";
+    const result1 = parseQuery({ clientId }, { name: "MyBook" });
+    expect(result1).to.deep.equal({ book: "MyBook", meta: { clientId } });
+
+    const _someOtherDatabaseId = "619af485cd56547936847584";
+    const result2 = parseQuery({ _someOtherDatabaseId }, { name: "MyBook" });
+    expect(result2).to.deep.equal({ book: "MyBook", meta: { _someOtherDatabaseId } });
   });
 
   it("should handle account with one path part correctly", () => {

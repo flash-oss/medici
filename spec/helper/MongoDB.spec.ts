@@ -24,6 +24,7 @@ before(async function () {
     await db.collection("medici_transactions").deleteMany({});
     await db.collection("medici_journals").deleteMany({});
     await db.collection("medici_locks").deleteMany({});
+    await db.collection("medici_balances").deleteMany({});
   } else {
     replSet = new MongoMemoryReplSet({
       binary: {

@@ -7,16 +7,22 @@ import type { Document, Types } from "mongoose";
 import { JournalNotFoundError } from "./errors/JournalNotFoundError";
 import { BookConstructorError } from "./errors/BookConstructorError";
 import { lockModel } from "./models/lock";
+import { getBestSnapshot, IBalance, snapshotBalance } from "./models/balance";
 
 export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJournal> {
   name: string;
   precision: number;
   maxAccountPath: number;
+  balanceSnapshotSec: number;
 
-  constructor(name: string, options = {} as { precision?: number; maxAccountPath?: number }) {
+  constructor(
+    name: string,
+    options = {} as { precision?: number; maxAccountPath?: number; balanceSnapshotSec?: number }
+  ) {
     this.name = name;
     this.precision = options.precision != null ? options.precision : 8;
     this.maxAccountPath = options.maxAccountPath != null ? options.maxAccountPath : 3;
+    this.balanceSnapshotSec = options.balanceSnapshotSec != null ? options.balanceSnapshotSec : 24 * 60 * 60;
 
     if (typeof this.name !== "string" || this.name.trim().length === 0) {
       throw new BookConstructorError("Invalid value for name provided.");
@@ -29,6 +35,10 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     if (typeof this.maxAccountPath !== "number" || !Number.isInteger(this.maxAccountPath) || this.maxAccountPath < 0) {
       throw new BookConstructorError("Invalid value for maxAccountPath provided.");
     }
+
+    if (typeof this.balanceSnapshotSec !== "number" || this.balanceSnapshotSec < 0) {
+      throw new BookConstructorError("Invalid value for balanceSnapshotSec provided.");
+    }
   }
 
   entry(memo: string, date = null as Date | null, original_journal?: string | Types.ObjectId): Entry<U, J> {
@@ -36,8 +46,29 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
   }
 
   async balance(query: IParseQuery, options = {} as IOptions): Promise<{ balance: number; notes: number }> {
+    const parsedQuery = parseQuery(query, this);
+
+    let balanceSnapshot: IBalance | null = null;
+    let accountForBalanceSnapshot: string | undefined;
+    let needToDoBalanceSnapshot = true;
+    if (this.balanceSnapshotSec) {
+      accountForBalanceSnapshot = query.account ? ([] as string[]).concat(query.account).join() : query.account;
+      balanceSnapshot = await getBestSnapshot(
+        {
+          book: parsedQuery.book,
+          account: accountForBalanceSnapshot,
+          meta: parsedQuery.meta,
+        },
+        options
+      );
+      if (balanceSnapshot) {
+        parsedQuery._id = { $gt: balanceSnapshot.transaction };
+        needToDoBalanceSnapshot = Date.now() > balanceSnapshot.createdAt.getTime() + this.balanceSnapshotSec * 1000;
+      }
+    }
+
     const match = {
-      $match: parseQuery(query, this),
+      $match: parsedQuery,
     };
 
     const group = {
@@ -51,18 +82,39 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
         count: {
           $sum: 1,
         },
+        lastTransactionId: { $last: "$_id" },
+        lastTimestamp: { $last: "$timestamp" },
       },
     };
     const result = (await transactionModel.aggregate([match, group], options).exec())[0];
-    return !result
-      ? {
-          balance: 0,
-          notes: 0,
-        }
-      : {
-          balance: parseFloat(result.balance.toFixed(this.precision)),
-          notes: result.count,
-        };
+
+    let balance = 0;
+    let notes = 0;
+
+    if (balanceSnapshot) {
+      balance += balanceSnapshot.balance;
+    }
+
+    if (result) {
+      balance += parseFloat(result.balance.toFixed(this.precision));
+      notes = result.count;
+      if (needToDoBalanceSnapshot && result.lastTransactionId) {
+        await snapshotBalance(
+          {
+            book: this.name,
+            account: accountForBalanceSnapshot,
+            meta: parsedQuery.meta,
+            transaction: result.lastTransactionId,
+            timestamp: result.lastTimestamp,
+            balance,
+            expireInSec: this.balanceSnapshotSec * 2, // Keep the document twice longer than needed in case this particular balance() query is not executed very often.
+          } as IBalance & { expireInSec: number },
+          options
+        );
+      }
+    }
+
+    return { balance, notes };
   }
 
   async ledger<T = U>(
