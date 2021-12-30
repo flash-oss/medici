@@ -39,21 +39,7 @@ expectError(book.entry("a memo").credit<{ fieldA: string }>("Assets", 200, { fie
 
 async () => {
   expectType<{ results: ITransaction[]; total: number }>(await book.ledger({}));
-  expectType<{ results: ITransaction[]; total: number }>(await book.ledger({}, null, { lean: true }));
-  expectType<{ results: (Document & ITransaction)[]; total: number }>(await book.ledger({}, null, { lean: false }));
   expectType<{ results: ITransaction[]; total: number }>(
-    await book.ledger({}, null, { session: null as unknown as ClientSession })
-  );
-  expectType<{ results: ITransaction[]; total: number }>(
-    await book.ledger({}, null, {
-      session: null as unknown as ClientSession,
-      lean: true,
-    })
-  );
-  expectType<{ results: (Document & ITransaction)[]; total: number }>(
-    await book.ledger({}, null, {
-      session: null as unknown as ClientSession,
-      lean: false,
-    })
+    await book.ledger({}, { session: null as unknown as ClientSession })
   );
 };

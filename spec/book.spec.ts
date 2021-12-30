@@ -175,9 +175,7 @@ describe("book", function () {
       const { balance } = await book.balance({ account: "A:B" });
       expect(balance).to.be.equal(0);
 
-      const res = await book.ledger({
-        account: "A:B",
-      });
+      const res = await book.ledger({ account: "A:B" });
 
       if (res.results[0].meta!.clientId === "Mr. A") {
         expect(res.results[0].credit).to.be.equal(2);
@@ -300,7 +298,7 @@ describe("book", function () {
       expect(data.balance).to.equal(999);
     });
 
-    it("should do only one snapshot document", async () => {
+    it("should create only one snapshot document", async () => {
       const book = new Book("MyBook-balance-snapshot-count");
       await addBalance(book);
 
@@ -314,8 +312,9 @@ describe("book", function () {
       expect(snapshots[0].meta.clientId).to.equal("12345");
     });
 
-    it("should do periodic balance snapshot document", async () => {
-      const book = new Book("MyBook-balance-snapshot-periodic", { balanceSnapshotSec: 0.05 });
+    it("should create periodic balance snapshot document", async () => {
+      const howOften = 50; // milliseconds
+      const book = new Book("MyBook-balance-snapshot-periodic", { balanceSnapshotSec: howOften / 1000 });
 
       await addBalance(book);
       await book.balance({ account: "Assets" });
@@ -324,7 +323,7 @@ describe("book", function () {
       expect(snapshots.length).to.equal(1);
       expect(snapshots[0].balance).to.equal(-1200);
 
-      await delay(51);
+      await delay(howOften + 1); // wait long enough to create a second periodic snapshot
       await addBalance(book);
       await book.balance({ account: "Assets" });
       // Should be two snapshots now.
@@ -546,44 +545,12 @@ describe("book", function () {
     });
 
     it("should return full ledger", async () => {
-      const res = await book.ledger({
-        account: "Assets",
-      });
+      const res = await book.ledger({ account: "Assets" });
       expect(res.results).to.have.lengthOf(3);
     });
 
     it("should return full ledger with hydrated objects when lean is not set", async () => {
-      const res = await book.ledger({
-        account: "Assets",
-      });
-      expect(res.results).to.have.lengthOf(3);
-      expect(res.results[0]).to.not.have.property("_doc");
-      expect(res.results[1]).to.not.have.property("_doc");
-      expect(res.results[2]).to.not.have.property("_doc");
-    });
-
-    it("should return full ledger with hydrated objects when lean is set to false", async () => {
-      const res = await book.ledger(
-        {
-          account: "Assets",
-        },
-        undefined,
-        { lean: false }
-      );
-      expect(res.results).to.have.lengthOf(3);
-      expect(res.results[0]).to.have.property("_doc");
-      expect(res.results[1]).to.have.property("_doc");
-      expect(res.results[2]).to.have.property("_doc");
-    });
-
-    it("should return full ledger with lean objects when lean is set to true", async () => {
-      const res = await book.ledger(
-        {
-          account: "Assets",
-        },
-        null,
-        { lean: true }
-      );
+      const res = await book.ledger({ account: "Assets" });
       expect(res.results).to.have.lengthOf(3);
       expect(res.results[0]).to.not.have.property("_doc");
       expect(res.results[1]).to.not.have.property("_doc");
@@ -591,44 +558,15 @@ describe("book", function () {
     });
 
     it("should return full ledger with just ObjectId of the _journal attribute", async () => {
-      const res = await book.ledger({
-        account: "Assets",
-      });
+      const res = await book.ledger({ account: "Assets" });
       expect(res.results).to.have.lengthOf(3);
       expect(res.results[0]._journal).to.be.instanceof(Types.ObjectId);
       expect(res.results[1]._journal).to.be.instanceof(Types.ObjectId);
       expect(res.results[2]._journal).to.be.instanceof(Types.ObjectId);
     });
 
-    it("should return full ledger with populated _journal", async () => {
-      const res = await book.ledger(
-        {
-          account: "Assets",
-        },
-        ["_journal"]
-      );
-      expect(res.results).to.have.lengthOf(3);
-      expect(res.results[0]._journal._id).to.be.instanceof(Types.ObjectId);
-      expect(res.results[1]._journal._id).to.be.instanceof(Types.ObjectId);
-      expect(res.results[2]._journal._id).to.be.instanceof(Types.ObjectId);
-    });
-
-    it("should ignore populate if the field does not exist", async () => {
-      const populateSpy = spy(transactionModel, "populate");
-      await book.ledger(
-        {
-          account: "Assets",
-        },
-        ["notExisting", "_journal"]
-      );
-      expect(populateSpy.callCount).to.be.equal(1);
-      populateSpy.restore();
-    });
-
     it("should return ledger with array of accounts", async () => {
-      const res = await book.ledger({
-        account: ["Assets", "Income"],
-      });
+      const res = await book.ledger({ account: ["Assets", "Income"] });
       expect(res.results).to.have.lengthOf(6);
       let assets = 0;
       let income = 0;

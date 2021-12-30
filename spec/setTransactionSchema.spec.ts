@@ -26,7 +26,7 @@ export interface ITransactionNew {
 }
 
 describe("setTransactionSchema", () => {
-  it("should return full ledger with populated _journal2", async function () {
+  it("should return full ledger with _journal2", async function () {
     this.timeout(10000);
     await syncIndexes({ background: false });
 
@@ -92,12 +92,7 @@ describe("setTransactionSchema", () => {
         .credit("Cars", 1, { _journal2: journal._id })
         .debit("Cars", 1, { _journal2: journal._id })
         .commit();
-      const res = await book.ledger(
-        {
-          account: "Cars",
-        },
-        ["_journal2"]
-      );
+      const res = await book.ledger({ account: "Cars" });
       expect(res.results).to.have.lengthOf(2);
       expect(res.results[0]._journal2._id).to.be.instanceof(Types.ObjectId);
       expect(res.results[1]._journal2._id).to.be.instanceof(Types.ObjectId);

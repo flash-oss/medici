@@ -93,8 +93,6 @@ const { results, total } = await myBook.ledger(
     start_date: startDate,
     end_date: endDate,
   },
-  null,
-  { lean: true }
 );
 ```
 
@@ -214,7 +212,7 @@ Note that the `book`, `datetime`, `memo`, `voided`, and `void_reason` attributes
 
 ### Customizing the Transaction document schema
 
-If you need to have related documents for Transactions and want to use Mongoose's `populate` method, or if you need to add additional fields to the schema that the `meta` won't satisfy, you can define your own schema for `Medici_Transaction` and use the `setJournalSchema` and `setTransactionSchema` to use those schemas. When you specify meta values when querying or writing transactions, the system will check the Transaction schema to see if those values correspond to actual top-level fields, and if so will set those instead of the corresponding `meta` field.
+If you need to add additional fields to the schema that the `meta` won't satisfy, you can define your own schema for `Medici_Transaction` and utilise the `setJournalSchema` and `setTransactionSchema` to use those schemas. When you specify meta values when querying or writing transactions, the system will check the Transaction schema to see if those values correspond to actual top-level fields, and if so will set those instead of the corresponding `meta` field.
 
 For example, if you want transactions to have a related "person" document, you can define the transaction schema like so and use setTransactionSchema to register it:
 
@@ -253,8 +251,6 @@ setTransactionSchema(MyTransactionSchema, undefined, { defaultIndexes: true });
 // Enforce the index 'void_1_void_reason_1'
 await syncIndexes({ background: false });
 ```
-
-Then when you query transactions using the `book.ledger()` method, you can specify the related documents to populate as the second argument. E.g., `book.ledger({account:'Assets:Accounts Receivable'}, ['_person']).then()...`
 
 ## Performance
 

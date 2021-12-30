@@ -2,7 +2,7 @@ import { Entry } from "./Entry";
 import { IPaginationQuery, IFilterQuery, parseFilterQuery } from "./helper/parse/parseFilterQuery";
 import { IBalanceQuery, parseBalanceQuery } from "./helper/parse/parseBalanceQuery";
 import { IJournal, journalModel } from "./models/journal";
-import { isValidTransactionKey, ITransaction, transactionModel } from "./models/transaction";
+import { ITransaction, transactionModel } from "./models/transaction";
 import type { IOptions } from "./IOptions";
 import type { Document, Types } from "mongoose";
 import { JournalNotFoundError } from "./errors/JournalNotFoundError";
@@ -75,19 +75,13 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     const group = {
       $group: {
         _id: null,
-        balance: {
-          $sum: {
-            $subtract: ["$credit", "$debit"],
-          },
-        },
-        count: {
-          $sum: 1,
-        },
+        balance: { $sum: { $subtract: ["$credit", "$debit"] } },
+        count: { $sum: 1 },
         lastTransactionId: { $last: "$_id" },
         lastTimestamp: { $last: "$timestamp" },
       },
     };
-    const result = (await transactionModel.aggregate([match, group], options).exec())[0];
+    const result = (await transactionModel.collection.aggregate([match, group], options).toArray())[0];
 
     let balance = 0;
     let notes = 0;
@@ -120,61 +114,55 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
 
   async ledger<T = U>(
     query: IFilterQuery & IPaginationQuery,
-    populate?: string[] | null,
-    options?: IOptions & { lean?: true }
+    options?: IOptions
   ): Promise<{ results: T[]; total: number }>;
 
   async ledger<T = U>(
     query: IFilterQuery & IPaginationQuery,
-    populate?: string[] | null,
-    options?: IOptions & { lean?: false }
+    options?: IOptions
   ): Promise<{ results: (Document & T)[]; total: number }>;
 
   async ledger<T = U>(
     query: IFilterQuery & IPaginationQuery,
-    populate = null as string[] | null,
-    options = {} as IOptions & { lean?: boolean }
+    options = {} as IOptions
   ): Promise<{ results: T[]; total: number }> {
-    let skip;
-    let limit = 0;
-
-    const { lean = true } = options;
-
     // Pagination
-    if (query.perPage) {
-      skip = (query.page ? query.page - 1 : 0) * query.perPage;
-      limit = query.perPage;
-      delete query.perPage;
-      delete query.page;
-    }
-    const filterQuery = parseFilterQuery(query, this);
-    const q = transactionModel.find(filterQuery, undefined, options).lean(lean).sort({
-      datetime: -1,
-      timestamp: -1,
-    });
-
-    let count = Promise.resolve(0);
-    if (skip != null) {
-      count = transactionModel
-        .countDocuments(filterQuery)
-        .session(options.session || null)
-        .exec();
-      q.skip(skip).limit(limit);
+    const { perPage, page, ...restOfQuery } = query;
+    const paginationOptions: { skip?: number; limit?: number } = {};
+    if (Number.isSafeInteger(perPage)) {
+      paginationOptions.skip = (Number.isSafeInteger(page) ? (page as number) - 1 : 0) * (perPage as number);
+      paginationOptions.limit = perPage as number;
     }
 
-    if (populate) {
-      for (const p of populate) {
-        if (isValidTransactionKey<U>(p)) {
-          q.populate(p);
-        }
-      }
+    const filterQuery = parseFilterQuery(restOfQuery, this);
+    const findPromise = transactionModel.collection
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      .find<ITransaction>(filterQuery, {
+        ...paginationOptions,
+
+        sort: {
+          datetime: -1,
+          timestamp: -1,
+        },
+        session: options.session,
+      })
+      .toArray();
+
+    let countPromise = Promise.resolve(0);
+    if (paginationOptions.limit) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      countPromise = transactionModel.collection.countDocuments(filterQuery, { session: options.session });
     }
 
-    const results = (await q.exec()) as unknown as T[];
+    const results = await findPromise;
 
     return {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       results,
-      total: (await count) || results.length,
+      total: (await countPromise) || results.length,
     };
   }
 

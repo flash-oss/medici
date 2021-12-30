@@ -44,14 +44,11 @@ let replSet: MongoMemoryReplSet;
   console.log("start benchmark");
   const start = Date.now();
   for (let i = 0; i < 1000; i++) {
-    await book.ledger(
-      {
-        account: "Income:Rent",
-        perPage: 34,
-        page: 5,
-      },
-      null
-    );
+    await book.ledger({
+      account: "Income:Rent",
+      perPage: 34,
+      page: 5,
+    });
     i % 100 === 0 && console.log(i);
   }
 
