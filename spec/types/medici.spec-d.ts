@@ -1,7 +1,7 @@
 /* eslint import/no-unresolved: off */
 import { expectError, expectType } from "tsd";
 import BookESM, { Book, Entry, setJournalSchema, setTransactionSchema } from "../../types/index";
-import { Types, Document, ClientSession } from "mongoose";
+import { Types, ClientSession } from "mongoose";
 import { ITransaction } from "../../src/models/transaction";
 
 expectType<Book>(new BookESM("MyBook"));

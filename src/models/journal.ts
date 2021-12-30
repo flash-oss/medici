@@ -7,6 +7,7 @@ import type { IOptions } from "../IOptions";
 import { JournalAlreadyVoidedError } from "../errors/JournalAlreadyVoidedError";
 import { isPrototypeAttribute } from "../helper/isPrototypeAttribute";
 import { MediciError } from "../errors/MediciError";
+import type { Entry } from "../Entry";
 
 export interface IJournal {
   _id: Types.ObjectId;
@@ -43,20 +44,7 @@ function safeSetKeyToMetaObject(key: string, val: unknown, meta: IAnyObject): vo
   if (!isValidTransactionKey(key)) meta[key] = val;
 }
 
-const voidJournal = async function (book: Book, reason: undefined | null | string, options: IOptions) {
-  if (this.voided) {
-    throw new JournalAlreadyVoidedError();
-  }
-
-  reason = handleVoidMemo(reason, this.memo);
-
-  // Not using options.session here as this read operation is not necessary to be in the ACID session.
-  const transactions = await transactionModel.collection.find({ _journal: this._id }).toArray();
-  if (transactions.length === 0)
-    throw new MediciError(`Transactions for journal ${this._id} not found on book ${this.book}`);
-
-  const entry = book.entry(reason, null, this._id);
-
+function addReverseTransactions(entry: Entry, transactions: ITransaction[]) {
   for (const transaction of transactions) {
     const newMeta: IAnyObject = {};
     for (const [key, value] of Object.entries(transaction)) {
@@ -76,6 +64,23 @@ const voidJournal = async function (book: Book, reason: undefined | null | strin
       entry.credit(transaction.account_path, transaction.debit, newMeta);
     }
   }
+}
+
+const voidJournal = async function (book: Book, reason: undefined | null | string, options: IOptions) {
+  if (this.voided) {
+    throw new JournalAlreadyVoidedError();
+  }
+
+  reason = handleVoidMemo(reason, this.memo);
+
+  // Not using options.session here as this read operation is not necessary to be in the ACID session.
+  const transactions = await transactionModel.collection.find({ _journal: this._id }).toArray();
+  if (transactions.length === 0)
+    throw new MediciError(`Transactions for journal ${this._id} not found on book ${this.book}`);
+
+  const entry = book.entry(reason, null, this._id);
+
+  addReverseTransactions(entry, transactions as ITransaction[]);
 
   // Set this journal to void with reason and also set all associated transactions
   const resultOne = await journalModel.collection.updateOne(
