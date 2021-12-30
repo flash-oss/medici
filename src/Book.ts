@@ -1,5 +1,6 @@
 import { Entry } from "./Entry";
-import { IPaginationQuery, IParseQuery, parseQuery } from "./helper/parseQuery";
+import { IPaginationQuery, IFilterQuery, parseFilterQuery } from "./helper/parse/parseFilterQuery";
+import { IBalanceQuery, parseBalanceQuery } from "./helper/parse/parseBalanceQuery";
 import { IJournal, journalModel } from "./models/journal";
 import { isValidTransactionKey, ITransaction, transactionModel } from "./models/transaction";
 import type { IOptions } from "./IOptions";
@@ -45,8 +46,8 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     return Entry.write<U, J>(this, memo, date, original_journal);
   }
 
-  async balance(query: IParseQuery, options = {} as IOptions): Promise<{ balance: number; notes: number }> {
-    const parsedQuery = parseQuery(query, this);
+  async balance(query: IBalanceQuery, options = {} as IOptions): Promise<{ balance: number; notes: number }> {
+    const parsedQuery = parseBalanceQuery(query, this);
 
     let balanceSnapshot: IBalance | null = null;
     let accountForBalanceSnapshot: string | undefined;
@@ -118,19 +119,19 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
   }
 
   async ledger<T = U>(
-    query: IParseQuery & IPaginationQuery,
+    query: IFilterQuery & IPaginationQuery,
     populate?: string[] | null,
     options?: IOptions & { lean?: true }
   ): Promise<{ results: T[]; total: number }>;
 
   async ledger<T = U>(
-    query: IParseQuery & IPaginationQuery,
+    query: IFilterQuery & IPaginationQuery,
     populate?: string[] | null,
     options?: IOptions & { lean?: false }
   ): Promise<{ results: (Document & T)[]; total: number }>;
 
   async ledger<T = U>(
-    query: IParseQuery & IPaginationQuery,
+    query: IFilterQuery & IPaginationQuery,
     populate = null as string[] | null,
     options = {} as IOptions & { lean?: boolean }
   ): Promise<{ results: T[]; total: number }> {
@@ -146,7 +147,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
       delete query.perPage;
       delete query.page;
     }
-    const filterQuery = parseQuery(query, this);
+    const filterQuery = parseFilterQuery(query, this);
     const q = transactionModel.find(filterQuery, undefined, options).lean(lean).sort({
       datetime: -1,
       timestamp: -1,

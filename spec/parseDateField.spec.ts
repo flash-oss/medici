@@ -1,6 +1,6 @@
 /* eslint @typescript-eslint/no-non-null-assertion: off */
 import { expect } from "chai";
-import { parseDateField } from "../src/helper/parseDateField";
+import { parseDateField } from "../src/helper/parse/parseDateField";
 
 describe("parseDateField", () => {
   it("should passthrough Date-Objects", () => {

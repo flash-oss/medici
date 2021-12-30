@@ -1,18 +1,18 @@
 import { FilterQuery, Types } from "mongoose";
-import type { Book } from "../Book";
-import { isTransactionObjectIdKey, isValidTransactionKey, ITransaction } from "../models/transaction";
-import { isPrototypeAttribute } from "./isPrototypeAttribute";
+import type { Book } from "../../Book";
+import { isTransactionObjectIdKey, isValidTransactionKey, ITransaction } from "../../models/transaction";
+import { isPrototypeAttribute } from "../isPrototypeAttribute";
 import { parseAccountField } from "./parseAccountField";
-import { parseDateField } from "./parseDateField";
+import { parseDateQuery } from "./parseDateField";
 
-export type IParseQuery = {
+export type IFilterQuery = {
   account?: string | string[];
   _journal?: Types.ObjectId | string;
   start_date?: Date | string | number;
   end_date?: Date | string | number;
-} & {
-  [key: string]: string[] | number | string | Date | boolean | Types.ObjectId;
-};
+} & Partial<ITransaction> & {
+    [key: string]: string[] | number | string | Date | boolean | Types.ObjectId;
+  };
 
 export interface IPaginationQuery {
   perPage?: number;
@@ -22,8 +22,8 @@ export interface IPaginationQuery {
 /**
  * Turn query into an object readable by MongoDB.
  */
-export function parseQuery(
-  query: IParseQuery & IPaginationQuery,
+export function parseFilterQuery(
+  query: IFilterQuery & IPaginationQuery,
   book: Pick<Book, "name"> & Partial<Pick<Book, "maxAccountPath">>
 ): FilterQuery<ITransaction> {
   const { account, start_date, end_date, ...extra } = query;
@@ -34,14 +34,7 @@ export function parseQuery(
   };
 
   if (start_date || end_date) {
-    filterQuery["datetime"] = {};
-
-    if (start_date) {
-      filterQuery.datetime.$gte = parseDateField(start_date);
-    }
-    if (end_date) {
-      filterQuery.datetime.$lte = parseDateField(end_date);
-    }
+    filterQuery["datetime"] = parseDateQuery(start_date, end_date);
   }
 
   for (const [key, value] of Object.entries(extra)) {

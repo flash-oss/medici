@@ -1,5 +1,5 @@
 import type { FilterQuery } from "mongoose";
-import type { ITransaction } from "../models/transaction";
+import type { ITransaction } from "../../models/transaction";
 
 export function parseAccountField(
   account: string | string[] | undefined,

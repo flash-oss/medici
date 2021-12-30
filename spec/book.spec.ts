@@ -93,7 +93,7 @@ describe("book", function () {
       const book = new Book("MyBook-basic-transaction");
       const journal = await book
         .entry("Test Entry")
-        .debit("Assets:Receivable", 500, { clientId: "12345" })
+        .debit("Assets:Receivable", 500, { clientId: "12345", bookmarked: true })
         .credit("Income:Rent", 500)
         .commit();
       expect(journal.memo).to.be.equal("Test Entry");
