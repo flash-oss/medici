@@ -7,6 +7,7 @@ import { isPrototypeAttribute } from "./helper/isPrototypeAttribute";
 import type { IOptions } from "./IOptions";
 import type { IAnyObject } from "./IAnyObject";
 import { InvalidAccountPathLengthError } from "./errors/InvalidAccountPathLengthError";
+import { parseDateField } from "./helper/parse/parseDateField";
 
 export class Entry<U extends ITransaction = ITransaction, J extends IJournal = IJournal> {
   book: Book;
@@ -27,14 +28,14 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
     this.journal = new journalModel() as TJournalDocument<J> & {
       _original_journal?: Types.ObjectId;
     };
-    this.journal.memo = memo;
+    this.journal.memo = String(memo);
 
     if (original_journal) {
       this.journal._original_journal =
         typeof original_journal === "string" ? new Types.ObjectId(original_journal) : original_journal;
     }
 
-    this.journal.datetime = date || new Date();
+    this.journal.datetime = parseDateField(date) || new Date();
     this.journal.book = this.book.name;
     this.transactions = [];
   }
@@ -119,12 +120,6 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
     }
 
     try {
-      const txModels = this.transactions.map((tx) => new transactionModel(tx));
-      for (const txModel of txModels) {
-        const err = txModel.validateSync();
-        if (err) throw err;
-      }
-
       const result = await transactionModel.collection.insertMany(this.transactions, {
         forceServerObjectId: true, // This improves ordering of the entries on high load.
         ordered: true, // Ensure items are inserted in the order provided.
