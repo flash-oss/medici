@@ -50,29 +50,10 @@ const voidJournal = async function (book: Book, reason: undefined | null | strin
 
   reason = handleVoidMemo(reason, this.memo);
 
-  // Set this to void with reason and also set all associated transactions
-  await journalModel.updateOne(
-    { _id: this._id },
-    { $set: { voided: true, void_reason: reason } },
-    {
-      session: options.session, // We must provide either session or writeConcern, but not both.
-      writeConcern: options.session ? undefined : { w: 1, j: true }, // Ensure at least ONE node wrote to JOURNAL (disk)
-    }
-  );
-
-  const result = await transactionModel.collection.updateMany(
-    { _journal: this._id },
-    { $set: { voided: true, void_reason: reason } },
-    {
-      session: options.session, // We must provide either session or writeConcern, but not both.
-      writeConcern: options.session ? undefined : { w: 1, j: true }, // Ensure at least ONE node wrote to JOURNAL (disk)
-    }
-  );
-  if (!result.acknowledged) throw new MediciError(`Failed to void ${this.memo} journal on book ${this.book}`);
-
-  const transactions = await transactionModel.collection
-    .find({ _journal: this._id }, { session: options.session })
-    .toArray();
+  // Not using options.session here as this read operation is not necessary to be in the ACID session.
+  const transactions = await transactionModel.collection.find({ _journal: this._id }).toArray();
+  if (transactions.length === 0)
+    throw new MediciError(`Transactions for journal ${this._id} not found on book ${this.book}`);
 
   const entry = book.entry(reason, null, this._id);
 
@@ -95,6 +76,31 @@ const voidJournal = async function (book: Book, reason: undefined | null | strin
       entry.credit(transaction.account_path, transaction.debit, newMeta);
     }
   }
+
+  // Set this journal to void with reason and also set all associated transactions
+  const resultOne = await journalModel.collection.updateOne(
+    { _id: this._id },
+    { $set: { voided: true, void_reason: reason } },
+    {
+      session: options.session, // We must provide either session or writeConcern, but not both.
+      writeConcern: options.session ? undefined : { w: 1, j: true }, // Ensure at least ONE node wrote to JOURNAL (disk)
+    }
+  );
+  if (!resultOne.acknowledged) throw new MediciError(`Failed to void ${this.memo} journal on book ${this.book}`);
+  if (resultOne.modifiedCount === 0) throw new MediciError(`Already voided ${this.memo} journal on book ${this.book}`);
+
+  const resultMany = await transactionModel.collection.updateMany(
+    { _journal: this._id },
+    { $set: { voided: true, void_reason: reason } },
+    {
+      session: options.session, // We must provide either session or writeConcern, but not both.
+      writeConcern: options.session ? undefined : { w: 1, j: true }, // Ensure at least ONE node wrote to JOURNAL (disk)
+    }
+  );
+  if (!resultMany.acknowledged) throw new MediciError(`Failed to void ${this.memo} transactions on book ${this.book}`);
+  if (resultMany.modifiedCount !== transactions.length)
+    throw new MediciError(`Already voided ${this.memo} transactions on book ${this.book}`);
+
   return entry.commit(options);
 } as (this: TJournalDocument, book: Book, reason?: undefined | string, options?: IOptions) => Promise<TJournalDocument>;
 
