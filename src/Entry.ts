@@ -13,6 +13,7 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
   book: Book;
   journal: TJournalDocument<J> & { _original_journal?: Types.ObjectId };
   transactions: U[] = [];
+  timestamp = new Date();
 
   static write<U extends ITransaction, J extends IJournal>(
     book: Book,
@@ -68,7 +69,7 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
       datetime: this.journal.datetime,
       debit,
       memo: this.journal.memo,
-      timestamp: new Date(),
+      timestamp: this.timestamp,
     };
     if (this.journal._original_journal) {
       transaction._original_journal = this.journal._original_journal;
@@ -85,6 +86,9 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
         }
       }
     }
+
+    // We set again timestamp to ensure there is no tampering with the timestamp
+    transaction.timestamp = this.timestamp;
     this.transactions.push(transaction as U);
 
     return this;

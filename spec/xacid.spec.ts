@@ -24,7 +24,7 @@ if (process.env.ACID_AVAILABLE) {
             .credit("X:Y:USD", 1)
             .credit("X:Y:INR", 1)
             // @ts-expect-error mongoose validator should throw an error
-            .credit("X:Y:CHF", 1, { timestamp: "invalid " })
+            .credit("X:Y:CHF", 1, { datetime: "invalid" })
             .debit("CashAssets", 5)
             .commit({ session });
         });
@@ -49,7 +49,7 @@ if (process.env.ACID_AVAILABLE) {
             .credit("X:Y:USD", 1)
             .credit("X:Y:INR", 1)
             // @ts-expect-error mongoose validator should throw an error
-            .credit("X:Y:CHF", 1, { timestamp: "invalid " })
+            .credit("X:Y:CHF", 1, { datetime: "invalid" })
             .debit("CashAssets", 5)
             .commit({ session });
         });
