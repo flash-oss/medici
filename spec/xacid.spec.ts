@@ -155,7 +155,7 @@ if (process.env.ACID_AVAILABLE) {
           .commit();
 
         await mongoose.connection.transaction(async (session) => {
-          await journal.void(book, null, { session });
+          await book.void(journal._id, null, { session });
         });
 
         const result = await book.balance({ account: "X:Y" });
@@ -219,7 +219,7 @@ if (process.env.ACID_AVAILABLE) {
       for (let i = 0; i < 100; i++) {
         try {
           await mongoose.connection.transaction(async (session) => {
-            await journal.void(book, null, { session });
+            await book.void(journal._id, null, { session });
             throw new Error("Journaling failed.");
           });
         } catch (e) {
