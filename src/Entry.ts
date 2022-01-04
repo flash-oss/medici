@@ -120,6 +120,16 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
     }
 
     try {
+      await Promise.all(
+        this.transactions
+          .map(tx =>
+            new Promise<void>(
+              (resolve, reject) => new transactionModel(tx)
+                 .validate(err => err ? reject(err) : resolve())
+            )
+          )
+      );
+
       const result = await transactionModel.collection.insertMany(this.transactions, {
         forceServerObjectId: true, // This improves ordering of the entries on high load.
         ordered: true, // Ensure items are inserted in the order provided.
