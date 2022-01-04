@@ -4,7 +4,7 @@ import { IBalanceQuery, parseBalanceQuery } from "./helper/parse/parseBalanceQue
 import { IJournal, journalModel } from "./models/journal";
 import { ITransaction, transactionModel } from "./models/transaction";
 import type { IOptions } from "./IOptions";
-import type { Document, Types } from "mongoose";
+import { Document, Types } from "mongoose";
 import { JournalNotFoundError } from "./errors/JournalNotFoundError";
 import { BookConstructorError } from "./errors/BookConstructorError";
 import { lockModel } from "./models/lock";
@@ -167,16 +167,29 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
   }
 
   async void(journal_id: string | Types.ObjectId, reason?: undefined | string, options = {} as IOptions) {
+
+    journal_id = typeof journal_id === "string"
+      ? new Types.ObjectId(journal_id)
+      : journal_id;
+
     const journal = await journalModel
+      .collection
       .findOne(
         {
           _id: journal_id,
           book: this.name,
         },
-        undefined,
-        options
-      )
-      .exec();
+        {
+          session: options.session,
+          projection: {
+            _id: true,
+            _transactions: true,
+            memo: true,
+            void_reason: true,
+            voided: true,
+          }
+        }
+      );
 
     if (journal === null) {
       throw new JournalNotFoundError();
@@ -185,20 +198,24 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     if (journal.voided) {
       throw new JournalAlreadyVoidedError();
     }
-  
+
     reason = handleVoidMemo(reason, journal.memo);
-  
+
     // Not using options.session here as this read operation is not necessary to be in the ACID session.
-    const transactions = await transactionModel.collection.find({ _journal: journal._id }).toArray();
-    if (transactions.length === 0)
+    const transactions = await transactionModel
+      .collection
+      .find({ _journal: journal._id }).toArray();
+
+    if (transactions.length !== journal._transactions.length) {
       throw new MediciError(`Transactions for journal ${journal._id} not found on book ${journal.book}`);
-  
-    const entry = this.entry(reason, null, journal._id);
-  
+    }
+
+    const entry = this.entry(reason, null, journal_id);
+
     addReversedTransactions(entry, transactions as ITransaction[]);
-  
+
     // Set this journal to void with reason and also set all associated transactions
-    const resultOne = await journalModel.collection.updateOne(
+    const modifiedJournal = await journalModel.collection.updateOne(
       { _id: journal._id },
       { $set: { voided: true, void_reason: reason } },
       {
@@ -206,21 +223,30 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
         writeConcern: options.session ? undefined : { w: 1, j: true }, // Ensure at least ONE node wrote to JOURNAL (disk)
       }
     );
-    if (!resultOne.acknowledged) throw new MediciError(`Failed to void ${journal.memo} journal on book ${journal.book}`);
-    if (resultOne.modifiedCount === 0) throw new MediciError(`Already voided ${journal.memo} journal on book ${journal.book}`);
-  
-    const resultMany = await transactionModel.collection.updateMany(
-      { _journal: journal._id },
-      { $set: { voided: true, void_reason: reason } },
-      {
-        session: options.session, // We must provide either session or writeConcern, but not both.
-        writeConcern: options.session ? undefined : { w: 1, j: true }, // Ensure at least ONE node wrote to JOURNAL (disk)
-      }
-    );
-    if (!resultMany.acknowledged) throw new MediciError(`Failed to void ${journal.memo} transactions on book ${journal.book}`);
-    if (resultMany.modifiedCount !== transactions.length)
-      throw new MediciError(`Already voided ${journal.memo} transactions on book ${journal.book}`);
-  
+
+    if (!modifiedJournal.acknowledged) {
+      throw new MediciError(`Failed to void journal ${journal._id} on book ${journal.book}`);
+    }
+
+    const modifiedTransactions = await transactionModel
+      .collection
+      .updateMany(
+        { _journal: journal._id },
+        { $set: { voided: true, void_reason: reason } },
+        {
+          session: options.session, // We must provide either session or writeConcern, but not both.
+          writeConcern: options.session ? undefined : { w: 1, j: true }, // Ensure at least ONE node wrote to JOURNAL (disk)
+        }
+      );
+
+    if (!modifiedTransactions.acknowledged) {
+      throw new MediciError(`Failed to void journal ${journal._id}  transactions on book ${journal.book}`);
+    }
+
+    if (modifiedTransactions.modifiedCount !== transactions.length) {
+      throw new MediciError(`Already voided journal ${journal._id}  transactions on book ${journal.book}`);
+    }
+
     return entry.commit(options);
   }
 
