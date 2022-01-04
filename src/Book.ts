@@ -4,7 +4,7 @@ import { IBalanceQuery, parseBalanceQuery } from "./helper/parse/parseBalanceQue
 import { IJournal, journalModel } from "./models/journal";
 import { ITransaction, transactionModel } from "./models/transaction";
 import type { IOptions } from "./IOptions";
-import { Document, Types } from "mongoose";
+import { Types } from "mongoose";
 import { JournalNotFoundError } from "./errors/JournalNotFoundError";
 import { BookConstructorError } from "./errors/BookConstructorError";
 import { lockModel } from "./models/lock";
@@ -114,16 +114,6 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
 
     return { balance, notes };
   }
-
-  async ledger<T = U>(
-    query: IFilterQuery & IPaginationQuery,
-    options?: IOptions
-  ): Promise<{ results: T[]; total: number }>;
-
-  async ledger<T = U>(
-    query: IFilterQuery & IPaginationQuery,
-    options?: IOptions
-  ): Promise<{ results: (Document & T)[]; total: number }>;
 
   async ledger<T = U>(
     query: IFilterQuery & IPaginationQuery,
