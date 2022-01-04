@@ -127,12 +127,10 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
       await Promise.all(
         this.transactions
           .map(tx =>
-            new Promise<void>(
-              (resolve, reject) => new transactionModel(tx)
-                 .validate(err => err ? reject(err) : resolve())
-            )
+            new transactionModel(tx).validate()
           )
       );
+      await this.journal.validate();
 
       const result = await transactionModel.collection.insertMany(this.transactions, {
         forceServerObjectId: true, // This improves ordering of the entries on high load.
@@ -158,14 +156,15 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
       }
 
       this.journal._transactions = insertedIds as Types.ObjectId[];
-      await this.journal.save(options);
+
+      await journalModel.collection.insertOne(this.journal.toObject(), options);
 
       if (options.writelockAccounts && options.session) {
         const writelockAccounts =
           options.writelockAccounts instanceof RegExp
             ? this.transactions
-                .filter((tx) => (options.writelockAccounts as RegExp).test(tx.accounts))
-                .map((tx) => tx.accounts)
+              .filter((tx) => (options.writelockAccounts as RegExp).test(tx.accounts))
+              .map((tx) => tx.accounts)
             : options.writelockAccounts;
 
         await this.book.writelockAccounts(writelockAccounts, {
