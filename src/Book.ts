@@ -129,16 +129,17 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     // Pagination
     const { perPage, page, ...restOfQuery } = query;
     const paginationOptions: { skip?: number; limit?: number } = {};
-    if (Number.isSafeInteger(perPage)) {
-      paginationOptions.skip = (Number.isSafeInteger(page) ? (page as number) - 1 : 0) * (perPage as number);
-      paginationOptions.limit = perPage as number;
+    if (
+      typeof perPage === "number" &&
+      Number.isSafeInteger(perPage)
+    ) {
+      paginationOptions.skip = (Number.isSafeInteger(page) ? (page as number) - 1 : 0) * (perPage);
+      paginationOptions.limit = perPage;
     }
 
     const filterQuery = parseFilterQuery(restOfQuery, this);
     const findPromise = transactionModel.collection
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      .find<ITransaction>(filterQuery, {
+      .find<T>(filterQuery, {
         ...paginationOptions,
 
         sort: {
@@ -151,16 +152,12 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
 
     let countPromise = Promise.resolve(0);
     if (paginationOptions.limit) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       countPromise = transactionModel.collection.countDocuments(filterQuery, { session: options.session });
     }
 
     const results = await findPromise;
 
     return {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       results,
       total: (await countPromise) || results.length,
     };

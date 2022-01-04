@@ -1,11 +1,10 @@
-import type { FilterQuery } from "mongoose";
-import type { ITransaction } from "../../models/transaction";
+import type { IFilter } from "./IFilter";
 
 export function parseAccountField(
   account: string | string[] | undefined,
   maxAccountPath = 3
-): FilterQuery<ITransaction> {
-  const filterQuery: FilterQuery<ITransaction> = {};
+): IFilter {
+  const filterQuery: IFilter = {};
 
   if (typeof account === "string") {
     const splitAccount = account.split(":");

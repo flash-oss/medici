@@ -1,9 +1,10 @@
-import { FilterQuery, Types } from "mongoose";
+import { Types } from "mongoose";
 import type { Book } from "../../Book";
 import { isTransactionObjectIdKey, isValidTransactionKey, ITransaction } from "../../models/transaction";
 import { isPrototypeAttribute } from "../isPrototypeAttribute";
 import { parseAccountField } from "./parseAccountField";
 import { parseDateQuery } from "./parseDateField";
+import type { IFilter } from "./IFilter";
 
 export type IFilterQuery = {
   account?: string | string[];
@@ -19,16 +20,17 @@ export interface IPaginationQuery {
   page?: number;
 }
 
+
 /**
  * Turn query into an object readable by MongoDB.
  */
 export function parseFilterQuery(
   query: IFilterQuery & IPaginationQuery,
   book: Pick<Book, "name"> & Partial<Pick<Book, "maxAccountPath">>
-): FilterQuery<ITransaction> {
+): IFilter {
   const { account, start_date, end_date, ...extra } = query;
 
-  const filterQuery: FilterQuery<ITransaction> = {
+  const filterQuery: IFilter = {
     book: book.name,
     ...parseAccountField(account, book.maxAccountPath),
   };

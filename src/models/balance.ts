@@ -1,4 +1,4 @@
-import { Schema, model, Model, connection, Types, FilterQuery, Document } from "mongoose";
+import { Schema, model, Model, connection, Types, Document, FilterQuery } from "mongoose";
 import { IAnyObject } from "../IAnyObject";
 import { IOptions } from "../IOptions";
 import { Book } from "../Book";

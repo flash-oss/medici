@@ -1,9 +1,9 @@
-import { FilterQuery, Types } from "mongoose";
+import { Types } from "mongoose";
 import type { Book } from "../../Book";
-import { ITransaction } from "../../models/transaction";
 import { isPrototypeAttribute } from "../isPrototypeAttribute";
 import { parseAccountField } from "./parseAccountField";
 import { parseDateQuery } from "./parseDateField";
+import type { IFilter } from "./IFilter";
 
 export type IBalanceQuery = {
   account?: string | string[];
@@ -19,10 +19,10 @@ export type IBalanceQuery = {
 export function parseBalanceQuery(
   query: IBalanceQuery,
   book: Pick<Book, "name"> & Partial<Pick<Book, "maxAccountPath">>
-): FilterQuery<ITransaction> {
+): IFilter {
   const { account, start_date, end_date, ...extra } = query;
 
-  const filterQuery: FilterQuery<ITransaction> = {
+  const filterQuery: IFilter = {
     book: book.name,
     ...parseAccountField(account, book.maxAccountPath),
   };
