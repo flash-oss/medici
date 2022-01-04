@@ -132,4 +132,4 @@ export function setJournalSchema(schema: Schema, collection?: string) {
   journalModel = model("Medici_Journal", schema, collection) as TJournalModel;
 }
 
-if (!connection.models["Medici_Journal"]) setJournalSchema(journalSchema);
+(!connection.models["Medici_Journal"]) && setJournalSchema(journalSchema);

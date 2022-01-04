@@ -39,4 +39,4 @@ export function setLockSchema(schema: Schema, collection?: string) {
   lockModel = model("Medici_Lock", schema, collection);
 }
 
-if (!connection.models["Medici_Lock"]) setLockSchema(lockSchema);
+(!connection.models["Medici_Lock"]) && setLockSchema(lockSchema);

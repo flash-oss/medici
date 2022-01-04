@@ -1,7 +1,6 @@
-import { Schema, model, Model, connection, Types, Document, FilterQuery } from "mongoose";
+import { Schema, model, Model, connection, Types, FilterQuery } from "mongoose";
 import { IAnyObject } from "../IAnyObject";
 import { IOptions } from "../IOptions";
-import { Book } from "../Book";
 
 export interface IBalance {
   _id: Types.ObjectId;
@@ -33,20 +32,7 @@ balanceSchema.index({ account: 1, book: 1 });
 
 balanceSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
 
-export type TBalanceDocument<T extends IBalance = IBalance> = Omit<Document, "__v" | "id"> &
-  T & {
-    void: (book: Book, reason?: undefined | null | string, options?: IOptions) => Promise<TBalanceDocument<T>>;
-  };
-
-type TBalanceModel<T extends IBalance = IBalance> = Model<
-  T,
-  unknown,
-  {
-    void: (book: Book, reason?: undefined | null | string, options?: IOptions) => Promise<TBalanceDocument<T>>;
-  }
->;
-
-export let balanceModel: TBalanceModel;
+export let balanceModel: Model<IBalance>;
 
 export function setBalanceSchema(schema: Schema, collection?: string) {
   delete connection.models["Medici_Balance"];
@@ -54,7 +40,7 @@ export function setBalanceSchema(schema: Schema, collection?: string) {
   balanceModel = model("Medici_Balance", schema, collection);
 }
 
-if (!connection.models["Medici_Balance"]) setBalanceSchema(balanceSchema);
+(!connection.models["Medici_Balance"]) && setBalanceSchema(balanceSchema);
 
 export async function snapshotBalance(
   balanceData: IBalance & { expireInSec: number },

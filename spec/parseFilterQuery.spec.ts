@@ -162,4 +162,10 @@ describe("parseFilterQuery", () => {
     expect(result.book).to.be.equal("MyBook");
     expect(result["accounts"]).to.be.equal("Assets:Gold:Swiss");
   });
+
+  it("should handle potential prototype injection correctly", () => {
+    const result = parseFilterQuery({ toString: "a" }, { name: "MyBook" });
+    expect(Object.keys(result)).to.have.lengthOf(1);
+    expect(result.book).to.be.equal("MyBook");
+  });
 });

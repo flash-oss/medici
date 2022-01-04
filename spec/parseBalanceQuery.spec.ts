@@ -2,7 +2,6 @@
 import { expect } from "chai";
 import { Types } from "mongoose";
 import { parseBalanceQuery } from "../src/helper/parse/parseBalanceQuery";
-import { parseFilterQuery } from "../src/helper/parse/parseFilterQuery";
 
 describe("parseBalanceQuery", () => {
   it("should handle empty object and book name correctly", () => {
@@ -71,7 +70,7 @@ describe("parseBalanceQuery", () => {
 
     bookmarked = false;
     const _someOtherDatabaseId = "619af485cd56547936847584";
-    const result2 = parseFilterQuery({ _someOtherDatabaseId, bookmarked }, { name: "MyBook" });
+    const result2 = parseBalanceQuery({ _someOtherDatabaseId, bookmarked }, { name: "MyBook" });
     expect(result2).to.deep.equal({ book: "MyBook", meta: { _someOtherDatabaseId, bookmarked } });
   });
 
@@ -161,5 +160,11 @@ describe("parseBalanceQuery", () => {
     expect(Object.keys(result)).to.have.lengthOf(2);
     expect(result.book).to.be.equal("MyBook");
     expect(result["accounts"]).to.be.equal("Assets:Gold:Swiss");
+  });
+
+  it("should handle potential prototype injection correctly", () => {
+    const result = parseBalanceQuery({ toString: "a" }, { name: "MyBook" });
+    expect(Object.keys(result)).to.have.lengthOf(1);
+    expect(result.book).to.be.equal("MyBook");
   });
 });

@@ -4,7 +4,6 @@ import type { Entry } from "./Entry";
 export { setJournalSchema } from "./models/journal";
 export { setTransactionSchema } from "./models/transaction";
 export { setLockSchema } from "./models/lock";
-export { setBalanceSchema } from "./models/balance";
 export { mongoTransaction } from "./helper/mongoTransaction";
 export { initModels } from "./helper/initModels";
 export { syncIndexes } from "./helper/syncIndexes";
