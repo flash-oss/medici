@@ -6,7 +6,7 @@
   "types": "types/index.d.ts",
   "scripts": {
     "ci": "npm run lint && npm run build && npm run test",
-    "ci-mongoose5": "npm i mongoose@5 && npm run test",
+    "ci-mongoose5": "npm i mongoose@5 && npm run test:code",
     "bench:balance": "ts-node ./bench/bench-balance.ts",
     "bench:ledger": "ts-node ./bench/bench-ledger.ts",
     "build": "npm run clean && npm run build:node && npm run build:types",
@@ -47,7 +47,7 @@
     "url": "https://github.com/flash-oss/medici/issues"
   },
   "dependencies": {
-    "mongoose": "5 - 6"
+    "mongoose": "^5.13.14"
   },
   "homepage": "https://github.com/flash-oss/medici",
   "devDependencies": {
