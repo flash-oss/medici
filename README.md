@@ -377,6 +377,7 @@ High level overview.
 - The project was rewritten with **TypeScript**. Types are provided within the package now.
 - Added support for MongoDB sessions (aka **ACID** transactions). See `IOptions` type.
 - Did number of consistency, stability, server disk space, and speed improvements.
+- Mongoose v5 and v6 are supported now.
 
 Technical changes of the release.
 
@@ -390,8 +391,8 @@ Technical changes of the release.
 - **POTENTIALLY BREAKING**: Node.js 12 is the lowest supported version. Although, 10 should still work fine.
 - **POTENTIALLY BREAKING**: `.ledger()` returns lean Transaction-Objects for better performance. To retrieve hydrated mongoose models set `lean` to `false` in the third parameter of `.ledger()`. It is recommended to not hydrate the transactions, as it implies that the transactions could be manipulated and the data integrity of Medici could be risked.
 - **POTENTIALLY BREAKING**: Rounding precision was changed from 7 to 8 floating point digits.
-  - You can now specify the `precision`. The `Book` now accepts an optional second parameter `precision` used internally by Medici. Javascript has issues with floating points precision and can only handle 16 digits precision, like 0.1 + 0.2 results in 0.30000000000000004 and not 0.3.
-  - The new default precision of 8 digits after decimal results in the correct sum of 0.1 + 0.2 = 0.3. The medici v4 had it 7 by default. Be careful if you are using values which have more than 8 digits after the comma.
+  - The new default precision is 8 digits. The medici v4 had it 7 by default. Be careful if you are using values which have more than 8 digits after the comma.
+  - You can now specify the `precision` in the `Book` constructor as an optional second parameter `precision`. Simulating medici v4 behaviour: `new Book("MyBook", { precision: 7 })`.
   - Also, you can enforce an "only-Integer"-mode, by setting the precision to 0. But keep in mind that Javascript has a max safe integer limit of 9007199254740991.
 - **POTENTIALLY BREAKING**: Added validation for `name` of Book, `maxAccountPath` and `precision`.
   - The `name` has to be not an empty string or a string containing only whitespace characters.
@@ -401,10 +402,10 @@ Technical changes of the release.
 - **POTENTIALLY BREAKING**: When calling `book.void()` the provided `journal_id` has to belong to the `book`. If the journal does not exist within the book, medici will throw a `JournalNotFoundError`. In medici < 5 you could theoretically void a `journal` of another `book`.
 - **POTENTIALLY BREAKING**: Transaction document properties `meta`, `voided`, `void_reason`, `_original_journal` won't be stored to the database when have no data. In medici v4 they were `{}`, `false`, `null`, `null` correspondingly.
 - **BREAKING**: Transactions are now committed/voided using native `insertMany`/`updateMany` instead of mongoose `.save()` method. If you had any "pre save" middlewares on the `medici_transactions` they won't be working anymore.
+- **BREAKING**: If you had any other Mongoose middlewares installed onto medici `transactionModel` or `journalModel` then they won't work anymore. Medici v5 is not using the mongoose to do DB operations. Instead, we execute commands via bare `mongodb` driver.
 - **BREAKING**: `.balance()` does not support pagination anymore. To get the balance of a page sum up the values of credit and debit of a paginated `.ledger()`-call.
 - **BREAKING**: You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
-- **BREAKING**: Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
-- **BREAKING**: The approving functionality (`approved` and `setApproved()`) was removed. It's complicating code, bloating the DB, not used by anyone maintainers know. Please, implemented approvals outside the ledger. If you still need it to be part of the ledger then you're out of luck and would have to (re)implement it yourself. Sorry about that.
+- **BREAKING**: The approving functionality (`approved` and `setApproved()`) was removed. It's complicating code, bloating the DB, not used by anyone maintainers know. Please, implement approvals outside the ledger. If you still need it to be part of the ledger then you're out of luck and would have to (re)implement it yourself. Sorry about that.
 
 ### v4.0.0
 

@@ -1,11 +1,12 @@
 {
   "name": "medici",
-  "version": "5.0.0-next.0",
+  "version": "5.0.0-next.1",
   "description": "Simple double-entry accounting for Node + Mongoose",
   "main": "build/index.js",
   "types": "types/index.d.ts",
   "scripts": {
     "ci": "npm run lint && npm run build && npm run test",
+    "ci-mongoose5": "npm i mongoose@5 && npm run test:code",
     "bench:balance": "ts-node ./bench/bench-balance.ts",
     "bench:ledger": "ts-node ./bench/bench-ledger.ts",
     "build": "npm run clean && npm run build:node && npm run build:types",
@@ -46,7 +47,7 @@
     "url": "https://github.com/flash-oss/medici/issues"
   },
   "dependencies": {
-    "mongoose": "^6.1.3"
+    "mongoose": "5 - 6"
   },
   "homepage": "https://github.com/flash-oss/medici",
   "devDependencies": {
@@ -89,6 +90,6 @@
     }
   },
   "engines": {
-    "node": "^12.0.0"
+    "node": ">=12"
   }
 }

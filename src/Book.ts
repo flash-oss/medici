@@ -12,6 +12,7 @@ import { getBestSnapshot, IBalance, snapshotBalance } from "./models/balance";
 import { JournalAlreadyVoidedError, MediciError } from ".";
 import { handleVoidMemo } from "./helper/handleVoidMemo";
 import { addReversedTransactions } from "./helper/addReversedTransactions";
+import { ConsistencyError } from "./errors/ConsistencyError";
 
 export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJournal> {
   name: string;
@@ -122,11 +123,8 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     // Pagination
     const { perPage, page, ...restOfQuery } = query;
     const paginationOptions: { skip?: number; limit?: number } = {};
-    if (
-      typeof perPage === "number" &&
-      Number.isSafeInteger(perPage)
-    ) {
-      paginationOptions.skip = (Number.isSafeInteger(page) ? (page as number) - 1 : 0) * (perPage);
+    if (typeof perPage === "number" && Number.isSafeInteger(perPage)) {
+      paginationOptions.skip = (Number.isSafeInteger(page) ? (page as number) - 1 : 0) * perPage;
       paginationOptions.limit = perPage;
     }
 
@@ -157,29 +155,24 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
   }
 
   async void(journal_id: string | Types.ObjectId, reason?: undefined | string, options = {} as IOptions) {
+    journal_id = typeof journal_id === "string" ? new Types.ObjectId(journal_id) : journal_id;
 
-    journal_id = typeof journal_id === "string"
-      ? new Types.ObjectId(journal_id)
-      : journal_id;
-
-    const journal = await journalModel
-      .collection
-      .findOne(
-        {
-          _id: journal_id,
-          book: this.name,
+    const journal = await journalModel.collection.findOne(
+      {
+        _id: journal_id,
+        book: this.name,
+      },
+      {
+        session: options.session,
+        projection: {
+          _id: true,
+          _transactions: true,
+          memo: true,
+          void_reason: true,
+          voided: true,
         },
-        {
-          session: options.session,
-          projection: {
-            _id: true,
-            _transactions: true,
-            memo: true,
-            void_reason: true,
-            voided: true,
-          }
-        }
-      );
+      }
+    );
 
     if (journal === null) {
       throw new JournalNotFoundError();
@@ -192,9 +185,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     reason = handleVoidMemo(reason, journal.memo);
 
     // Not using options.session here as this read operation is not necessary to be in the ACID session.
-    const transactions = await transactionModel
-      .collection
-      .find({ _journal: journal._id }).toArray();
+    const transactions = await transactionModel.collection.find({ _journal: journal._id }).toArray();
 
     if (transactions.length !== journal._transactions.length) {
       throw new MediciError(`Transactions for journal ${journal._id} not found on book ${journal.book}`);
@@ -205,7 +196,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     addReversedTransactions(entry, transactions as ITransaction[]);
 
     // Set this journal to void with reason and also set all associated transactions
-    const modifiedJournal = await journalModel.collection.updateOne(
+    const resultOne = await journalModel.collection.updateOne(
       { _id: journal._id },
       { $set: { voided: true, void_reason: reason } },
       {
@@ -214,28 +205,32 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
       }
     );
 
-    if (!modifiedJournal.acknowledged) {
-      throw new MediciError(`Failed to void journal ${journal._id} on book ${journal.book}`);
-    }
+    // This can happen if someone read a journal, then deleted it from DB, then tried voiding. Full stop.
+    if (resultOne.matchedCount === 0)
+      throw new ConsistencyError(`Failed to void ${journal.memo} ${journal._id} journal on book ${journal.book}`);
+    // Someone else voided! Is it two simultaneous voidings? Let's stop our void action altogether.
+    if (resultOne.modifiedCount === 0)
+      throw new ConsistencyError(`Already voided ${journal.memo} ${journal._id} journal on book ${journal.book}`);
 
-    const modifiedTransactions = await transactionModel
-      .collection
-      .updateMany(
-        { _journal: journal._id },
-        { $set: { voided: true, void_reason: reason } },
-        {
-          session: options.session, // We must provide either session or writeConcern, but not both.
-          writeConcern: options.session ? undefined : { w: 1, j: true }, // Ensure at least ONE node wrote to JOURNAL (disk)
-        }
+    const resultMany = await transactionModel.collection.updateMany(
+      { _journal: journal._id },
+      { $set: { voided: true, void_reason: reason } },
+      {
+        session: options.session, // We must provide either session or writeConcern, but not both.
+        writeConcern: options.session ? undefined : { w: 1, j: true }, // Ensure at least ONE node wrote to JOURNAL (disk)
+      }
+    );
+
+    // At this stage we have to make sure the `commit()` is executed.
+    // Let's not make the DB even more inconsistent if something wild happens. Let's not throw, instead log to stderr.
+    if (resultMany.matchedCount !== transactions.length)
+      throw new ConsistencyError(
+        `Failed to void all ${journal.memo} ${journal._id} journal transactions on book ${journal.book}`
       );
-
-    if (!modifiedTransactions.acknowledged) {
-      throw new MediciError(`Failed to void journal ${journal._id}  transactions on book ${journal.book}`);
-    }
-
-    if (modifiedTransactions.modifiedCount !== transactions.length) {
-      throw new MediciError(`Already voided journal ${journal._id}  transactions on book ${journal.book}`);
-    }
+    if (resultMany.modifiedCount === 0)
+      throw new ConsistencyError(
+        `Already voided ${journal.memo} ${journal._id} journal transactions on book ${journal.book}`
+      );
 
     return entry.commit(options);
   }
@@ -261,11 +256,11 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
   }
 
   async listAccounts(options = {} as IOptions): Promise<string[]> {
-    const results = await transactionModel
-      .find({ book: this.name }, undefined, options)
-      .lean(true)
-      .distinct("accounts")
-      .exec();
+    const results = await transactionModel.collection.distinct(
+      "accounts",
+      { book: this.name },
+      { session: options.session }
+    );
     const uniqueAccounts: Set<string> = new Set();
     for (const result of results) {
       const prev = [];
