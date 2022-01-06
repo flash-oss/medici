@@ -31,7 +31,7 @@ before(async function () {
         version: "4.4.0",
       },
       instanceOpts: [
-        // Set the expire job in MongoDB to run every second
+        // Set the expiry job in MongoDB to run every second
         { args: ["--setParameter", "ttlMonitorSleepSecs=1"] },
       ],
       replSet: {
@@ -41,7 +41,7 @@ before(async function () {
     });
     await replSet.start();
     await replSet.waitUntilRunning();
-    const connectionString = replSet.getUri();
+    const connectionString = replSet.getUri("medici_test");
     await mongoose.connect(connectionString);
   }
 });

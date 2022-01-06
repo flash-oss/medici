@@ -380,6 +380,7 @@ High level overview.
 
 Technical changes of the release.
 
+- Mongoose v5 and v6 are supported now.
 - Added a `mongoTransaction`-method, which is a convenience shortcut for `mongoose.connection.transaction`.
 - Added async helper method `initModels`, which initializes the underlying `transactionModel` and `journalModel`. Use this after you connected to the MongoDB-Server if you want to use transactions. Or else you could get `Unable to read from a snapshot due to pending collection catalog changes; please retry the operation.` error when acquiring a session because the actual database-collection is still being created by the underlying mongoose-instance.
 - Added `setJournalSchema` and `setTransactionSchema` to use custom Schemas. It will ensure, that all relevant middlewares and methods are also added when using custom Schemas. Use `syncIndexes`-method from medici after setTransactionSchema to enforce the defined indexes on the models.
@@ -403,8 +404,8 @@ Technical changes of the release.
 - **BREAKING**: Transactions are now committed/voided using native `insertMany`/`updateMany` instead of mongoose `.save()` method. If you had any "pre save" middlewares on the `medici_transactions` they won't be working anymore.
 - **BREAKING**: `.balance()` does not support pagination anymore. To get the balance of a page sum up the values of credit and debit of a paginated `.ledger()`-call.
 - **BREAKING**: You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
-- **BREAKING**: Mongoose v6 is the only supported version now. Avoid using both v5 and v6 in the same project.
 - **BREAKING**: The approving functionality (`approved` and `setApproved()`) was removed. It's complicating code, bloating the DB, not used by anyone maintainers know. Please, implemented approvals outside the ledger. If you still need it to be part of the ledger then you're out of luck and would have to (re)implement it yourself. Sorry about that.
+- ???
 
 ### v4.0.0
 

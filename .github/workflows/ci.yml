@@ -25,5 +25,6 @@ jobs:
 
       # ignoring scripts to not install mongodb-memory-server
       - run: npm ci --ignore-scripts
-
       - run: npm run ci
+      - run: npm run ci-mongoose5
+
