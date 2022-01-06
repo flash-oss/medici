@@ -256,11 +256,11 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
   }
 
   async listAccounts(options = {} as IOptions): Promise<string[]> {
-    const results = await transactionModel
-      .find({ book: this.name }, undefined, options)
-      .lean(true)
-      .distinct("accounts")
-      .exec();
+    const results = await transactionModel.collection.distinct(
+      "accounts",
+      { book: this.name },
+      { session: options.session }
+    );
     const uniqueAccounts: Set<string> = new Set();
     for (const result of results) {
       const prev = [];

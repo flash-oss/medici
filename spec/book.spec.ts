@@ -518,19 +518,22 @@ describe("book", function () {
   });
 
   describe("listAccounts", () => {
-    const book = new Book("MyBook-listAccounts");
-
-    before(async () => {
-      await book.entry("depth test").credit("Assets:Receivable", 1).debit("Income:Rent", 1).commit();
-    });
-
     it("should list all accounts", async () => {
+      const book = new Book("MyBook-listAccounts");
+      await book.entry("listAccounts test").credit("Assets:Receivable", 1).debit("Income:Rent", 1).commit();
+
       const accounts = await book.listAccounts();
       expect(accounts).to.have.lengthOf(4);
-      expect(accounts).to.include("Assets");
-      expect(accounts).to.include("Assets:Receivable");
-      expect(accounts).to.include("Income");
-      expect(accounts).to.include("Income:Rent");
+      expect(accounts).to.have.members(["Assets", "Assets:Receivable", "Income", "Income:Rent"]);
+    });
+
+    it("should list accounts with 1 and 3 path parts", async () => {
+      const book = new Book("MyBook-listAccounts path parts");
+      await book.entry("listAccounts test 2").credit("Assets", 1).debit("Income:Rent:Taxable", 1).commit();
+
+      const accounts = await book.listAccounts();
+      expect(accounts).to.have.lengthOf(4);
+      expect(accounts).to.have.members(["Assets", "Income", "Income:Rent", "Income:Rent:Taxable"]);
     });
   });
 
