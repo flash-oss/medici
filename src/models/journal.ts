@@ -1,11 +1,10 @@
 import { connection, Schema, Document, Model, model, Types } from "mongoose";
-import { ITransaction } from "./transaction";
 
 export interface IJournal {
   _id: Types.ObjectId;
   datetime: Date;
   memo: string;
-  _transactions: Types.ObjectId[] | ITransaction[];
+  _transactions: Types.ObjectId[];
   book: string;
   voided?: boolean;
   void_reason?: string;
