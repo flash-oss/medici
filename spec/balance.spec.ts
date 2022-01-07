@@ -1,7 +1,7 @@
 /* eslint sonarjs/no-duplicate-string: off, no-prototype-builtins: off*/
 import { expect } from "chai";
 import { Book } from "../src";
-import { getBestSnapshot } from "../src/models/balance";
+import { balanceModel, getBestSnapshot } from "../src/models/balance";
 
 describe("balance model", function () {
   describe("getBestSnapshot", () => {
@@ -92,6 +92,31 @@ describe("balance model", function () {
       // check if previously missing balance was created and equals to 1.0
       snapshot = await getBestSnapshot({ book: book.name, account: "Assets:Receivable", meta: { clientId: "12345" } });
       expect(snapshot).to.have.property("balance", 1);
+    });
+
+    it("should snapshot with mongodb query language", async function () {
+      const book = new Book("MyBook-balance-mongodb-query-language");
+
+      await book
+        .entry("Test 1")
+        .credit("Assets:Receivable", 1, { clientId: "12345" })
+        .debit("Income:Rent", 1, { clientId: "12345" })
+        .commit();
+
+      const balance1 = await book.balance({ account: "Assets:Receivable", clientId: { $in: ["12345", "67890"] } });
+      expect(balance1).to.deep.equal({ balance: 1, notes: 1 });
+
+      const snapshot = await getBestSnapshot({
+        book: book.name,
+        account: "Assets:Receivable",
+        meta: { clientId: { $in: ["12345", "67890"] } },
+      });
+      expect(snapshot).to.have.property("balance", 1);
+
+      // Let's make sure the snapshot is used when mongodb query language is present in the query
+      await balanceModel.collection.updateOne({ key: snapshot!.key }, { $set: { balance: 300 } });
+      const balance2 = await book.balance({ account: "Assets:Receivable", clientId: { $in: ["12345", "67890"] } });
+      expect(balance2).to.deep.equal({ balance: 300, notes: 1 });
     });
   });
 });
