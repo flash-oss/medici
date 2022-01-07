@@ -10,6 +10,11 @@ export function parseDateField(value: unknown): Date | undefined {
   } else if (typeof value === "string") {
     return new Date(value);
   }
+
+  // Using JS type auto conversion. This code can lose milliseconds. By design.
+  // Consider throwing exception in the next breaking release.
+  const parsed = Date.parse(value as string);
+  if (parsed) return new Date(parsed);
 }
 
 export type IDateFilter = {

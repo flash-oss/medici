@@ -1,13 +1,14 @@
 /* eslint sonarjs/no-duplicate-string: off, @typescript-eslint/no-non-null-assertion: off, no-prototype-builtins: off*/
-import { Book } from "../src";
+import { Book, JournalNotFoundError } from "../src";
 import { Document, Types } from "mongoose";
 import { IJournal } from "../src/models/journal";
 import { expect } from "chai";
 import { spy } from "sinon";
 import { transactionModel } from "../src/models/transaction";
-import { JournalNotFoundError } from "../src";
 import { balanceModel } from "../src/models/balance";
 import delay from "./helper/delay";
+import * as moment from "moment";
+import { DateTime } from "luxon";
 
 describe("book", function () {
   describe("constructor", () => {
@@ -89,7 +90,7 @@ describe("book", function () {
       expect(accounts).to.include("CashAssets");
     });
 
-    it("should let you create a basic transaction", async function () {
+    it("should let you create and query a basic transaction", async function () {
       const book = new Book("MyBook-basic-transaction");
       const journal = await book
         .entry("Test Entry")
@@ -108,6 +109,20 @@ describe("book", function () {
       expect(journal1.book).to.be.equal("MyBook-basic-transaction");
       expect(journal1.memo).to.be.equal("Test Entry 2");
       expect(journal._transactions).to.be.have.lengthOf(2);
+
+      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const entries1 = await book.ledger({ accounts: "Assets:Receivable", start_date: moment(twoDaysAgo) });
+      expect(entries1.total).to.equal(1);
+      expect(entries1.results[0]).to.have.property("debit", 500);
+
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const entries2 = await book.ledger({ accounts: "Assets:Receivable", start_date: DateTime.fromJSDate(oneDayAgo) });
+      expect(entries2.total).to.equal(1);
+      expect(entries1.results[0]).to.have.property("debit", 500);
     });
 
     it("should let you use strings for amounts", async function () {

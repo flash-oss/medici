@@ -20,7 +20,6 @@ export interface IPaginationQuery {
   page?: number;
 }
 
-
 /**
  * Turn query into an object readable by MongoDB.
  */
