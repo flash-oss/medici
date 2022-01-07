@@ -144,6 +144,17 @@ describe("book", function () {
       expect(result.balance).to.be.equal(500);
     });
 
+    it("should allow meta querying using mongodb query language", async function () {
+      const book = new Book("MyBookAmountStrings-mongodb-query-language");
+      await book
+        .entry("Test Entry")
+        .debit("Assets:Receivable", 123, { clientId: "12345" })
+        .credit("Income:Rent", 123)
+        .commit();
+      const result = await book.balance({ account: "Assets:Receivable", clientId: { $in: ["12345", "67890"] } });
+      expect(result.balance).to.be.equal(-123);
+    });
+
     it("should let you use string for original journal", async function () {
       const book = new Book("MyBookAmountStrings");
       const journal = await book

@@ -4,13 +4,14 @@ import { isPrototypeAttribute } from "../isPrototypeAttribute";
 import { parseAccountField } from "./parseAccountField";
 import { parseDateQuery } from "./parseDateField";
 import type { IFilter } from "./IFilter";
+import { IAnyObject } from "../../IAnyObject";
 
 export type IBalanceQuery = {
   account?: string | string[];
   start_date?: Date | string | number;
   end_date?: Date | string | number;
 } & {
-  [key: string]: string[] | number | string | Date | boolean | Types.ObjectId;
+  [key: string]: string[] | number | string | Date | boolean | Types.ObjectId | IAnyObject;
 };
 
 /**

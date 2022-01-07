@@ -49,12 +49,12 @@ export function setBalanceSchema(schema: Schema, collection?: string) {
 
 export function constructKey(book: string, account?: string, meta?: IAnyObject): string {
   // Example of a simple key: "My book;Liabilities:12345"
-  // Example of a complex key: "My book;Liabilities:Client,Liabilities:Client Pending;client.id:12345,approved:true"
+  // Example of a complex key: "My book;Liabilities:Client,Liabilities:Client Pending;clientId.$in.0:12345,clientId.$in.1:67890"
 
   return [
     book,
     account,
-    Object.entries(flattenObject(meta))
+    Object.entries(flattenObject(meta, "", true))
       .map(([key, value]) => key + ":" + value)
       .join(),
   ]
