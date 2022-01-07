@@ -86,7 +86,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
       $group: {
         _id: null,
         balance: { $sum: { $subtract: ["$credit", "$debit"] } },
-        count: { $sum: 1 },
+        notes: { $sum: 1 },
         lastTransactionId: { $last: "$_id" },
         lastTimestamp: { $last: "$timestamp" },
       },
@@ -98,11 +98,12 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
 
     if (balanceSnapshot) {
       balance += balanceSnapshot.balance;
+      notes += balanceSnapshot.notes;
     }
 
     if (result) {
       balance += parseFloat(result.balance.toFixed(this.precision));
-      notes = result.count;
+      notes += result.notes;
       if (needToDoBalanceSnapshot && result.lastTransactionId) {
         await snapshotBalance(
           {
@@ -112,6 +113,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
             transaction: result.lastTransactionId,
             timestamp: result.lastTimestamp,
             balance,
+            notes,
             expireInSec: this.balanceSnapshotSec * 2, // Keep the document twice longer than needed in case this particular balance() query is not executed very often.
           } as IBalance & { expireInSec: number },
           options

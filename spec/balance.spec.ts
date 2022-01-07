@@ -10,10 +10,28 @@ describe("balance model", function () {
 
       await book.entry("Test 1").credit("Assets:Receivable", 1).debit("Income:Rent", 1).commit();
 
-      await book.balance({ account: "Assets:Receivable" });
+      const balance1 = await book.balance({ account: "Assets:Receivable" });
+      expect(balance1).to.deep.equal({ balance: 1, notes: 1 });
 
       const snapshot = await getBestSnapshot({ book: book.name, account: "Assets:Receivable" });
       expect(snapshot).to.have.property("balance", 1);
+    });
+
+    it("should return proper number of notes", async function () {
+      const book = new Book("MyBook-balance-notes");
+
+      await book.entry("Test 1").credit("Assets:Receivable", 1).debit("Income:Rent", 1).commit();
+
+      const balance1 = await book.balance({ account: "Assets:Receivable" });
+      expect(balance1).to.deep.equal({ balance: 1, notes: 1 });
+
+      const balance2 = await book.balance({ account: "Assets:Receivable" });
+      expect(balance2).to.deep.equal({ balance: 1, notes: 1 });
+
+      await book.entry("Test 1").credit("Assets:Receivable", 1).debit("Income:Rent", 1).commit();
+
+      const balance3 = await book.balance({ account: "Assets:Receivable" });
+      expect(balance3).to.deep.equal({ balance: 2, notes: 2 });
     });
 
     it("should not confuse snapshots", async function () {
