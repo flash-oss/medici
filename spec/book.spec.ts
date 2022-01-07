@@ -104,11 +104,16 @@ describe("book", function () {
       const journal1 = await book
         .entry("Test Entry 2", threeDaysAgo)
         .debit("Assets:Receivable", 700)
-        .credit("Income:Rent", 700)
+        .credit("Income:Rent", 700, { clientId: "12345", bookmarked: true })
         .commit();
       expect(journal1.book).to.be.equal("MyBook-basic-transaction");
       expect(journal1.memo).to.be.equal("Test Entry 2");
       expect(journal._transactions).to.be.have.lengthOf(2);
+
+      const entries0 = await book.ledger({ clientId: "12345" });
+      expect(entries0.total).to.equal(2);
+      expect(entries0.results[0]).to.have.property("debit", 500);
+      expect(entries0.results[1]).to.have.property("credit", 700);
 
       const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment

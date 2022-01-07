@@ -5,6 +5,8 @@ import { isPrototypeAttribute } from "../isPrototypeAttribute";
 import { parseAccountField } from "./parseAccountField";
 import { parseDateQuery } from "./parseDateField";
 import type { IFilter } from "./IFilter";
+import { flattenObject } from "../flattenObject";
+import { IAnyObject } from "../../IAnyObject";
 
 export type IFilterQuery = {
   account?: string | string[];
@@ -38,6 +40,7 @@ export function parseFilterQuery(
     filterQuery["datetime"] = parseDateQuery(start_date, end_date);
   }
 
+  const meta: IAnyObject = {};
   for (const [key, value] of Object.entries(extra)) {
     if (isPrototypeAttribute(key)) continue;
 
@@ -49,10 +52,9 @@ export function parseFilterQuery(
     if (isValidTransactionKey(key)) {
       filterQuery[key] = newValue;
     } else {
-      if (!filterQuery.meta) filterQuery.meta = {};
-      filterQuery.meta[key] = newValue;
+      meta[key] = newValue;
     }
   }
 
-  return filterQuery;
+  return { ...filterQuery, ...flattenObject(meta, "meta") };
 }

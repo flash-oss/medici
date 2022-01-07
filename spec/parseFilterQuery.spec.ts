@@ -72,7 +72,11 @@ describe("parseFilterQuery", () => {
     bookmarked = false;
     const _someOtherDatabaseId = "619af485cd56547936847584";
     const result2 = parseFilterQuery({ _someOtherDatabaseId, bookmarked }, { name: "MyBook" });
-    expect(result2).to.deep.equal({ book: "MyBook", meta: { _someOtherDatabaseId, bookmarked } });
+    expect(result2).to.deep.equal({
+      book: "MyBook",
+      "meta._someOtherDatabaseId": "619af485cd56547936847584",
+      "meta.bookmarked": false,
+    });
   });
 
   it("should handle account with one path part correctly", () => {
