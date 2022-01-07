@@ -1,9 +1,11 @@
 import { Schema, model, Model, connection, Types, FilterQuery } from "mongoose";
 import type { IAnyObject } from "../IAnyObject";
 import type { IOptions } from "../IOptions";
+import { flattenObject } from "../helper/flattenObject";
 
 export interface IBalance {
   _id: Types.ObjectId;
+  key: string;
   book: string;
   account?: string;
   transaction: Types.ObjectId;
@@ -16,6 +18,7 @@ export interface IBalance {
 
 const balanceSchema = new Schema<IBalance>(
   {
+    key: String,
     book: String,
     account: String,
     transaction: Types.ObjectId,
@@ -28,7 +31,7 @@ const balanceSchema = new Schema<IBalance>(
   { id: false, versionKey: false, timestamps: false }
 );
 
-balanceSchema.index({ account: 1, book: 1 });
+balanceSchema.index({ key: 1 });
 
 balanceSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
 
@@ -40,13 +43,31 @@ export function setBalanceSchema(schema: Schema, collection?: string) {
   balanceModel = model("Medici_Balance", schema, collection);
 }
 
-(!connection.models["Medici_Balance"]) && setBalanceSchema(balanceSchema);
+!connection.models["Medici_Balance"] && setBalanceSchema(balanceSchema);
+
+export function constructKey(book: string, account?: string, meta?: IAnyObject): string {
+  // Example of a simple key: "My book;Liabilities:12345"
+  // Example of a complex key: "My book;Liabilities:Client,Liabilities:Client Pending;client.id:12345,approved:true"
+
+  return [
+    book,
+    account,
+    Object.entries(flattenObject(meta))
+      .map(([key, value]) => key + ":" + value)
+      .join(),
+  ]
+    .filter(Boolean)
+    .join(";");
+}
 
 export async function snapshotBalance(
   balanceData: IBalance & { expireInSec: number },
-  options: IOptions
+  options: IOptions = {}
 ): Promise<boolean> {
+  const key = constructKey(balanceData.book, balanceData.account, balanceData.meta);
+
   const balanceDoc = {
+    key,
     book: balanceData.book,
     account: balanceData.account,
     meta: balanceData.meta,
@@ -64,13 +85,10 @@ export async function snapshotBalance(
   return result.acknowledged;
 }
 
-export function getBestSnapshot(query: FilterQuery<IBalance>, options: IOptions): Promise<IBalance | null> {
+export function getBestSnapshot(query: FilterQuery<IBalance>, options: IOptions = {}): Promise<IBalance | null> {
+  const key = constructKey(query.book, query.account, query.meta);
   return balanceModel.collection.findOne(
-    {
-      book: query.book,
-      account: query.account,
-      meta: query.meta,
-    },
+    { key },
     { sort: { _id: -1 }, session: options.session }
   ) as Promise<IBalance | null>;
 }

@@ -1,21 +1,22 @@
+import { Types } from "mongoose";
 import {
   JournalAlreadyVoidedError,
   MediciError,
   ConsistencyError,
   JournalNotFoundError,
-  BookConstructorError
+  BookConstructorError,
 } from "./errors";
-import { Entry } from "./Entry";
+import { handleVoidMemo } from "./helper/handleVoidMemo";
+import { addReversedTransactions } from "./helper/addReversedTransactions";
+import { flattenObject } from "./helper/flattenObject";
 import { IPaginationQuery, IFilterQuery, parseFilterQuery } from "./helper/parse/parseFilterQuery";
 import { IBalanceQuery, parseBalanceQuery } from "./helper/parse/parseBalanceQuery";
+import { Entry } from "./Entry";
 import { IJournal, journalModel } from "./models/journal";
 import { ITransaction, transactionModel } from "./models/transaction";
 import type { IOptions } from "./IOptions";
-import { Types } from "mongoose";
 import { lockModel } from "./models/lock";
 import { getBestSnapshot, IBalance, snapshotBalance } from "./models/balance";
-import { handleVoidMemo } from "./helper/handleVoidMemo";
-import { addReversedTransactions } from "./helper/addReversedTransactions";
 
 export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJournal> {
   name: string;
@@ -55,6 +56,8 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
 
   async balance(query: IBalanceQuery, options = {} as IOptions): Promise<{ balance: number; notes: number }> {
     const parsedQuery = parseBalanceQuery(query, this);
+    const meta = parsedQuery.meta;
+    delete parsedQuery.meta;
 
     let balanceSnapshot: IBalance | null = null;
     let accountForBalanceSnapshot: string | undefined;
@@ -65,7 +68,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
         {
           book: parsedQuery.book,
           account: accountForBalanceSnapshot,
-          meta: parsedQuery.meta,
+          meta,
         },
         options
       );
@@ -76,7 +79,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     }
 
     const match = {
-      $match: parsedQuery,
+      $match: { ...parsedQuery, ...flattenObject(meta, "meta") },
     };
 
     const group = {
@@ -105,7 +108,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
           {
             book: this.name,
             account: accountForBalanceSnapshot,
-            meta: parsedQuery.meta,
+            meta,
             transaction: result.lastTransactionId,
             timestamp: result.lastTimestamp,
             balance,

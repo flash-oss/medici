@@ -1,11 +1,11 @@
 /* eslint sonarjs/no-duplicate-string: off, @typescript-eslint/no-non-null-assertion: off, no-prototype-builtins: off*/
-import { Book } from "../src/Book";
+import { Book } from "../src";
 import { Document, Types } from "mongoose";
 import { IJournal } from "../src/models/journal";
 import { expect } from "chai";
 import { spy } from "sinon";
 import { transactionModel } from "../src/models/transaction";
-import { JournalNotFoundError } from "../src/errors/JournalNotFoundError";
+import { JournalNotFoundError } from "../src";
 import { balanceModel } from "../src/models/balance";
 import delay from "./helper/delay";
 
@@ -225,12 +225,12 @@ describe("book", function () {
     async function addBalance(book: Book) {
       await book
         .entry("Test Entry")
-        .debit("Assets:Receivable", 700, { clientId: "67890" })
+        .debit("Assets:Receivable", 700, { clientId: "67890", otherProp: 1 })
         .credit("Income:Rent", 700)
         .commit();
       await book
         .entry("Test Entry")
-        .debit("Assets:Receivable", 500, { clientId: "12345" })
+        .debit("Assets:Receivable", 500, { clientId: "12345", otherProp: 1 })
         .credit("Income:Rent", 500)
         .commit();
     }
@@ -241,6 +241,16 @@ describe("book", function () {
 
       const data = await book.balance({ account: "Assets" });
       expect(data.balance).to.be.equal(-1200);
+    });
+
+    it("should give you the balance with partial meta queries", async () => {
+      const book = new Book("MyBook-balance with meta");
+      await addBalance(book);
+
+      const data1 = await book.balance({ account: "Assets:Receivable", clientId: "67890" });
+      expect(data1.balance).to.be.equal(-700);
+      const data2 = await book.balance({ account: "Assets:Receivable", clientId: "12345" });
+      expect(data2.balance).to.be.equal(-500);
     });
 
     it("should give you the balance without providing the account", async () => {

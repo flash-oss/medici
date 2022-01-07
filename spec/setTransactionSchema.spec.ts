@@ -1,11 +1,10 @@
 /* eslint sonarjs/no-duplicate-string: off */
 import { expect } from "chai";
 import { Schema, Types } from "mongoose";
-import { Book } from "../src/Book";
+import { Book, syncIndexes } from "../src";
 import { IAnyObject } from "../src/IAnyObject";
 import { IJournal } from "../src/models/journal";
 import { setTransactionSchema, transactionModel, transactionSchema } from "../src/models/transaction";
-import { syncIndexes } from "../src/helper/syncIndexes";
 
 export interface ITransactionNew {
   _id: Types.ObjectId;

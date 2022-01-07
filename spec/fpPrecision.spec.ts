@@ -1,6 +1,6 @@
 /* eslint sonarjs/no-duplicate-string: off, no-prototype-builtins: off*/
 import { expect } from "chai";
-import { Book } from "../src/Book";
+import { Book } from "../src";
 
 describe("fpPrecision", function () {
   describe("fpPrecision - default: fp-Mode 8", () => {
