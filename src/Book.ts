@@ -1,3 +1,10 @@
+import {
+  JournalAlreadyVoidedError,
+  MediciError,
+  ConsistencyError,
+  JournalNotFoundError,
+  BookConstructorError
+} from "./errors";
 import { Entry } from "./Entry";
 import { IPaginationQuery, IFilterQuery, parseFilterQuery } from "./helper/parse/parseFilterQuery";
 import { IBalanceQuery, parseBalanceQuery } from "./helper/parse/parseBalanceQuery";
@@ -5,14 +12,10 @@ import { IJournal, journalModel } from "./models/journal";
 import { ITransaction, transactionModel } from "./models/transaction";
 import type { IOptions } from "./IOptions";
 import { Types } from "mongoose";
-import { JournalNotFoundError } from "./errors/JournalNotFoundError";
-import { BookConstructorError } from "./errors/BookConstructorError";
 import { lockModel } from "./models/lock";
 import { getBestSnapshot, IBalance, snapshotBalance } from "./models/balance";
-import { JournalAlreadyVoidedError, MediciError } from ".";
 import { handleVoidMemo } from "./helper/handleVoidMemo";
 import { addReversedTransactions } from "./helper/addReversedTransactions";
-import { ConsistencyError } from "./errors/ConsistencyError";
 
 export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJournal> {
   name: string;

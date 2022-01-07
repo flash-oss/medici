@@ -1,6 +1,6 @@
 import { Schema, model, Model, connection, Types, FilterQuery } from "mongoose";
-import { IAnyObject } from "../IAnyObject";
-import { IOptions } from "../IOptions";
+import type { IAnyObject } from "../IAnyObject";
+import type { IOptions } from "../IOptions";
 
 export interface IBalance {
   _id: Types.ObjectId;
