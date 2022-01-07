@@ -1,7 +1,6 @@
 import { connection, Schema, model, Model, Types } from "mongoose";
 import { extractObjectIdKeysFromSchema } from "../helper/extractObjectIdKeysFromSchema";
 import type { IAnyObject } from "../IAnyObject";
-import type { IJournal } from "./journal";
 
 export interface ITransaction {
   _id?: Types.ObjectId;
@@ -13,11 +12,11 @@ export interface ITransaction {
   accounts: string;
   book: string;
   memo: string;
-  _journal: Types.ObjectId | IJournal;
+  _journal: Types.ObjectId;
   timestamp: Date;
   voided?: boolean;
   void_reason?: string;
-  _original_journal?: Types.ObjectId | IJournal;
+  _original_journal?: Types.ObjectId;
 }
 
 export const transactionSchema = new Schema<ITransaction>(
