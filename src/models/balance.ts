@@ -72,7 +72,7 @@ export async function snapshotBalance(
     key,
     book: balanceData.book,
     account: balanceData.account,
-    meta: flattenObject(balanceData.meta, "", true),
+    meta: JSON.stringify(balanceData.meta),
     transaction: balanceData.transaction,
     timestamp: balanceData.timestamp,
     balance: balanceData.balance,

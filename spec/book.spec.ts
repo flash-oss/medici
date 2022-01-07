@@ -327,10 +327,14 @@ describe("book", function () {
 
       await book.balance({ account: "Assets", clientId: "12345" });
 
-      const snapshots = await balanceModel.find({ account: "Assets", book: book.name, meta: { clientId: "12345" } });
+      const snapshots = await balanceModel.find({
+        account: "Assets",
+        book: book.name,
+        meta: JSON.stringify({ clientId: "12345" }),
+      });
       expect(snapshots).to.have.length(1);
       expect(snapshots[0].balance).to.equal(-500);
-      expect(snapshots[0].meta.clientId).to.equal("12345");
+      expect(snapshots[0].meta).to.equal('{"clientId":"12345"}');
 
       snapshots[0].balance = 999;
       await snapshots[0].save();
@@ -347,10 +351,14 @@ describe("book", function () {
       await book.balance({ account: "Assets", clientId: "12345" });
       await book.balance({ account: "Assets", clientId: "12345" });
 
-      const snapshots = await balanceModel.find({ account: "Assets", book: book.name, meta: { clientId: "12345" } });
+      const snapshots = await balanceModel.find({
+        account: "Assets",
+        book: book.name,
+        meta: JSON.stringify({ clientId: "12345" }),
+      });
       expect(snapshots).to.have.length(1);
       expect(snapshots[0].balance).to.equal(-500);
-      expect(snapshots[0].meta.clientId).to.equal("12345");
+      expect(snapshots[0].meta).to.equal('{"clientId":"12345"}');
     });
 
     it("should create periodic balance snapshot document", async () => {
