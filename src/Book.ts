@@ -87,8 +87,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
         _id: null,
         balance: { $sum: { $subtract: ["$credit", "$debit"] } },
         notes: { $sum: 1 },
-        lastTransactionId: { $last: "$_id" },
-        lastTimestamp: { $last: "$timestamp" },
+        lastTransactionId: { $max: "$_id" },
       },
     };
     const result = (await transactionModel.collection.aggregate([match, group], options).toArray())[0];
@@ -111,7 +110,6 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
             account: accountForBalanceSnapshot,
             meta,
             transaction: result.lastTransactionId,
-            timestamp: result.lastTimestamp,
             balance,
             notes,
             expireInSec: this.balanceSnapshotSec * 2, // Keep the document twice longer than needed in case this particular balance() query is not executed very often.

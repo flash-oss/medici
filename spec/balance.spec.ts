@@ -2,6 +2,7 @@
 import { expect } from "chai";
 import { Book } from "../src";
 import { balanceModel, getBestSnapshot } from "../src/models/balance";
+import { transactionModel } from "../src/models/transaction";
 
 describe("balance model", function () {
   describe("getBestSnapshot", () => {
@@ -117,6 +118,32 @@ describe("balance model", function () {
       await balanceModel.collection.updateOne({ key: snapshot!.key }, { $set: { balance: 300 } });
       const balance2 = await book.balance({ account: "Assets:Receivable", clientId: { $in: ["12345", "67890"] } });
       expect(balance2).to.deep.equal({ balance: 300, notes: 1 });
+    });
+
+    it("should ignore the order of doc insertion", async function () {
+      const book = new Book("MyBook-id-order");
+
+      const journal = await book.entry("Test 1").debit("Income:Rent", 1).credit("Assets:Receivable", 1).commit();
+      const t1 = await transactionModel.findOne({ _journal: journal }).sort("-_id").exec(); // last transaction
+
+      await book.entry("Test 2").debit("Income:Rent", 1).credit("Assets:Receivable", 1).commit();
+
+      const balance1 = await book.balance({ account: "Assets:Receivable" });
+      expect(balance1).to.deep.equal({ balance: 2, notes: 2 });
+      // To simulate medici v4 behaviour we need to clean up the `balances` collection.
+      await balanceModel.collection.deleteMany({ book: "MyBook-id-order" });
+
+      // We need to change the order of transactions in the database.
+      // The first inserted doc must have the largest _id for this unit test.
+      // Copying it the first transaction to the end and remove it.
+      const t1Object = t1!.toObject();
+      await t1!.remove(); // we have to remove BEFORE creating the clone because otherwise MongoDB sees the stale (removed) doc!!!
+      delete t1Object.id;
+      delete t1Object._id;
+      await transactionModel.create(t1Object);
+
+      const balance2 = await book.balance({ account: "Assets:Receivable" });
+      expect(balance2).to.deep.equal({ balance: 2, notes: 2 });
     });
   });
 });

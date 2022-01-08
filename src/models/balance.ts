@@ -10,7 +10,6 @@ export interface IBalance {
   account?: string;
   transaction: Types.ObjectId;
   meta: IAnyObject;
-  timestamp: Date;
   balance: number;
   notes: number;
   createdAt: Date;
@@ -24,7 +23,6 @@ const balanceSchema = new Schema<IBalance>(
     account: String,
     transaction: Types.ObjectId,
     meta: Schema.Types.Mixed,
-    timestamp: Date,
     balance: Number,
     notes: Number,
     createdAt: Date,
@@ -74,7 +72,6 @@ export async function snapshotBalance(
     account: balanceData.account,
     meta: JSON.stringify(balanceData.meta),
     transaction: balanceData.transaction,
-    timestamp: balanceData.timestamp,
     balance: balanceData.balance,
     notes: balanceData.notes,
     createdAt: new Date(),
