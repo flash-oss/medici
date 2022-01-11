@@ -87,13 +87,11 @@ To retrieve transactions, use the `book.ledger()` method (here I'm using moment.
 const startDate = moment().subtract("months", 1).toDate(); // One month ago
 const endDate = new Date(); // today
 
-const { results, total } = await myBook.ledger(
-  {
-    account: "Income",
-    start_date: startDate,
-    end_date: endDate,
-  },
-);
+const { results, total } = await myBook.ledger({
+  account: "Income",
+  start_date: startDate,
+  end_date: endDate,
+});
 ```
 
 ## Voiding Journal Entries
@@ -254,7 +252,41 @@ await syncIndexes({ background: false });
 
 ## Performance
 
-Medici v2 was slow when number of records reach 30k. Starting from v3.0 the [following](https://github.com/flash-oss/medici/commit/274528ef5d1dae0beedca4a98dbf706808be53bd) indexes are auto generated on the `medici_transactions` collection:
+### Fast balance
+
+In medici v5 we introduced the so-called "fast balance" feature. [Here is the discussion](https://github.com/flash-oss/medici/issues/38). TL;DR: it caches `.balance()` call result once a day (customisable) to `medici_balances` collection.
+
+If a database has millions of records then calculating the balance on half of them would take like 5 seconds. When this result is cached it takes few milliseconds to calculate the balance after that.
+
+#### How it works under the hood
+
+There are two hard problems in programming: cache invalidation and naming things. (C) Phil Karlton
+
+Be default, when you call `book.blanace(...)` for the first time medici will cache its result to `medici_balances` (aka balance snapshot). By default, every doc there will be auto-removed as they have TTL of 48 hours. Meaning this cache will definitely expire in 2 days. Although, medici will try doing a second balance snapshot every 24 hours (default value). Thus, at any point of time there will be present from zero to two snapshots per balance query.
+
+When you would call the `book.balance(...)` with the same exact arguments the medici will:
+
+- retrieve the most recent snapshot if present,
+- sum up only transactions inserted after the snapshot, and
+- add the snapshot's balance to the sum.
+
+In a rare case you wanted to remove some ledger entries from `medici_transactions` you would also need to remove all the `medici_balances` docs. Otherwise, the `.balance()` would be returning inaccurate data for up to 24 hours.
+
+**IMPORTANT!**
+
+To make this feature consistent we had to switch from client-generated IDs to MongoDB server generated IDs. See [forceServerObjectId](https://mongodb.github.io/node-mongodb-native/api-generated/mongoclient.html#constructor).
+
+#### How to disable balance caching feature
+
+When creating a book you need to pass the `balanceSnapshotSec: 0` option.
+
+```js
+const myBook = new Book("MyBook", { balanceSnapshotSec: 0 })
+```
+
+### Indexes
+
+Medici <=v2 was slow when number of records reach 30k. Starting from v3.0 the [following](https://github.com/flash-oss/medici/commit/274528ef5d1dae0beedca4a98dbf706808be53bd) indexes are auto generated on the `medici_transactions` collection:
 
 ```
     "_journal": 1
@@ -376,13 +408,29 @@ High level overview.
 
 - The project was rewritten with **TypeScript**. Types are provided within the package now.
 - Added support for MongoDB sessions (aka **ACID** transactions). See `IOptions` type.
-- Did number of consistency, stability, server disk space, and speed improvements.
-- Mongoose v5 and v6 are supported now.
+- Did number of consistency, stability, server disk space, and speed improvements. Balance querying on massive databases with millions of documents are going to be much-much faster now. Like 10 to 1000 times faster.
+- Mongoose v5 and v6 are both supported now.
+
+Major breaking changes:
+
+- The "approved" feature was removed.
+- Mongoose middlewares on medici models are not supported anymore.
+- The `.balance()` method does not support pagination anymore.
+- Rename constructor `book` -> `Book`.
+- Plus some other potentially breaking changes. See below.
+
+Step by step migration from v4 to v5.
+
+- Adapt your code to all the breaking changes.
+- On the app start medici (actually mongoose) will create all the new indexes. If you have any custom indexes containing the `approved` proprty, you'd ned to re-create those
+- You'd need to manually remove all the indexes which contain `approved` property in it.
+- Done.
 
 Technical changes of the release.
 
 - Added a `mongoTransaction`-method, which is a convenience shortcut for `mongoose.connection.transaction`.
 - Added async helper method `initModels`, which initializes the underlying `transactionModel` and `journalModel`. Use this after you connected to the MongoDB-Server if you want to use transactions. Or else you could get `Unable to read from a snapshot due to pending collection catalog changes; please retry the operation.` error when acquiring a session because the actual database-collection is still being created by the underlying mongoose-instance.
+- Added `syncIndexes`. Warning! This function will erase any custom (non-builtin) indexes you might have added.
 - Added `setJournalSchema` and `setTransactionSchema` to use custom Schemas. It will ensure, that all relevant middlewares and methods are also added when using custom Schemas. Use `syncIndexes`-method from medici after setTransactionSchema to enforce the defined indexes on the models.
 - Added `maxAccountPath`. You can set the maximum amount of account paths via the second parameter of Book. This can improve the performance of `.balance()` and `.ledger()` calls as it will then use the accounts attribute of the transactions as a filter.
 - MongoDB v4 and above is supported. You can still try using MongoDB v3, but it's not recommended.
@@ -401,8 +449,7 @@ Technical changes of the release.
 - **POTENTIALLY BREAKING**: Added prototype-pollution protection when creating entries. Reserved words like `__proto__` can not be used as properties of a Transaction or a Journal or their meta-Field. They will get silently filtered out.
 - **POTENTIALLY BREAKING**: When calling `book.void()` the provided `journal_id` has to belong to the `book`. If the journal does not exist within the book, medici will throw a `JournalNotFoundError`. In medici < 5 you could theoretically void a `journal` of another `book`.
 - **POTENTIALLY BREAKING**: Transaction document properties `meta`, `voided`, `void_reason`, `_original_journal` won't be stored to the database when have no data. In medici v4 they were `{}`, `false`, `null`, `null` correspondingly.
-- **BREAKING**: Transactions are now committed/voided using native `insertMany`/`updateMany` instead of mongoose `.save()` method. If you had any "pre save" middlewares on the `medici_transactions` they won't be working anymore.
-- **BREAKING**: If you had any other Mongoose middlewares installed onto medici `transactionModel` or `journalModel` then they won't work anymore. Medici v5 is not using the mongoose to do DB operations. Instead, we execute commands via bare `mongodb` driver.
+- **BREAKING**: If you had any Mongoose middlewares (e.g. `"pre save"`) installed onto medici `transactionModel` or `journalModel` then they won't work anymore. Medici v5 is not using the mongoose to do DB operations. Instead, we execute commands via bare `mongodb` driver.
 - **BREAKING**: `.balance()` does not support pagination anymore. To get the balance of a page sum up the values of credit and debit of a paginated `.ledger()`-call.
 - **BREAKING**: You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
 - **BREAKING**: The approving functionality (`approved` and `setApproved()`) was removed. It's complicating code, bloating the DB, not used by anyone maintainers know. Please, implement approvals outside the ledger. If you still need it to be part of the ledger then you're out of luck and would have to (re)implement it yourself. Sorry about that.
