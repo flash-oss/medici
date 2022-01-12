@@ -437,6 +437,7 @@ All changes of the release.
 - Added a new `timestamp+datetime` index on the transactionModel to improve the performance of paginated ledger queries.
 - Added a `lockModel` to make it possible to call `.balance()` and **get a reliable result while using a mongo-session**. Call `.writelockAccounts()` with first parameter being an Array of Accounts, which you want to lock. E.g. `book.writelockAccounts(["Assets:User:User1"], { session })`. For best performance call writelockAccounts as the last operation in the transaction. Also `.commit()` accepts the option `writelockAccounts`, where you can provide an array of accounts or a RegExp. It is recommended to use the `book.writelockAccounts()`.
 - **POTENTIALLY BREAKING**: Node.js 12 is the lowest supported version. Although, 10 should still work fine.
+- **POTENTIALLY BREAKING**: MongoDB v4.0 is the lowest supported version. The v3.6 support was dropped. 
 - **POTENTIALLY BREAKING**: `.ledger()` returns lean Transaction-Objects (POJO) for better performance. To retrieve hydrated mongoose models set `lean` to `false` in the third parameter of `.ledger()`. It is recommended to not hydrate the transactions, as it implies that the transactions could be manipulated and the data integrity of Medici could be risked.
 - **POTENTIALLY BREAKING**: Rounding precision was changed from 7 to 8 floating point digits.
   - The new default precision is 8 digits. The medici v4 had it 7 by default. Be careful if you are using values which have more than 8 digits after the comma.
