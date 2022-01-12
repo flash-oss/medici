@@ -63,7 +63,7 @@
     "dts-bundle-generator": "^6.2.0",
     "eslint": "^8.4.1",
     "eslint-plugin-import": "^2.25.3",
-    "eslint-plugin-promise": "^5.2.0",
+    "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-security": "^1.4.0",
     "eslint-plugin-security-node": "^1.0.14",
     "eslint-plugin-sonarjs": "^0.11.0",
