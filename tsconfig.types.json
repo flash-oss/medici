@@ -1,0 +1,25 @@
+{
+	"display": "Typings",
+	"compilerOptions": {
+		"sourceMap": true,
+		"noImplicitAny": false,
+		"declaration": true,
+		"module": "commonjs",
+		"target": "es2021",
+		"emitDeclarationOnly": true,
+		"moduleResolution": "node",
+		"rootDir": "src",
+		"experimentalDecorators": true,
+		"resolveJsonModule": false,
+		// Explicitly set types settings so typescript doesn't auto-discover types.
+		// If all types are discovered then all types need to be included as deps
+		// or typescript may error out with TS2688: Cannot find type definition file for 'foo'.
+		"types": [
+			"node"
+		],
+		"skipLibCheck": true
+	},
+	"include": [
+		"src"
+	]
+}

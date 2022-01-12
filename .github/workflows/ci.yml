@@ -2,28 +2,29 @@ name: CI
 on: [push, pull_request]
 jobs:
   test:
-    name: Test with Node.js v${{ matrix.node }} and ${{ matrix.os }}
+    name: Node ${{ matrix.node }}, Mongo ${{ matrix.mongodb-version }}, on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
-        node: ['10', '12', '14']
-        mongodb-version: [3.6, 4.0, 4.2]
+        node: ['12', '14', '16']
+        mongodb-version: [4.0, 4.2, 4.4, 5.0]
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
 
       - name: Setup Node.js v${{ matrix.node }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node }}
 
       - name: Start MongoDB v${{ matrix.mongodb-version }}
-        uses: supercharge/mongodb-github-action@1.2.0
+        uses: supercharge/mongodb-github-action@1.7.0
         with:
           mongodb-version: ${{ matrix.mongodb-version }}
+          mongodb-replica-set: test-rs
 
-      - run: npm install
+      # ignoring scripts to not install mongodb-memory-server
+      - run: npm ci --ignore-scripts
+      - run: npm run ci
+      - run: npm run ci-mongoose5
 
-      - run: npm test
-        env:
-          CI: true

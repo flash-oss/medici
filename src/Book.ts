@@ -1,0 +1,283 @@
+import { Types } from "mongoose";
+import {
+  JournalAlreadyVoidedError,
+  MediciError,
+  ConsistencyError,
+  JournalNotFoundError,
+  BookConstructorError,
+} from "./errors";
+import { handleVoidMemo } from "./helper/handleVoidMemo";
+import { addReversedTransactions } from "./helper/addReversedTransactions";
+import { flattenObject } from "./helper/flattenObject";
+import { IPaginationQuery, IFilterQuery, parseFilterQuery } from "./helper/parse/parseFilterQuery";
+import { IBalanceQuery, parseBalanceQuery } from "./helper/parse/parseBalanceQuery";
+import { Entry } from "./Entry";
+import { IJournal, journalModel } from "./models/journal";
+import { ITransaction, transactionModel } from "./models/transaction";
+import type { IOptions } from "./IOptions";
+import { lockModel } from "./models/lock";
+import { getBestSnapshot, IBalance, snapshotBalance } from "./models/balance";
+
+export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJournal> {
+  name: string;
+  precision: number;
+  maxAccountPath: number;
+  balanceSnapshotSec: number;
+
+  constructor(
+    name: string,
+    options = {} as { precision?: number; maxAccountPath?: number; balanceSnapshotSec?: number }
+  ) {
+    this.name = name;
+    this.precision = options.precision != null ? options.precision : 8;
+    this.maxAccountPath = options.maxAccountPath != null ? options.maxAccountPath : 3;
+    this.balanceSnapshotSec = options.balanceSnapshotSec != null ? options.balanceSnapshotSec : 24 * 60 * 60;
+
+    if (typeof this.name !== "string" || this.name.trim().length === 0) {
+      throw new BookConstructorError("Invalid value for name provided.");
+    }
+
+    if (typeof this.precision !== "number" || !Number.isInteger(this.precision) || this.precision < 0) {
+      throw new BookConstructorError("Invalid value for precision provided.");
+    }
+
+    if (typeof this.maxAccountPath !== "number" || !Number.isInteger(this.maxAccountPath) || this.maxAccountPath < 0) {
+      throw new BookConstructorError("Invalid value for maxAccountPath provided.");
+    }
+
+    if (typeof this.balanceSnapshotSec !== "number" || this.balanceSnapshotSec < 0) {
+      throw new BookConstructorError("Invalid value for balanceSnapshotSec provided.");
+    }
+  }
+
+  entry(memo: string, date = null as Date | null, original_journal?: string | Types.ObjectId): Entry<U, J> {
+    return Entry.write<U, J>(this, memo, date, original_journal);
+  }
+
+  async balance(query: IBalanceQuery, options = {} as IOptions): Promise<{ balance: number; notes: number }> {
+    const parsedQuery = parseBalanceQuery(query, this);
+    const meta = parsedQuery.meta;
+    delete parsedQuery.meta;
+
+    let balanceSnapshot: IBalance | null = null;
+    let accountForBalanceSnapshot: string | undefined;
+    let needToDoBalanceSnapshot = true;
+    if (this.balanceSnapshotSec) {
+      accountForBalanceSnapshot = query.account ? [].concat(query.account as never).join() : undefined;
+      balanceSnapshot = await getBestSnapshot(
+        {
+          book: parsedQuery.book,
+          account: accountForBalanceSnapshot,
+          meta,
+        },
+        options
+      );
+      if (balanceSnapshot) {
+        parsedQuery._id = { $gt: balanceSnapshot.transaction };
+        needToDoBalanceSnapshot = Date.now() > balanceSnapshot.createdAt.getTime() + this.balanceSnapshotSec * 1000;
+      }
+    }
+
+    const match = {
+      $match: { ...parsedQuery, ...flattenObject(meta, "meta") },
+    };
+
+    const group = {
+      $group: {
+        _id: null,
+        balance: { $sum: { $subtract: ["$credit", "$debit"] } },
+        notes: { $sum: 1 },
+        lastTransactionId: { $max: "$_id" },
+      },
+    };
+    const result = (await transactionModel.collection.aggregate([match, group], options).toArray())[0];
+
+    let balance = 0;
+    let notes = 0;
+
+    if (balanceSnapshot) {
+      balance += balanceSnapshot.balance;
+      notes += balanceSnapshot.notes;
+    }
+
+    if (result) {
+      balance += parseFloat(result.balance.toFixed(this.precision));
+      notes += result.notes;
+      if (needToDoBalanceSnapshot && result.lastTransactionId) {
+        await snapshotBalance(
+          {
+            book: this.name,
+            account: accountForBalanceSnapshot,
+            meta,
+            transaction: result.lastTransactionId,
+            balance,
+            notes,
+            expireInSec: this.balanceSnapshotSec * 2, // Keep the document twice longer than needed in case this particular balance() query is not executed very often.
+          } as IBalance & { expireInSec: number },
+          options
+        );
+      }
+    }
+
+    return { balance, notes };
+  }
+
+  async ledger<T = U>(
+    query: IFilterQuery & IPaginationQuery,
+    options = {} as IOptions
+  ): Promise<{ results: T[]; total: number }> {
+    // Pagination
+    const { perPage, page, ...restOfQuery } = query;
+    const paginationOptions: { skip?: number; limit?: number } = {};
+    if (typeof perPage === "number" && Number.isSafeInteger(perPage)) {
+      paginationOptions.skip = (Number.isSafeInteger(page) ? (page as number) - 1 : 0) * perPage;
+      paginationOptions.limit = perPage;
+    }
+
+    const filterQuery = parseFilterQuery(restOfQuery, this);
+    const findPromise = transactionModel.collection
+      .find<T>(filterQuery, {
+        ...paginationOptions,
+
+        sort: {
+          datetime: -1,
+          timestamp: -1,
+        },
+        session: options.session,
+      })
+      .toArray();
+
+    let countPromise = Promise.resolve(0);
+    if (paginationOptions.limit) {
+      countPromise = transactionModel.collection.countDocuments(filterQuery, { session: options.session });
+    }
+
+    const results = await findPromise;
+
+    return {
+      results,
+      total: (await countPromise) || results.length,
+    };
+  }
+
+  async void(journal_id: string | Types.ObjectId, reason?: undefined | string, options = {} as IOptions) {
+    journal_id = typeof journal_id === "string" ? new Types.ObjectId(journal_id) : journal_id;
+
+    const journal = await journalModel.collection.findOne(
+      {
+        _id: journal_id,
+        book: this.name,
+      },
+      {
+        session: options.session,
+        projection: {
+          _id: true,
+          _transactions: true,
+          memo: true,
+          void_reason: true,
+          voided: true,
+        },
+      }
+    );
+
+    if (journal === null) {
+      throw new JournalNotFoundError();
+    }
+
+    if (journal.voided) {
+      throw new JournalAlreadyVoidedError();
+    }
+
+    reason = handleVoidMemo(reason, journal.memo);
+
+    // Not using options.session here as this read operation is not necessary to be in the ACID session.
+    const transactions = await transactionModel.collection.find({ _journal: journal._id }).toArray();
+
+    if (transactions.length !== journal._transactions.length) {
+      throw new MediciError(`Transactions for journal ${journal._id} not found on book ${journal.book}`);
+    }
+
+    const entry = this.entry(reason, null, journal_id);
+
+    addReversedTransactions(entry, transactions as ITransaction[]);
+
+    // Set this journal to void with reason and also set all associated transactions
+    const resultOne = await journalModel.collection.updateOne(
+      { _id: journal._id },
+      { $set: { voided: true, void_reason: reason } },
+      {
+        session: options.session, // We must provide either session or writeConcern, but not both.
+        writeConcern: options.session ? undefined : { w: 1, j: true }, // Ensure at least ONE node wrote to JOURNAL (disk)
+      }
+    );
+
+    // This can happen if someone read a journal, then deleted it from DB, then tried voiding. Full stop.
+    if (resultOne.matchedCount === 0)
+      throw new ConsistencyError(`Failed to void ${journal.memo} ${journal._id} journal on book ${journal.book}`);
+    // Someone else voided! Is it two simultaneous voidings? Let's stop our void action altogether.
+    if (resultOne.modifiedCount === 0)
+      throw new ConsistencyError(`Already voided ${journal.memo} ${journal._id} journal on book ${journal.book}`);
+
+    const resultMany = await transactionModel.collection.updateMany(
+      { _journal: journal._id },
+      { $set: { voided: true, void_reason: reason } },
+      {
+        session: options.session, // We must provide either session or writeConcern, but not both.
+        writeConcern: options.session ? undefined : { w: 1, j: true }, // Ensure at least ONE node wrote to JOURNAL (disk)
+      }
+    );
+
+    // At this stage we have to make sure the `commit()` is executed.
+    // Let's not make the DB even more inconsistent if something wild happens. Let's not throw, instead log to stderr.
+    if (resultMany.matchedCount !== transactions.length)
+      throw new ConsistencyError(
+        `Failed to void all ${journal.memo} ${journal._id} journal transactions on book ${journal.book}`
+      );
+    if (resultMany.modifiedCount === 0)
+      throw new ConsistencyError(
+        `Already voided ${journal.memo} ${journal._id} journal transactions on book ${journal.book}`
+      );
+
+    return entry.commit(options);
+  }
+
+  async writelockAccounts(accounts: string[], options: Required<Pick<IOptions, "session">>): Promise<Book<U, J>> {
+    accounts = Array.from(new Set(accounts));
+
+    // ISBN: 978-1-4842-6879-7. MongoDB Performance Tuning (2021), p. 217
+    // Reduce the Chance of Transient Transaction Errors by moving the
+    // contentious statement to the end of the transaction.
+    for (const account of accounts) {
+      await lockModel.collection.updateOne(
+        { account, book: this.name },
+        {
+          $set: { updatedAt: new Date() },
+          $setOnInsert: { book: this.name, account },
+          $inc: { __v: 1 },
+        },
+        { upsert: true, session: options.session }
+      );
+    }
+    return this;
+  }
+
+  async listAccounts(options = {} as IOptions): Promise<string[]> {
+    const results = await transactionModel.collection.distinct(
+      "accounts",
+      { book: this.name },
+      { session: options.session }
+    );
+    const uniqueAccounts: Set<string> = new Set();
+    for (const result of results) {
+      const prev = [];
+      const paths = result.split(":");
+      for (const acct of paths) {
+        prev.push(acct);
+        uniqueAccounts.add(prev.join(":"));
+      }
+    }
+    return Array.from(uniqueAccounts);
+  }
+}
+
+export default Book;

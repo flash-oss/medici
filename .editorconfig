@@ -5,7 +5,7 @@
 root = true
 
 
-[*.js]
+[{*.js,*.ts}]
 
 # Change these settings to your own preference
 indent_style = space
