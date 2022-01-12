@@ -422,11 +422,11 @@ Major breaking changes:
 Step by step migration from v4 to v5.
 
 - Adapt your code to all the breaking changes.
-- On the app start medici (actually mongoose) will create all the new indexes. If you have any custom indexes containing the `approved` proprty, you'd ned to re-create those
+- On the app start medici (actually mongoose) will create all the new indexes. If you have any custom indexes containing the `approved` property, you'd need to create similar indexes but without the property.
 - You'd need to manually remove all the indexes which contain `approved` property in it.
 - Done.
 
-Technical changes of the release.
+All changes of the release.
 
 - Added a `mongoTransaction`-method, which is a convenience shortcut for `mongoose.connection.transaction`.
 - Added async helper method `initModels`, which initializes the underlying `transactionModel` and `journalModel`. Use this after you connected to the MongoDB-Server if you want to use transactions. Or else you could get `Unable to read from a snapshot due to pending collection catalog changes; please retry the operation.` error when acquiring a session because the actual database-collection is still being created by the underlying mongoose-instance.
@@ -437,11 +437,11 @@ Technical changes of the release.
 - Added a new `timestamp+datetime` index on the transactionModel to improve the performance of paginated ledger queries.
 - Added a `lockModel` to make it possible to call `.balance()` and **get a reliable result while using a mongo-session**. Call `.writelockAccounts()` with first parameter being an Array of Accounts, which you want to lock. E.g. `book.writelockAccounts(["Assets:User:User1"], { session })`. For best performance call writelockAccounts as the last operation in the transaction. Also `.commit()` accepts the option `writelockAccounts`, where you can provide an array of accounts or a RegExp. It is recommended to use the `book.writelockAccounts()`.
 - **POTENTIALLY BREAKING**: Node.js 12 is the lowest supported version. Although, 10 should still work fine.
-- **POTENTIALLY BREAKING**: `.ledger()` returns lean Transaction-Objects for better performance. To retrieve hydrated mongoose models set `lean` to `false` in the third parameter of `.ledger()`. It is recommended to not hydrate the transactions, as it implies that the transactions could be manipulated and the data integrity of Medici could be risked.
+- **POTENTIALLY BREAKING**: `.ledger()` returns lean Transaction-Objects (POJO) for better performance. To retrieve hydrated mongoose models set `lean` to `false` in the third parameter of `.ledger()`. It is recommended to not hydrate the transactions, as it implies that the transactions could be manipulated and the data integrity of Medici could be risked.
 - **POTENTIALLY BREAKING**: Rounding precision was changed from 7 to 8 floating point digits.
   - The new default precision is 8 digits. The medici v4 had it 7 by default. Be careful if you are using values which have more than 8 digits after the comma.
   - You can now specify the `precision` in the `Book` constructor as an optional second parameter `precision`. Simulating medici v4 behaviour: `new Book("MyBook", { precision: 7 })`.
-  - Also, you can enforce an "only-Integer"-mode, by setting the precision to 0. But keep in mind that Javascript has a max safe integer limit of 9007199254740991.
+  - Also, you can enforce an "only-Integer" mode, by setting the precision to 0. But keep in mind that Javascript has a max safe integer limit of 9007199254740991.
 - **POTENTIALLY BREAKING**: Added validation for `name` of Book, `maxAccountPath` and `precision`.
   - The `name` has to be not an empty string or a string containing only whitespace characters.
   - `precision` has to be an integer bigger or equal 0.
