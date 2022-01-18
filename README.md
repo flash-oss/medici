@@ -402,6 +402,17 @@ For `medici_transactions` collection with 50000 documents:
 
 ## Changelog
 
+### v5.1.0
+
+The balance snapshots were never recalculated from the beginning of the ledger. They were always based on the most recent snapshot. It gave us speed. Although, if one of the snapshots gets corrupt or an early ledger entry gets manually edited/deleted then we would always get wrong number from the `.balance()` method. Thus, we have to calculate snapshots from the beginning of the ledger at least once in a while.
+
+BUT! If you have millions of documents in `medici_transactions` collection a full balance recalculation might take up to 10 seconds. So, we can't afford aggregation of the entire database during the `.blance()` invocation. Solution: let's aggregate it **in the background**. Thus, v5.1 was born.
+
+New feature:
+- In addition to the existing `balanceSnapshotSec` option, we added `expireBalanceSnapshotSec`.
+  - The `balanceSnapshotSec` tells medici how often you want those snapshots to be made **in the background** (right after the `.balance()` call). Default value - 24 hours.
+  - The `expireBalanceSnapshotSec` tells medici when to evict those snapshots from the database (TTL). It is recommended to set `expireBalanceSnapshotSec` higher than `balanceSnapshotSec`. Default value - twice the `balanceSnapshotSec`.
+
 ### v5.0.0
 
 High level overview.
