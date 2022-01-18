@@ -18,20 +18,37 @@ import type { IOptions } from "./IOptions";
 import { lockModel } from "./models/lock";
 import { getBestSnapshot, IBalance, snapshotBalance } from "./models/balance";
 
+const GROUP = {
+  $group: {
+    _id: null,
+    balance: { $sum: { $subtract: ["$credit", "$debit"] } },
+    notes: { $sum: 1 },
+    lastTransactionId: { $max: "$_id" },
+  },
+};
+
 export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJournal> {
   name: string;
   precision: number;
   maxAccountPath: number;
   balanceSnapshotSec: number;
+  expireBalanceSnapshotSec: number;
 
   constructor(
     name: string,
-    options = {} as { precision?: number; maxAccountPath?: number; balanceSnapshotSec?: number }
+    options = {} as {
+      precision?: number;
+      maxAccountPath?: number;
+      balanceSnapshotSec?: number;
+      expireBalanceSnapshotSec?: number;
+    }
   ) {
     this.name = name;
     this.precision = options.precision != null ? options.precision : 8;
     this.maxAccountPath = options.maxAccountPath != null ? options.maxAccountPath : 3;
     this.balanceSnapshotSec = options.balanceSnapshotSec != null ? options.balanceSnapshotSec : 24 * 60 * 60;
+    this.expireBalanceSnapshotSec =
+      options.expireBalanceSnapshotSec != null ? options.expireBalanceSnapshotSec : 2 * this.balanceSnapshotSec;
 
     if (typeof this.name !== "string" || this.name.trim().length === 0) {
       throw new BookConstructorError("Invalid value for name provided.");
@@ -48,6 +65,10 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     if (typeof this.balanceSnapshotSec !== "number" || this.balanceSnapshotSec < 0) {
       throw new BookConstructorError("Invalid value for balanceSnapshotSec provided.");
     }
+
+    if (typeof this.expireBalanceSnapshotSec !== "number" || this.expireBalanceSnapshotSec < 0) {
+      throw new BookConstructorError("Invalid value for expireBalanceSnapshotSec provided.");
+    }
   }
 
   entry(memo: string, date = null as Date | null, original_journal?: string | Types.ObjectId): Entry<U, J> {
@@ -61,7 +82,6 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
 
     let balanceSnapshot: IBalance | null = null;
     let accountForBalanceSnapshot: string | undefined;
-    let needToDoBalanceSnapshot = true;
     if (this.balanceSnapshotSec) {
       accountForBalanceSnapshot = query.account ? [].concat(query.account as never).join() : undefined;
       balanceSnapshot = await getBestSnapshot(
@@ -73,8 +93,8 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
         options
       );
       if (balanceSnapshot) {
+        // Use cached balance
         parsedQuery._id = { $gt: balanceSnapshot.transaction };
-        needToDoBalanceSnapshot = Date.now() > balanceSnapshot.createdAt.getTime() + this.balanceSnapshotSec * 1000;
       }
     }
 
@@ -82,15 +102,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
       $match: { ...parsedQuery, ...flattenObject(meta, "meta") },
     };
 
-    const group = {
-      $group: {
-        _id: null,
-        balance: { $sum: { $subtract: ["$credit", "$debit"] } },
-        notes: { $sum: 1 },
-        lastTransactionId: { $max: "$_id" },
-      },
-    };
-    const result = (await transactionModel.collection.aggregate([match, group], options).toArray())[0];
+    const result = (await transactionModel.collection.aggregate([match, GROUP], options).toArray())[0];
 
     let balance = 0;
     let notes = 0;
@@ -103,19 +115,64 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     if (result) {
       balance += parseFloat(result.balance.toFixed(this.precision));
       notes += result.notes;
-      if (needToDoBalanceSnapshot && result.lastTransactionId) {
-        await snapshotBalance(
-          {
-            book: this.name,
-            account: accountForBalanceSnapshot,
-            meta,
-            transaction: result.lastTransactionId,
-            balance,
-            notes,
-            expireInSec: this.balanceSnapshotSec * 2, // Keep the document twice longer than needed in case this particular balance() query is not executed very often.
-          } as IBalance & { expireInSec: number },
-          options
-        );
+
+      // We can do snapshots only if there is at least one entry for this balance
+      if (this.balanceSnapshotSec && result.lastTransactionId) {
+        // It's the first (ever?) snapshot for this balance. We just need to save whatever we've just aggregated
+        // so that the very next balance query would use cached snapshot.
+        if (!balanceSnapshot) {
+          await snapshotBalance(
+            {
+              book: this.name,
+              account: accountForBalanceSnapshot,
+              meta,
+              transaction: result.lastTransactionId,
+              balance,
+              notes,
+              expireInSec: this.expireBalanceSnapshotSec,
+            } as IBalance & { expireInSec: number },
+            options
+          );
+        } else {
+          // There is a snapshot already. But let's check if it's too old.
+          const tooOld = Date.now() > balanceSnapshot.createdAt.getTime() + this.balanceSnapshotSec * 1000;
+          // If it's too old we would need to cache another snapshot.
+          if (tooOld) {
+            delete parsedQuery._id;
+            const match = {
+              $match: { ...parsedQuery, ...flattenObject(meta, "meta") },
+            };
+
+            // Important! We are going to recalculate the entire balance from the day one.
+            // Since this operation can take seconds (if you have millions of documents)
+            // we better run this query IN THE BACKGROUND.
+            // If this exact balance query would be executed multiple times at the same second we might end up with
+            // multiple snapshots in the database. Which is fine. The chance of this happening is low.
+            // Our main goal here is not to delay this .balance() method call. The tradeoff is that
+            // database will use 100% CPU for few (milli)seconds, which is fine. It's all fine (C)
+            transactionModel.collection
+              .aggregate([match, GROUP], options)
+              .toArray()
+              .then((results) => {
+                const resultFull = results[0];
+                return snapshotBalance(
+                  {
+                    book: this.name,
+                    account: accountForBalanceSnapshot,
+                    meta,
+                    transaction: resultFull.lastTransactionId,
+                    balance: parseFloat(resultFull.balance.toFixed(this.precision)),
+                    notes: resultFull.notes,
+                    expireInSec: this.expireBalanceSnapshotSec,
+                  } as IBalance & { expireInSec: number },
+                  options
+                );
+              })
+              .catch((error) => {
+                console.error("medici: Couldn't do background balance snapshot.", error);
+              });
+          }
+        }
       }
     }
 

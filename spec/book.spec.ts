@@ -53,6 +53,17 @@ describe("book", function () {
         "Invalid value for balanceSnapshotSec provided."
       );
     });
+    it("should throw an error when expireBalanceSnapshotSec of book is not a number", () => {
+      // @ts-expect-error we need a number
+      expect(() => new Book("MyBook", { expireBalanceSnapshotSec: "999" })).to.throw(
+        "Invalid value for expireBalanceSnapshotSec provided."
+      );
+    });
+    it("should throw an error when expireBalanceSnapshotSec of book is a negative number", () => {
+      expect(() => new Book("MyBook", { expireBalanceSnapshotSec: -3 })).to.throw(
+        "Invalid value for expireBalanceSnapshotSec provided."
+      );
+    });
   });
 
   describe("journaling", () => {
@@ -375,6 +386,7 @@ describe("book", function () {
       await delay(howOften + 1); // wait long enough to create a second periodic snapshot
       await addBalance(book);
       await book.balance({ account: "Assets" });
+      await delay(10); // wait until the full balance snapshot is recalculated in the background
       // Should be two snapshots now.
       snapshots = await balanceModel.find({ account: "Assets", book: book.name });
       expect(snapshots.length).to.equal(2);
