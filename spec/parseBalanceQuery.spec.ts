@@ -1,7 +1,9 @@
 /* eslint sonarjs/no-duplicate-string: off, @typescript-eslint/no-non-null-assertion: off */
 import { expect } from "chai";
 import { Types } from "mongoose";
+import * as sinon from "sinon";
 import { parseBalanceQuery } from "../src/helper/parse/parseBalanceQuery";
+import * as Transaction from "../src/models/transaction";
 
 describe("parseBalanceQuery", () => {
   it("should handle empty object and book name correctly", () => {
@@ -15,6 +17,7 @@ describe("parseBalanceQuery", () => {
     const result = parseBalanceQuery({ _journal }, { name: "MyBook" });
     expect(result).to.deep.equal({
       book: "MyBook",
+      _journal: new Types.ObjectId(_journal),
       meta: { _journal },
     });
   });
@@ -24,6 +27,7 @@ describe("parseBalanceQuery", () => {
     const result = parseBalanceQuery({ _journal }, { name: "MyBook" });
     expect(result).to.deep.equal({
       book: "MyBook",
+      _journal: new Types.ObjectId(_journal),
       meta: { _journal: new Types.ObjectId(_journal) },
     });
   });
@@ -66,12 +70,35 @@ describe("parseBalanceQuery", () => {
     const clientId = "619af485cd56547936847584";
     let bookmarked = true;
     const result1 = parseBalanceQuery({ clientId, bookmarked }, { name: "MyBook" });
-    expect(result1).to.deep.equal({ book: "MyBook", meta: { clientId, bookmarked } });
+    expect(result1).to.deep.equal({
+      book: "MyBook",
+      "meta.clientId": clientId,
+      "meta.bookmarked": bookmarked,
+      meta: { clientId, bookmarked },
+    });
+
+    sinon.stub(Transaction, "isValidTransactionKey").callsFake((value: unknown) => value === "clientId");
+
+    const result2 = parseBalanceQuery({ clientId, bookmarked }, { name: "MyBook" });
+    expect(result2).to.deep.equal({
+      book: "MyBook",
+      clientId,
+      "meta.bookmarked": bookmarked,
+      meta: { clientId, bookmarked },
+    });
+
+    sinon.restore();
 
     bookmarked = false;
     const _someOtherDatabaseId = "619af485cd56547936847584";
-    const result2 = parseBalanceQuery({ _someOtherDatabaseId, bookmarked }, { name: "MyBook" });
-    expect(result2).to.deep.equal({ book: "MyBook", meta: { _someOtherDatabaseId, bookmarked } });
+    const result3 = parseBalanceQuery({ clientId, _someOtherDatabaseId, bookmarked }, { name: "MyBook" });
+    expect(result3).to.deep.equal({
+      book: "MyBook",
+      "meta.clientId": clientId,
+      "meta.bookmarked": bookmarked,
+      "meta._someOtherDatabaseId": _someOtherDatabaseId,
+      meta: { clientId, bookmarked, _someOtherDatabaseId },
+    });
   });
 
   it("should handle account with one path part correctly", () => {
