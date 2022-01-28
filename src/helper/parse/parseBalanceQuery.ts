@@ -5,6 +5,8 @@ import { parseAccountField } from "./parseAccountField";
 import { parseDateQuery } from "./parseDateField";
 import type { IFilter } from "./IFilter";
 import { IAnyObject } from "../../IAnyObject";
+import { isTransactionObjectIdKey, isValidTransactionKey } from "../../models/transaction";
+import { flattenObject } from "../flattenObject";
 
 export type IBalanceQuery = {
   account?: string | string[];
@@ -32,11 +34,23 @@ export function parseBalanceQuery(
     filterQuery["datetime"] = parseDateQuery(start_date, end_date);
   }
 
+  const meta: IAnyObject = {};
   for (const [key, value] of Object.entries(extra)) {
     if (isPrototypeAttribute(key)) continue;
     if (!filterQuery.meta) filterQuery.meta = {};
     filterQuery.meta[key] = value;
+
+    let newValue = value;
+    if (typeof value === "string" && isTransactionObjectIdKey(key)) {
+      newValue = new Types.ObjectId(value);
+    }
+
+    if (isValidTransactionKey(key)) {
+      filterQuery[key] = newValue;
+    } else {
+      meta[key] = newValue;
+    }
   }
 
-  return filterQuery;
+  return { ...filterQuery, ...flattenObject(meta, "meta") };
 }
