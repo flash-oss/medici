@@ -1,0 +1,16 @@
+name: "Check code"
+on:
+  pull_request:
+    branches: [ master ]
+jobs:
+  check-code:
+    name: Check Code
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+    - run: npm install
+    - name: Run prettier
+      run: npm run prettier
+    - name: Run lint
+      run: npm run lint

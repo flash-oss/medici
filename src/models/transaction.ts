@@ -96,4 +96,4 @@ export function setTransactionSchema(schema: Schema, collection?: string, option
   transactionSchemaObjectIdKeys = extractObjectIdKeysFromSchema(schema);
 }
 
-(!connection.models["Medici_Transaction"]) && setTransactionSchema(transactionSchema);
+!connection.models["Medici_Transaction"] && setTransactionSchema(transactionSchema);

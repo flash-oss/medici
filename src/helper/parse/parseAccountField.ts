@@ -1,9 +1,6 @@
 import type { IFilter } from "./IFilter";
 
-export function parseAccountField(
-  account: string | string[] | undefined,
-  maxAccountPath = 3
-): IFilter {
+export function parseAccountField(account: string | string[] | undefined, maxAccountPath = 3): IFilter {
   const filterQuery: IFilter = {};
 
   if (typeof account === "string") {
