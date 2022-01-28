@@ -112,10 +112,11 @@ describe("balance model", function () {
         account: "Assets:Receivable",
         meta: { clientId: { $in: ["12345", "67890"] } },
       });
+      expect(snapshot).to.exist;
       expect(snapshot).to.have.property("balance", 1);
 
       // Let's make sure the snapshot is used when mongodb query language is present in the query
-      await balanceModel.collection.updateOne({ key: snapshot!.key }, { $set: { balance: 300 } });
+      await balanceModel.collection.updateOne({ key: snapshot.key }, { $set: { balance: 300 } });
       const balance2 = await book.balance({ account: "Assets:Receivable", clientId: { $in: ["12345", "67890"] } });
       expect(balance2).to.deep.equal({ balance: 300, notes: 1 });
     });
@@ -125,6 +126,7 @@ describe("balance model", function () {
 
       const journal = await book.entry("Test 1").debit("Income:Rent", 1).credit("Assets:Receivable", 1).commit();
       const t1 = await transactionModel.findOne({ _journal: journal }).sort("-_id").exec(); // last transaction
+      expect(t1).to.exist;
 
       await book.entry("Test 2").debit("Income:Rent", 1).credit("Assets:Receivable", 1).commit();
 
@@ -136,8 +138,8 @@ describe("balance model", function () {
       // We need to change the order of transactions in the database.
       // The first inserted doc must have the largest _id for this unit test.
       // Copying it the first transaction to the end and remove it.
-      const t1Object = t1!.toObject();
-      await t1!.remove(); // we have to remove BEFORE creating the clone because otherwise MongoDB sees the stale (removed) doc!!!
+      const t1Object = t1.toObject();
+      await t1.remove(); // we have to remove BEFORE creating the clone because otherwise MongoDB sees the stale (removed) doc!!!
       delete t1Object.id;
       delete t1Object._id;
       await transactionModel.create(t1Object);
