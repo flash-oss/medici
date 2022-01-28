@@ -1,8 +1,5 @@
 import { Types } from "mongoose";
-import {
-  TransactionError,
-  InvalidAccountPathLengthError,
-} from "./errors";
+import { TransactionError, InvalidAccountPathLengthError } from "./errors";
 import type { Book } from "./Book";
 import { isValidTransactionKey, ITransaction, transactionModel } from "./models/transaction";
 import { IJournal, journalModel, TJournalDocument } from "./models/journal";
@@ -126,12 +123,7 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
     }
 
     try {
-      await Promise.all(
-        this.transactions
-          .map(tx =>
-            new transactionModel(tx).validate()
-          )
-      );
+      await Promise.all(this.transactions.map((tx) => new transactionModel(tx).validate()));
       await this.journal.validate();
 
       const result = await transactionModel.collection.insertMany(this.transactions, {
@@ -165,8 +157,8 @@ export class Entry<U extends ITransaction = ITransaction, J extends IJournal = I
         const writelockAccounts =
           options.writelockAccounts instanceof RegExp
             ? this.transactions
-              .filter((tx) => (options.writelockAccounts as RegExp).test(tx.accounts))
-              .map((tx) => tx.accounts)
+                .filter((tx) => (options.writelockAccounts as RegExp).test(tx.accounts))
+                .map((tx) => tx.accounts)
             : options.writelockAccounts;
 
         await this.book.writelockAccounts(writelockAccounts, {
