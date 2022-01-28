@@ -13,6 +13,7 @@
     "build:node": "tsc -p .",
     "build:types": "dts-bundle-generator -o ./types/index.d.ts ./src/index.ts --project ./tsconfig.types.json --no-check",
     "clean": "rimraf ./build && rimraf ./types",
+    "prettier": "prettier '**/*.ts' --check",
     "prettier:fix": "prettier '**/*.ts' --write",
     "lint": "eslint ./spec ./src",
     "lint:fix": "eslint --fix ./spec ./src",
