@@ -225,8 +225,11 @@ describe("balance model", function () {
       expect(res.results[0].meta).to.have.property("otherMeta");
       expect(res.results[0].meta).to.not.have.property("clientId");
 
-      const snapshot = await getBestSnapshot({ book: book.name, account, clientId, otherMeta });
-      expect(snapshot).to.have.property("balance", 1);
+      const snapshot1 = await getBestSnapshot({ book: book.name, account, clientId, meta: { otherMeta } });
+      expect(snapshot1).to.have.property("balance", 1);
+
+      const snapshot2 = await getBestSnapshot({ book: book.name, account, clientId, otherMeta });
+      expect(snapshot2).to.have.property("balance", 1);
     });
   });
 });
