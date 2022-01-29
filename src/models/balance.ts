@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { Schema, model, Model, connection, Types, FilterQuery } from "mongoose";
 import type { IAnyObject } from "../IAnyObject";
 import type { IOptions } from "../IOptions";
@@ -49,7 +50,7 @@ export function constructKey(book: string, account?: string, meta?: IAnyObject):
   // Example of a simple key: "My book;Liabilities:12345"
   // Example of a complex key: "My book;Liabilities:Client,Liabilities:Client Pending;clientId.$in.0:12345,clientId.$in.1:67890"
 
-  return [
+  const key = [
     book,
     account,
     Object.entries(flattenObject(meta, "", true))
@@ -59,6 +60,8 @@ export function constructKey(book: string, account?: string, meta?: IAnyObject):
   ]
     .filter(Boolean)
     .join(";");
+
+  return createHash("sha1").update(key).digest().toString("latin1");
 }
 
 export async function snapshotBalance(
