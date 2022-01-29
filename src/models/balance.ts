@@ -53,6 +53,7 @@ export function constructKey(book: string, account?: string, meta?: IAnyObject):
     book,
     account,
     Object.entries(flattenObject(meta, "", true))
+      .sort()
       .map(([key, value]) => key + ":" + value)
       .join(),
   ]
