@@ -94,7 +94,8 @@ export async function snapshotBalance(
 }
 
 export function getBestSnapshot(query: FilterQuery<IBalance>, options: IOptions = {}): Promise<IBalance | null> {
-  const key = constructKey(query.book, query.account, query.meta);
+  const { book, account, meta, ...extras } = query;
+  const key = constructKey(book, account, { ...meta, ...extras });
   return balanceModel.collection.findOne(
     { key },
     { sort: { _id: -1 }, session: options.session }

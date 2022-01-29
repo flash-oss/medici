@@ -1,8 +1,9 @@
 /* eslint sonarjs/no-duplicate-string: off, no-prototype-builtins: off*/
 import { expect } from "chai";
-import { Book } from "../src";
+import { Book, syncIndexes } from "../src";
 import { balanceModel, getBestSnapshot } from "../src/models/balance";
-import { transactionModel } from "../src/models/transaction";
+import { setTransactionSchema, transactionModel, transactionSchema } from "../src/models/transaction";
+import { getTransactionSchemaTest, ITransactionTest } from "./helper/transactionSchema";
 
 describe("balance model", function () {
   describe("getBestSnapshot", () => {
@@ -146,6 +147,86 @@ describe("balance model", function () {
 
       const balance2 = await book.balance({ account: "Assets:Receivable" });
       expect(balance2).to.deep.equal({ balance: 2, notes: 2 });
+    });
+  });
+
+  describe("getBestSnapshot with custom schema", () => {
+    let book: Book<ITransactionTest>;
+
+    before(async function () {
+      const transactionSchemaTest = getTransactionSchemaTest();
+
+      setTransactionSchema(transactionSchemaTest, undefined, {
+        defaultIndexes: false,
+      });
+
+      book = new Book<ITransactionTest>("MyBook-balance-custom-attrs-1");
+      const meta = { clientId: "12345" };
+      await book
+        .entry("Test 1")
+        .credit("Assets:Receivable", 1)
+        .debit("Income:Rent", 1)
+        .credit("Assets:Receivable", 1, meta)
+        .debit("Income:Rent", 1, meta)
+        .credit("Assets:Receivable", 1, { ...meta, otherMeta: 1 })
+        .debit("Income:Rent", 1, { ...meta, otherMeta: 1 })
+        .commit();
+    });
+
+    after(async function () {
+      setTransactionSchema(transactionSchema);
+      await syncIndexes({ background: false });
+    });
+
+    it("should find snapshot by account", async function () {
+      const account = "Assets:Receivable";
+      const balance = await book.balance({ account });
+      expect(balance).to.deep.equal({ balance: 3, notes: 3 });
+
+      const res = await book.ledger({ account });
+      expect(res.results).to.have.lengthOf(3);
+      expect(res.results[2]).to.have.property("clientId");
+      expect(res.results[2]).to.not.have.property("otherMeta");
+      expect(res.results[2].meta).to.have.property("otherMeta");
+      expect(res.results[2].meta).to.not.have.property("clientId");
+
+      const snapshot = await getBestSnapshot({ book: book.name, account });
+      expect(snapshot).to.have.property("balance", 3);
+    });
+
+    it("should find snapshot with custom attribute", async function () {
+      const account = "Assets:Receivable";
+      const clientId = "12345";
+      const balance = await book.balance({ account, clientId });
+      expect(balance).to.deep.equal({ balance: 2, notes: 2 });
+
+      const res = await book.ledger({ account, clientId });
+      expect(res.results).to.have.lengthOf(2);
+      expect(res.results[1]).to.have.property("clientId");
+      expect(res.results[1]).to.not.have.property("otherMeta");
+      expect(res.results[1].meta).to.have.property("otherMeta");
+      expect(res.results[1].meta).to.not.have.property("clientId");
+
+      const snapshot = await getBestSnapshot({ book: book.name, account, clientId });
+      expect(snapshot).to.have.property("balance", 2);
+    });
+
+    it("should find snapshot with custom attribute and meta", async function () {
+      const account = "Assets:Receivable";
+      const clientId = "12345";
+      const otherMeta = 1;
+      const balance = await book.balance({ account, clientId, otherMeta });
+      expect(balance).to.deep.equal({ balance: 1, notes: 1 });
+
+      const res = await book.ledger({ account, clientId, otherMeta });
+      expect(res.results).to.have.lengthOf(1);
+      expect(res.results[0]).to.have.property("clientId");
+      expect(res.results[0]).to.not.have.property("otherMeta");
+      expect(res.results[0].meta).to.have.property("otherMeta");
+      expect(res.results[0].meta).to.not.have.property("clientId");
+
+      const snapshot = await getBestSnapshot({ book: book.name, account, clientId, otherMeta });
+      expect(snapshot).to.have.property("balance", 1);
     });
   });
 });
