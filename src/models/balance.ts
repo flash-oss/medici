@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { Schema, model, Model, connection, Types, FilterQuery } from "mongoose";
 import type { IAnyObject } from "../IAnyObject";
 import type { IOptions } from "../IOptions";
@@ -45,19 +46,26 @@ export function setBalanceSchema(schema: Schema, collection?: string) {
 
 !connection.models["Medici_Balance"] && setBalanceSchema(balanceSchema);
 
+export function hashKey(key: string) {
+  return createHash("sha1").update(key).digest().toString("latin1");
+}
+
 export function constructKey(book: string, account?: string, meta?: IAnyObject): string {
   // Example of a simple key: "My book;Liabilities:12345"
   // Example of a complex key: "My book;Liabilities:Client,Liabilities:Client Pending;clientId.$in.0:12345,clientId.$in.1:67890"
 
-  return [
+  const key = [
     book,
     account,
     Object.entries(flattenObject(meta, "", true))
+      .sort()
       .map(([key, value]) => key + ":" + value)
       .join(),
   ]
     .filter(Boolean)
     .join(";");
+
+  return hashKey(key);
 }
 
 export async function snapshotBalance(
