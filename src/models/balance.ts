@@ -46,6 +46,10 @@ export function setBalanceSchema(schema: Schema, collection?: string) {
 
 !connection.models["Medici_Balance"] && setBalanceSchema(balanceSchema);
 
+export function hashKey(key: string) {
+  return createHash("sha1").update(key).digest().toString("latin1");
+}
+
 export function constructKey(book: string, account?: string, meta?: IAnyObject): string {
   // Example of a simple key: "My book;Liabilities:12345"
   // Example of a complex key: "My book;Liabilities:Client,Liabilities:Client Pending;clientId.$in.0:12345,clientId.$in.1:67890"
@@ -61,7 +65,7 @@ export function constructKey(book: string, account?: string, meta?: IAnyObject):
     .filter(Boolean)
     .join(";");
 
-  return createHash("sha1").update(key).digest().toString("latin1");
+  return hashKey(key);
 }
 
 export async function snapshotBalance(
