@@ -49,8 +49,11 @@ export let transactionModel: Model<ITransaction>;
 
 let transactionSchemaKeys: Set<string> = new Set(Object.keys(transactionSchema.paths));
 
-export function isValidTransactionKey<T extends ITransaction = ITransaction>(value: unknown): value is keyof T {
-  return typeof value === "string" && transactionSchemaKeys.has(value);
+export function isValidTransactionKey<T extends ITransaction = ITransaction>(
+  value: unknown,
+  schemaKeys: Set<string> = transactionSchemaKeys
+): value is keyof T {
+  return typeof value === "string" && schemaKeys.has(value);
 }
 
 let transactionSchemaObjectIdKeys: Set<string> = extractObjectIdKeysFromSchema(transactionSchema);
