@@ -62,7 +62,9 @@ export function isTransactionObjectIdKey(value: unknown): boolean {
 export function setTransactionSchema(schema: Schema, collection?: string, options = {} as { defaultIndexes: boolean }) {
   const { defaultIndexes = true } = options;
 
-  delete connection.models["Medici_Transaction"];
+  if (connection.models["Medici_Transaction"]) {
+    connection.deleteModel("Medici_Transaction");
+  }
 
   if (defaultIndexes) {
     schema.index({ _journal: 1 });
@@ -90,7 +92,7 @@ export function setTransactionSchema(schema: Schema, collection?: string, option
     });
   }
 
-  transactionModel = model("Medici_Transaction", schema, collection);
+  transactionModel = model("Medici_Transaction", schema, collection) as Model<ITransaction>;
 
   transactionSchemaKeys = new Set(Object.keys(schema.paths));
   transactionSchemaObjectIdKeys = extractObjectIdKeysFromSchema(schema);

@@ -37,7 +37,9 @@ type TJournalModel<T extends IJournal = IJournal> = Model<T>;
 export let journalModel: TJournalModel;
 
 export function setJournalSchema(schema: Schema, collection?: string) {
-  delete connection.models["Medici_Journal"];
+  if (connection.models["Medici_Journal"]) {
+    connection.deleteModel("Medici_Journal");
+  }
 
   journalModel = model("Medici_Journal", schema, collection) as TJournalModel;
 }

@@ -39,9 +39,11 @@ balanceSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
 export let balanceModel: Model<IBalance>;
 
 export function setBalanceSchema(schema: Schema, collection?: string) {
-  delete connection.models["Medici_Balance"];
+  if (connection.models["Medici_Balance"]) {
+    connection.deleteModel("Medici_Balance");
+  }
 
-  balanceModel = model("Medici_Balance", schema, collection);
+  balanceModel = model("Medici_Balance", schema, collection) as Model<IBalance>;
 }
 
 !connection.models["Medici_Balance"] && setBalanceSchema(balanceSchema);

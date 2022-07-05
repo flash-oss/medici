@@ -34,9 +34,11 @@ lockSchema.index(
 export let lockModel: Model<ILock>;
 
 export function setLockSchema(schema: Schema, collection?: string) {
-  delete connection.models["Medici_Lock"];
+  if (connection.models["Medici_Lock"]) {
+    connection.deleteModel("Medici_Lock");
+  }
 
-  lockModel = model("Medici_Lock", schema, collection);
+  lockModel = model("Medici_Lock", schema, collection) as Model<ILock>;
 }
 
 !connection.models["Medici_Lock"] && setLockSchema(lockSchema);
