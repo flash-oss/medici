@@ -8,7 +8,6 @@ import {
 } from "./errors";
 import { handleVoidMemo } from "./helper/handleVoidMemo";
 import { addReversedTransactions } from "./helper/addReversedTransactions";
-import { flattenObject } from "./helper/flattenObject";
 import { IPaginationQuery, IFilterQuery, parseFilterQuery } from "./helper/parse/parseFilterQuery";
 import { IBalanceQuery, parseBalanceQuery } from "./helper/parse/parseBalanceQuery";
 import { Entry } from "./Entry";
@@ -98,9 +97,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
       }
     }
 
-    const match = {
-      $match: { ...parsedQuery, ...flattenObject(meta, "meta") },
-    };
+    const match = { $match: parsedQuery };
 
     const result = (await transactionModel.collection.aggregate([match, GROUP], options).toArray())[0];
 
@@ -139,9 +136,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
           // If it's too old we would need to cache another snapshot.
           if (tooOld) {
             delete parsedQuery._id;
-            const match = {
-              $match: { ...parsedQuery, ...flattenObject(meta, "meta") },
-            };
+            const match = { $match: parsedQuery };
 
             // Important! We are going to recalculate the entire balance from the day one.
             // Since this operation can take seconds (if you have millions of documents)
@@ -326,8 +321,8 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     );
     const uniqueAccounts: Set<string> = new Set();
     for (const result of results) {
-      const prev = [];
-      const paths = result.split(":");
+      const prev: string[] = [];
+      const paths: string[] = result.split(":");
       for (const acct of paths) {
         prev.push(acct);
         uniqueAccounts.add(prev.join(":"));

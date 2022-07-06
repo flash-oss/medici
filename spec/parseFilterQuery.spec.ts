@@ -67,7 +67,12 @@ describe("parseFilterQuery", () => {
     const clientId = "619af485cd56547936847584";
     let bookmarked = true;
     const result1 = parseBalanceQuery({ clientId, bookmarked }, { name: "MyBook" });
-    expect(result1).to.deep.equal({ book: "MyBook", meta: { clientId, bookmarked } });
+    expect(result1).to.deep.equal({
+      book: "MyBook",
+      "meta.bookmarked": bookmarked,
+      "meta.clientId": clientId,
+      meta: { clientId, bookmarked },
+    });
 
     bookmarked = false;
     const _someOtherDatabaseId = "619af485cd56547936847584";
