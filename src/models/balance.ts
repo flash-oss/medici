@@ -7,6 +7,7 @@ import { flattenObject } from "../helper/flattenObject";
 export interface IBalance {
   _id: Types.ObjectId;
   key: string;
+  rawKey: string;
   book: string;
   account?: string;
   transaction: Types.ObjectId;
@@ -20,6 +21,7 @@ export interface IBalance {
 const balanceSchema = new Schema<IBalance>(
   {
     key: String,
+    rawKey: String,
     book: String,
     account: String,
     transaction: Types.ObjectId,
@@ -56,7 +58,7 @@ export function constructKey(book: string, account?: string, meta?: IAnyObject):
   // Example of a simple key: "My book;Liabilities:12345"
   // Example of a complex key: "My book;Liabilities:Client,Liabilities:Client Pending;clientId.$in.0:12345,clientId.$in.1:67890"
 
-  const key = [
+  return [
     book,
     account,
     Object.entries(flattenObject(meta, "", true))
@@ -66,18 +68,18 @@ export function constructKey(book: string, account?: string, meta?: IAnyObject):
   ]
     .filter(Boolean)
     .join(";");
-
-  return hashKey(key);
 }
 
 export async function snapshotBalance(
   balanceData: IBalance & { expireInSec: number },
   options: IOptions = {}
 ): Promise<boolean> {
-  const key = constructKey(balanceData.book, balanceData.account, balanceData.meta);
+  const rawKey = constructKey(balanceData.book, balanceData.account, balanceData.meta);
+  const key = hashKey(rawKey);
 
   const balanceDoc = {
     key,
+    rawKey,
     book: balanceData.book,
     account: balanceData.account,
     meta: JSON.stringify(balanceData.meta),
@@ -97,7 +99,7 @@ export async function snapshotBalance(
 
 export function getBestSnapshot(query: FilterQuery<IBalance>, options: IOptions = {}): Promise<IBalance | null> {
   const { book, account, meta, ...extras } = query;
-  const key = constructKey(book, account, { ...meta, ...extras });
+  const key = hashKey(constructKey(book, account, { ...meta, ...extras }));
   return balanceModel.collection.findOne(
     { key },
     { sort: { _id: -1 }, session: options.session }
