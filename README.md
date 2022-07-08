@@ -402,7 +402,13 @@ For `medici_transactions` collection with 50000 documents:
 
 ## Changelog
 
-### v5.1.0
+### v5.2
+
+- The balances cache primary key is now a SHA1 hash of the previous value. Before: `"MyBook;Account;clientId.$in.0:12345,clientId.$in.1:67890,currency:USD"`. After: `"\u001b\u0004NÞj\u0013rÅ\u001b¼,F_#\u001cÔk Nv"`. Allows each key to be exactly 40 bytes (20 chars) regadless the actual balance query text length.
+  - But the old raw unhashed key is now stored in `rawKey` of `medici_balances` for DX and troubleshooting purposes.
+- Fixed important bugs #58 and #70 related to retrieving balance for a custom schema properties. Thanks @dolcalmi
+
+### v5.1
 
 The balance snapshots were never recalculated from the beginning of the ledger. They were always based on the most recent snapshot. It gave us speed. Although, if one of the snapshots gets corrupt or an early ledger entry gets manually edited/deleted then we would always get wrong number from the `.balance()` method. Thus, we have to calculate snapshots from the beginning of the ledger at least once in a while.
 
@@ -413,7 +419,7 @@ New feature:
   - The `balanceSnapshotSec` tells medici how often you want those snapshots to be made **in the background** (right after the `.balance()` call). Default value - 24 hours.
   - The `expireBalanceSnapshotSec` tells medici when to evict those snapshots from the database (TTL). It is recommended to set `expireBalanceSnapshotSec` higher than `balanceSnapshotSec`. Default value - twice the `balanceSnapshotSec`.
 
-### v5.0.0
+### v5.0
 
 High level overview.
 
@@ -466,24 +472,24 @@ All changes of the release.
 - **BREAKING**: You can't import `book` anymore. Only `Book` is supported. `require("medici").Book`.
 - **BREAKING**: The approving functionality (`approved` and `setApproved()`) was removed. It's complicating code, bloating the DB, not used by anyone maintainers know. Please, implement approvals outside the ledger. If you still need it to be part of the ledger then you're out of luck and would have to (re)implement it yourself. Sorry about that.
 
-### v4.0.0
+### v4.0
 
 - Node.js 8 is required now.
 - Drop support of Mongoose v4. Only v5 is supported now. (But v4 should just work, even though not tested.)
 - No API changes.
 
-### v3.0.0
+### v3.0
 
 - Add 4 mandatory indexes, otherwise queries get very slow when transactions collection grows.
 - No API changes.
 
-### v2.0.0
+### v2.0
 
 - Upgrade to use mongoose v5. To use with mongoose v4 just `npm i medici@1`.
 - Support node.js v10.
 - No API changes.
 
-### v1.0.0
+### v1.0
 
 _See [this PR](https://github.com/flash-oss/medici/pull/5) for more details_
 
