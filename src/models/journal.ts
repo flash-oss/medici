@@ -41,7 +41,7 @@ export function setJournalSchema(schema: Schema, collection?: string) {
     connection.deleteModel("Medici_Journal");
   }
 
-  journalModel = model("Medici_Journal", schema, collection) as TJournalModel;
+  journalModel = model("Medici_Journal", schema, collection) as unknown as TJournalModel;
 }
 
 !connection.models["Medici_Journal"] && setJournalSchema(journalSchema);
