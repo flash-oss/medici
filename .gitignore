@@ -3,5 +3,5 @@
 /types
 /coverage
 /.nyc_output
-.npmrc
 .idea
+package-lock.json
