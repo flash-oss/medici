@@ -38,7 +38,7 @@ export function setLockSchema(schema: Schema, collection?: string) {
     connection.deleteModel("Medici_Lock");
   }
 
-  lockModel = model("Medici_Lock", schema, collection) as Model<ILock>;
+  lockModel = model("Medici_Lock", schema, collection) as unknown as Model<ILock>;
 }
 
 !connection.models["Medici_Lock"] && setLockSchema(lockSchema);

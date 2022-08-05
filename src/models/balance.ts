@@ -45,7 +45,7 @@ export function setBalanceSchema(schema: Schema, collection?: string) {
     connection.deleteModel("Medici_Balance");
   }
 
-  balanceModel = model("Medici_Balance", schema, collection) as Model<IBalance>;
+  balanceModel = model("Medici_Balance", schema, collection) as unknown as Model<IBalance>;
 }
 
 !connection.models["Medici_Balance"] && setBalanceSchema(balanceSchema);

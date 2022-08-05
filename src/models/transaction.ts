@@ -97,7 +97,7 @@ export function setTransactionSchema(schema: Schema, collection?: string, option
     });
   }
 
-  transactionModel = model("Medici_Transaction", schema, collection) as Model<ITransaction>;
+  transactionModel = model("Medici_Transaction", schema, collection) as unknown as Model<ITransaction>;
 
   transactionSchemaKeys = new Set(Object.keys(schema.paths));
   transactionSchemaObjectIdKeys = extractObjectIdKeysFromSchema(schema);
