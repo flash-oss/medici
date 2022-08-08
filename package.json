@@ -67,7 +67,7 @@
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-security": "^1.4.0",
     "eslint-plugin-security-node": "^1.0.14",
-    "eslint-plugin-sonarjs": "^0.11.0",
+    "eslint-plugin-sonarjs": "^0.14.0",
     "luxon": "^3.0.1",
     "mocha": "^9.1.3",
     "moment": "^2.29.1",
