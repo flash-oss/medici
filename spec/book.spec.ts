@@ -576,6 +576,16 @@ describe("book", function () {
       expect(voidedJournal.memo).to.be.equal("[VOID] Test Entry");
       expect(voidedJournal.void_reason).to.be.equal(undefined);
     });
+
+    it("should void string journal IDs", async () => {
+      const journal = await book
+        .entry("Test Entry")
+        .debit("Assets:Receivable", 700)
+        .credit("Income:Rent", 700)
+        .commit();
+
+      await book.void(journal._id.toString());
+    });
   });
 
   describe("listAccounts", () => {
