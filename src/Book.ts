@@ -75,6 +75,16 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
   }
 
   async balance(query: IBalanceQuery, options = {} as IOptions): Promise<{ balance: number; notes: number }> {
+    if (options) {
+      // If there is a session, we must NOT set any readPreference (as per mongo v5 and v6).
+      // https://www.mongodb.com/docs/v6.0/core/transactions/#read-concern-write-concern-read-preference
+      // Otherwise, we are free to use any readPreference.
+      if (!options.session && !options.readPreference) {
+        // Let's try reading from the secondary node, if available.
+        options.readPreference = "secondaryPreferred";
+      }
+    }
+
     const parsedQuery = parseBalanceQuery(query, this);
     const meta = parsedQuery.meta;
     delete parsedQuery.meta;
