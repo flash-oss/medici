@@ -1,7 +1,7 @@
 {
   "name": "medici",
   "version": "5.2.2",
-  "description": "Simple double-entry accounting for Node + Mongoose",
+  "description": "Double-entry accounting ledger for Node + Mongoose",
   "main": "build/index.js",
   "types": "types/index.d.ts",
   "scripts": {
@@ -25,13 +25,11 @@
   },
   "files": [
     "build/",
-    "types/",
-    "README.md",
-    "LICENSE"
+    "types/"
   ],
   "repository": {
     "type": "git",
-    "url": "http://github.com/flash-oss/medici"
+    "url": "https://github.com/flash-oss/medici"
   },
   "keywords": [
     "double-entry",
@@ -39,7 +37,8 @@
     "account",
     "finance",
     "mongodb",
-    "mongoose"
+    "mongoose",
+    "ledger"
   ],
   "author": {
     "name": "Jason Raede"
@@ -69,7 +68,7 @@
     "eslint-plugin-security-node": "^1.0.14",
     "eslint-plugin-sonarjs": "^0.14.0",
     "luxon": "^3.0.1",
-    "mocha": "^9.1.3",
+    "mocha": "^10.2.0",
     "moment": "^2.29.1",
     "mongodb-memory-server": "^8.0.4",
     "nyc": "^15.1.0",
@@ -94,6 +93,6 @@
     }
   },
   "engines": {
-    "node": ">=12"
+    "node": ">=16"
   }
 }

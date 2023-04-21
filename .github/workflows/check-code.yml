@@ -9,7 +9,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-node@v3
-    - run: npm install
+    - run: npm ci
     - name: Run prettier
       run: npm run prettier
     - name: Run lint
