@@ -5,3 +5,4 @@
 /.nyc_output
 .idea
 .npmrc
+.DS_Store
