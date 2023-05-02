@@ -8,7 +8,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         node: [16, 18]
-        mongodb-version: [4.0, 4.2, 4.4, 5.0]
+        mongodb-version: [4.0, 4.2, 4.4, 5.0, 6.0]
     steps:
       - uses: actions/checkout@v3
 
@@ -18,7 +18,7 @@ jobs:
           node-version: ${{ matrix.node }}
 
       - name: Start MongoDB v${{ matrix.mongodb-version }}
-        uses: supercharge/mongodb-github-action@1.7.0
+        uses: supercharge/mongodb-github-action@1.8.0
         with:
           mongodb-version: ${{ matrix.mongodb-version }}
           mongodb-replica-set: test-rs
