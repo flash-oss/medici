@@ -402,6 +402,11 @@ For `medici_transactions` collection with 50000 documents:
 
 ## Changelog
 
+### 6.0
+
+- Drop node 12 and 14 support. Only 16 and 18 are supported now.
+- By default use the secondary nodes (if present) of your MongoDB cluster to calculate balances.
+
 ### v5.2
 
 - The balances cache primary key is now a SHA1 hash of the previous value. Before: `"MyBook;Account;clientId.$in.0:12345,clientId.$in.1:67890,currency:USD"`. After: `"\u001b\u0004NÞj\u0013rÅ\u001b¼,F_#\u001cÔk Nv"`. Allows each key to be exactly 40 bytes (20 chars) regadless the actual balance query text length.
