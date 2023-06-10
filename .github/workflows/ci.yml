@@ -7,7 +7,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        node: [16, 18]
+        node: [16, 18, 20]
         mongodb-version: [4.0, 4.2, 4.4, 5.0, 6.0]
     steps:
       - uses: actions/checkout@v3
@@ -27,4 +27,4 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run ci
       - run: npm run ci-mongoose5
-
+      - run: npm run ci-mongoose6

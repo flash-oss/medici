@@ -140,8 +140,7 @@ describe("balance model", function () {
       // The first inserted doc must have the largest _id for this unit test.
       // Copying it the first transaction to the end and remove it.
       const t1Object = t1.toObject();
-      await t1.remove(); // we have to remove BEFORE creating the clone because otherwise MongoDB sees the stale (removed) doc!!!
-      delete t1Object.id;
+      await t1.deleteOne(); // we have to remove BEFORE creating the clone because otherwise MongoDB sees the stale (removed) doc!!!
       delete t1Object._id;
       await transactionModel.create(t1Object);
 

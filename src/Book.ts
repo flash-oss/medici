@@ -75,14 +75,12 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
   }
 
   async balance(query: IBalanceQuery, options = {} as IOptions): Promise<{ balance: number; notes: number }> {
-    if (options) {
-      // If there is a session, we must NOT set any readPreference (as per mongo v5 and v6).
-      // https://www.mongodb.com/docs/v6.0/core/transactions/#read-concern-write-concern-read-preference
-      // Otherwise, we are free to use any readPreference.
-      if (!options.session && !options.readPreference) {
-        // Let's try reading from the secondary node, if available.
-        options.readPreference = "secondaryPreferred";
-      }
+    // If there is a session, we must NOT set any readPreference (as per mongo v5 and v6).
+    // https://www.mongodb.com/docs/v6.0/core/transactions/#read-concern-write-concern-read-preference
+    // Otherwise, we are free to use any readPreference.
+    if (options && !options.session && !options.readPreference) {
+      // Let's try reading from the secondary node, if available.
+      options.readPreference = "secondaryPreferred";
     }
 
     const parsedQuery = parseBalanceQuery(query, this);
@@ -198,7 +196,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
 
     const filterQuery = parseFilterQuery(restOfQuery, this);
     const findPromise = transactionModel.collection
-      .find<T>(filterQuery, {
+      .find(filterQuery, {
         ...paginationOptions,
 
         sort: {
@@ -214,7 +212,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
       countPromise = transactionModel.collection.countDocuments(filterQuery, { session: options.session });
     }
 
-    const results = await findPromise;
+    const results = (await findPromise) as T[];
 
     return {
       results,
