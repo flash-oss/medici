@@ -15,7 +15,14 @@ import { IJournal, journalModel } from "./models/journal";
 import { ITransaction, transactionModel } from "./models/transaction";
 import type { IOptions } from "./IOptions";
 import { lockModel } from "./models/lock";
-import { getBestSnapshot, IBalance, snapshotBalance } from "./models/balance";
+import {
+  getBestBalanceSnapshot,
+  getBestListAccountsSnapshot,
+  IBalance,
+  snapshotBalance,
+  snapshotListAccounts,
+} from "./models/balance";
+import { IFilter } from "./helper/parse/IFilter";
 
 const GROUP = {
   $group: {
@@ -25,6 +32,20 @@ const GROUP = {
     lastTransactionId: { $max: "$_id" },
   },
 };
+
+function fromDistinctToAccounts(distinctResult: string[]) {
+  const accountsSet: Set<string> = new Set();
+  for (const result of distinctResult) {
+    const prev: string[] = [];
+    const paths: string[] = result.split(":");
+    for (const acct of paths) {
+      prev.push(acct);
+      accountsSet.add(prev.join(":"));
+    }
+  }
+
+  return accountsSet;
+}
 
 export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJournal> {
   name: string;
@@ -91,7 +112,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     let accountForBalanceSnapshot: string | undefined;
     if (this.balanceSnapshotSec) {
       accountForBalanceSnapshot = query.account ? [].concat(query.account as never).join() : undefined;
-      balanceSnapshot = await getBestSnapshot(
+      balanceSnapshot = await getBestBalanceSnapshot(
         {
           book: parsedQuery.book,
           account: accountForBalanceSnapshot,
@@ -322,21 +343,84 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
   }
 
   async listAccounts(options = {} as IOptions): Promise<string[]> {
-    const results = await transactionModel.collection.distinct(
-      "accounts",
-      { book: this.name },
-      { session: options.session }
-    );
-    const uniqueAccounts: Set<string> = new Set();
-    for (const result of results) {
-      const prev: string[] = [];
-      const paths: string[] = result.split(":");
-      for (const acct of paths) {
-        prev.push(acct);
-        uniqueAccounts.add(prev.join(":"));
+    // If there is a session, we must NOT set any readPreference (as per mongo v5 and v6).
+    // https://www.mongodb.com/docs/v6.0/core/transactions/#read-concern-write-concern-read-preference
+    // Otherwise, we are free to use any readPreference.
+    if (options && !options.session && !options.readPreference) {
+      // Let's try reading from the secondary node, if available.
+      options.readPreference = "secondaryPreferred";
+    }
+
+    const query = { book: this.name } as IFilter;
+
+    let listAccountsSnapshot: IBalance | null = null;
+    if (this.balanceSnapshotSec) {
+      listAccountsSnapshot = await getBestListAccountsSnapshot({ book: this.name });
+      if (listAccountsSnapshot) {
+        // Use cached balance
+        query.timestamp = { $gte: listAccountsSnapshot.createdAt };
       }
     }
-    return Array.from(uniqueAccounts);
+
+    const createdAt = new Date(); // take date earlier
+    const results = (await transactionModel.collection.distinct("accounts", query, {
+      session: options.session,
+    })) as string[];
+
+    let accountsSet: Set<string> = fromDistinctToAccounts(results);
+
+    if (listAccountsSnapshot) {
+      accountsSet = new Set([...accountsSet, ...listAccountsSnapshot.meta.accounts]);
+    }
+
+    const uniqueAccounts = Array.from(accountsSet);
+
+    if (uniqueAccounts.length === 0) return uniqueAccounts;
+
+    if (this.balanceSnapshotSec) {
+      // It's the first (ever?) snapshot for this listAccounts. We just need to save whatever we've just aggregated
+      // so that the very next listAccounts query would use cached snapshot.
+      if (!listAccountsSnapshot) {
+        await snapshotListAccounts({
+          book: this.name,
+          accounts: uniqueAccounts,
+          createdAt,
+          expireInSec: this.expireBalanceSnapshotSec,
+        });
+      } else {
+        // There is a snapshot already. But let's check if it's too old.
+        const tooOld = Date.now() > listAccountsSnapshot.createdAt.getTime() + this.balanceSnapshotSec * 1000;
+        // If it's too old we would need to cache another snapshot.
+        if (tooOld) {
+          delete query.timestamp;
+
+          // Important! We are going to recalculate the entire listAccounts from the day one.
+          // Since this operation can take seconds (if you have millions of documents)
+          // we better run this query IN THE BACKGROUND.
+          // If this exact balance query would be executed multiple times at the same second we might end up with
+          // multiple snapshots in the database. Which is fine. The chance of this happening is low.
+          // Our main goal here is not to delay this .listAccounts() method call. The tradeoff is that
+          // database will use 100% CPU for few (milli)seconds, which is fine. It's all fine (C)
+          transactionModel.collection
+            .distinct("accounts", query, {
+              session: options.session,
+            })
+            .then((results) => {
+              return snapshotListAccounts({
+                book: this.name,
+                accounts: Array.from(fromDistinctToAccounts(results)),
+                createdAt,
+                expireInSec: this.expireBalanceSnapshotSec,
+              });
+            })
+            .catch((error) => {
+              console.error("medici: Couldn't do background listAccounts snapshot.", error);
+            });
+        }
+      }
+    }
+
+    return uniqueAccounts;
   }
 }
 
