@@ -625,7 +625,6 @@ describe("book", function () {
     it("should reuse the snapshot listAccounts", async () => {
       const book = new Book("MyBook-listAccounts-snapshot");
       await addBalance(book);
-      // await snapshotListAccounts({ book: book.name, accounts: ["a", "b"], createdAt: new Date(), expireInSec: 1 });
 
       await book.listAccounts();
 

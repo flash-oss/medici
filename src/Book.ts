@@ -44,7 +44,7 @@ function fromDistinctToAccounts(distinctResult: string[]) {
     }
   }
 
-  return accountsSet;
+  return Array.from(accountsSet);
 }
 
 export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJournal> {
@@ -367,13 +367,11 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
       session: options.session,
     })) as string[];
 
-    let accountsSet: Set<string> = fromDistinctToAccounts(results);
+    let uniqueAccounts = fromDistinctToAccounts(results);
 
     if (listAccountsSnapshot) {
-      accountsSet = new Set([...accountsSet, ...listAccountsSnapshot.meta.accounts]);
+      uniqueAccounts = Array.from(new Set([...uniqueAccounts, ...listAccountsSnapshot.meta.accounts]));
     }
-
-    const uniqueAccounts = Array.from(accountsSet);
 
     if (uniqueAccounts.length === 0) return uniqueAccounts;
 
@@ -408,7 +406,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
             .then((results) => {
               return snapshotListAccounts({
                 book: this.name,
-                accounts: Array.from(fromDistinctToAccounts(results)),
+                accounts: fromDistinctToAccounts(results),
                 createdAt,
                 expireInSec: this.expireBalanceSnapshotSec,
               });
