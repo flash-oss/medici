@@ -35,15 +35,15 @@ const GROUP = {
 
 function fromDistinctToAccounts(distinctResult: string[]) {
   const accountsSet: Set<string> = new Set();
-  for (const result of distinctResult) {
-    const prev: string[] = [];
-    const paths: string[] = result.split(":");
-    for (const acct of paths) {
-      prev.push(acct);
-      accountsSet.add(prev.join(":"));
+  for (const fullAccountName of distinctResult) {
+    const paths = fullAccountName.split(":");
+    let path = paths[0];
+    accountsSet.add(path);
+    for (let i = 1; i < paths.length; ++i) {
+      path += ":" + paths[i];
+      accountsSet.add(path);
     }
   }
-
   return Array.from(accountsSet);
 }
 
@@ -161,9 +161,9 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
           );
         } else {
           // There is a snapshot already. But let's check if it's too old.
-          const tooOld = Date.now() > balanceSnapshot.createdAt.getTime() + this.balanceSnapshotSec * 1000;
+          const isSnapshotObsolete = Date.now() > balanceSnapshot.createdAt.getTime() + this.balanceSnapshotSec * 1000;
           // If it's too old we would need to cache another snapshot.
-          if (tooOld) {
+          if (isSnapshotObsolete) {
             delete parsedQuery._id;
             const match = { $match: parsedQuery };
 
@@ -387,9 +387,10 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
         });
       } else {
         // There is a snapshot already. But let's check if it's too old.
-        const tooOld = Date.now() > listAccountsSnapshot.createdAt.getTime() + this.balanceSnapshotSec * 1000;
+        const isSnapshotObsolete =
+          Date.now() > listAccountsSnapshot.createdAt.getTime() + this.balanceSnapshotSec * 1000;
         // If it's too old we would need to cache another snapshot.
-        if (tooOld) {
+        if (isSnapshotObsolete) {
           delete query.timestamp;
 
           // Important! We are going to recalculate the entire listAccounts from the day one.
@@ -403,14 +404,14 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
             .distinct("accounts", query, {
               session: options.session,
             })
-            .then((results) => {
-              return snapshotListAccounts({
+            .then((results) =>
+              snapshotListAccounts({
                 book: this.name,
                 accounts: fromDistinctToAccounts(results),
                 createdAt,
                 expireInSec: this.expireBalanceSnapshotSec,
-              });
-            })
+              })
+            )
             .catch((error) => {
               console.error("medici: Couldn't do background listAccounts snapshot.", error);
             });
