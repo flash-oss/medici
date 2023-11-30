@@ -402,6 +402,15 @@ For `medici_transactions` collection with 50000 documents:
 
 ## Changelog
 
+### 6.2
+
+- The `book.listAccounts()` method is now cached same way the `book.balance()` is cached.
+- Add Node 20 support.
+
+### 6.1
+
+- Add MongoDB v6 support.
+
 ### 6.0
 
 - Drop node 12 and 14 support. Only 16 and 18 are supported now.
@@ -409,7 +418,7 @@ For `medici_transactions` collection with 50000 documents:
 
 ### v5.2
 
-- The balances cache primary key is now a SHA1 hash of the previous value. Before: `"MyBook;Account;clientId.$in.0:12345,clientId.$in.1:67890,currency:USD"`. After: `"\u001b\u0004NÞj\u0013rÅ\u001b¼,F_#\u001cÔk Nv"`. Allows each key to be exactly 40 bytes (20 chars) regadless the actual balance query text length.
+- The balances cache primary key is now a SHA1 hash of the previous value. Before: `"MyBook;Account;clientId.$in.0:12345,clientId.$in.1:67890,currency:USD"`. After: `"\u001b\u0004NÞj\u0013rÅ\u001b¼,F_#\u001cÔk Nv"`. Allows each key to be exactly 40 bytes (20 chars) regardless the actual balance query text length.
   - But the old raw unhashed key is now stored in `rawKey` of `medici_balances` for DX and troubleshooting purposes.
 - Fixed important bugs #58 and #70 related to retrieving balance for a custom schema properties. Thanks @dolcalmi
 
