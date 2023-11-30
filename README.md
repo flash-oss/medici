@@ -402,9 +402,14 @@ For `medici_transactions` collection with 50000 documents:
 
 ## Changelog
 
-### 6.2
+### 6.3
 
 - The `book.listAccounts()` method is now cached same way the `book.balance()` is cached.
+- Add `mongoose` v8 support.
+
+### 6.2
+
+- Add `mongoose` v7 support.
 - Add Node 20 support.
 
 ### 6.1

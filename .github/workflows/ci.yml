@@ -28,3 +28,5 @@ jobs:
       - run: npm run ci
       - run: npm run ci-mongoose5
       - run: npm run ci-mongoose6
+      - run: npm run ci-mongoose7
+      - run: npm run ci-mongoose8
