@@ -469,6 +469,8 @@ describe("book", function () {
 
     before(async () => {
       await book.entry("Test Entry").debit("Assets:Receivable", 700).credit("Income:Rent", 700).commit();
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       journal = await book
         .entry("Test Entry")
         .debit("Assets:Receivable", 500, { clientId: "12345" })
@@ -605,6 +607,94 @@ describe("book", function () {
       const accounts = await book.listAccounts();
       expect(accounts).to.have.lengthOf(4);
       expect(accounts).to.have.members(["Assets", "Income", "Income:Rent", "Income:Rent:Taxable"]);
+    });
+
+    async function addBalance(book: Book, suffix = "") {
+      await book
+        .entry("Test Entry")
+        .debit("Assets:Receivable" + suffix, 700, { clientId: "67890", otherProp: 1 })
+        .credit("Income:Rent" + suffix, 700)
+        .commit();
+      await book
+        .entry("Test Entry")
+        .debit("Assets:Receivable" + suffix, 500, { clientId: "12345", otherProp: 1 })
+        .credit("Income:Rent" + suffix, 500)
+        .commit();
+    }
+
+    it("should reuse the snapshot listAccounts", async () => {
+      const book = new Book("MyBook-listAccounts-snapshot");
+      await addBalance(book);
+
+      await book.listAccounts();
+
+      let snapshots = await balanceModel.find({ book: book.name });
+      expect(snapshots).to.have.length(1);
+      expect(snapshots[0].meta.accounts).to.deep.equal(["Assets", "Assets:Receivable", "Income", "Income:Rent"]);
+
+      snapshots[0].meta.accounts = ["new-list"];
+      await snapshots[0].save();
+
+      await book.listAccounts();
+      snapshots = await balanceModel.find({ book: book.name });
+
+      expect(snapshots).to.have.length(1);
+      expect(snapshots[0].meta.accounts).to.deep.equal(["Assets", "Assets:Receivable", "Income", "Income:Rent"]);
+    });
+
+    it("should create only one snapshot document", async () => {
+      const book = new Book("MyBook-listAccounts-snapshot-count");
+      await addBalance(book);
+
+      await book.listAccounts();
+      await book.listAccounts();
+      await book.listAccounts();
+
+      const snapshots = await balanceModel.find({ book: book.name });
+      expect(snapshots).to.have.length(1);
+      expect(snapshots[0].meta.accounts).to.deep.equal(["Assets", "Assets:Receivable", "Income", "Income:Rent"]);
+    });
+
+    it("should create periodic balance snapshot document", async () => {
+      const howOften = 50; // milliseconds
+      const book = new Book("MyBook-listAccounts-snapshot-periodic", { balanceSnapshotSec: howOften / 1000 });
+
+      await addBalance(book);
+
+      await book.listAccounts();
+      // Should be one snapshot.
+      let snapshots = await balanceModel.find({ book: book.name });
+      expect(snapshots.length).to.equal(1);
+      expect(snapshots[0].meta.accounts).to.deep.equal(["Assets", "Assets:Receivable", "Income", "Income:Rent"]);
+
+      await delay(howOften + 1); // wait long enough to create a second periodic snapshot
+
+      await addBalance(book, "2");
+      await book.listAccounts();
+      await delay(10); // wait until the full listAccounts snapshot is recalculated in the background
+
+      // Should be two snapshots now.
+      snapshots = await balanceModel.find({ book: book.name });
+      expect(snapshots.length).to.equal(2);
+      expect(snapshots[0].meta.accounts).to.deep.equal(["Assets", "Assets:Receivable", "Income", "Income:Rent"]);
+      expect(snapshots[1].meta.accounts).to.deep.equal([
+        "Assets",
+        "Assets:Receivable",
+        "Assets:Receivable2",
+        "Income",
+        "Income:Rent",
+        "Income:Rent2",
+      ]);
+    });
+
+    it("should not do listAccounts snapshots if turned off", async () => {
+      const book = new Book("MyBook-balance-listAccounts-off", { balanceSnapshotSec: 0 });
+      await addBalance(book);
+
+      await book.listAccounts();
+
+      const snapshots = await balanceModel.find({ book: book.name });
+      expect(snapshots).to.have.length(0);
     });
   });
 

@@ -1,12 +1,12 @@
 /* eslint sonarjs/no-duplicate-string: off, no-prototype-builtins: off*/
 import { expect } from "chai";
 import { Book, syncIndexes } from "../src";
-import { balanceModel, getBestSnapshot } from "../src/models/balance";
+import { balanceModel, getBestBalanceSnapshot } from "../src/models/balance";
 import { setTransactionSchema, transactionModel, transactionSchema } from "../src/models/transaction";
 import { getTransactionSchemaTest, ITransactionTest } from "./helper/transactionSchema";
 
 describe("balance model", function () {
-  describe("getBestSnapshot", () => {
+  describe("getBestBalanceSnapshot", () => {
     it("should find snapshot", async function () {
       const book = new Book("MyBook-balance-1");
 
@@ -15,7 +15,7 @@ describe("balance model", function () {
       const balance1 = await book.balance({ account: "Assets:Receivable" });
       expect(balance1).to.deep.equal({ balance: 1, notes: 1 });
 
-      const snapshot = await getBestSnapshot({ book: book.name, account: "Assets:Receivable" });
+      const snapshot = await getBestBalanceSnapshot({ book: book.name, account: "Assets:Receivable" });
       expect(snapshot).to.have.property("balance", 1);
     });
 
@@ -50,11 +50,15 @@ describe("balance model", function () {
       expect(balance).to.deep.equal({ balance: 1, notes: 1 });
 
       // balance with meta should equal 1.0
-      snapshot = await getBestSnapshot({ book: book.name, account: "Assets:Receivable", meta: { clientId: "12345" } });
+      snapshot = await getBestBalanceSnapshot({
+        book: book.name,
+        account: "Assets:Receivable",
+        meta: { clientId: "12345" },
+      });
       expect(snapshot).to.have.property("balance", 1);
 
       // there must be no balance without meta (yet)
-      snapshot = await getBestSnapshot({ book: book.name, account: "Assets:Receivable" });
+      snapshot = await getBestBalanceSnapshot({ book: book.name, account: "Assets:Receivable" });
       expect(snapshot).to.be.not.ok;
 
       // this should create a new balance
@@ -62,7 +66,7 @@ describe("balance model", function () {
       expect(balance).to.deep.equal({ balance: 3, notes: 2 });
 
       // check if previously missing balance was created and equals to 3.0
-      snapshot = await getBestSnapshot({ book: book.name, account: "Assets:Receivable" });
+      snapshot = await getBestBalanceSnapshot({ book: book.name, account: "Assets:Receivable" });
       expect(snapshot).to.have.property("balance", 3);
     });
 
@@ -80,11 +84,15 @@ describe("balance model", function () {
       expect(balance).to.deep.equal({ balance: 3, notes: 2 });
 
       // balance without meta should equal 3.0
-      snapshot = await getBestSnapshot({ book: book.name, account: "Assets:Receivable" });
+      snapshot = await getBestBalanceSnapshot({ book: book.name, account: "Assets:Receivable" });
       expect(snapshot).to.have.property("balance", 3);
 
       // there must be no balance with meta (yet)
-      snapshot = await getBestSnapshot({ book: book.name, account: "Assets:Receivable", meta: { clientId: "12345" } });
+      snapshot = await getBestBalanceSnapshot({
+        book: book.name,
+        account: "Assets:Receivable",
+        meta: { clientId: "12345" },
+      });
       expect(snapshot).to.be.not.ok;
 
       // this should create a new balance, this time with meta
@@ -92,7 +100,11 @@ describe("balance model", function () {
       expect(balance).to.deep.equal({ balance: 1, notes: 1 });
 
       // check if previously missing balance was created and equals to 1.0
-      snapshot = await getBestSnapshot({ book: book.name, account: "Assets:Receivable", meta: { clientId: "12345" } });
+      snapshot = await getBestBalanceSnapshot({
+        book: book.name,
+        account: "Assets:Receivable",
+        meta: { clientId: "12345" },
+      });
       expect(snapshot).to.have.property("balance", 1);
     });
 
@@ -108,7 +120,7 @@ describe("balance model", function () {
       const balance1 = await book.balance({ account: "Assets:Receivable", clientId: { $in: ["12345", "67890"] } });
       expect(balance1).to.deep.equal({ balance: 1, notes: 1 });
 
-      const snapshot = await getBestSnapshot({
+      const snapshot = await getBestBalanceSnapshot({
         book: book.name,
         account: "Assets:Receivable",
         meta: { clientId: { $in: ["12345", "67890"] } },
@@ -117,7 +129,7 @@ describe("balance model", function () {
       expect(snapshot).to.have.property("balance", 1);
 
       // Let's make sure the snapshot is used when mongodb query language is present in the query
-      await balanceModel.collection.updateOne({ key: snapshot.key }, { $set: { balance: 300 } });
+      await balanceModel.collection.updateOne({ key: snapshot?.key }, { $set: { balance: 300 } });
       const balance2 = await book.balance({ account: "Assets:Receivable", clientId: { $in: ["12345", "67890"] } });
       expect(balance2).to.deep.equal({ balance: 300, notes: 1 });
     });
@@ -139,8 +151,10 @@ describe("balance model", function () {
       // We need to change the order of transactions in the database.
       // The first inserted doc must have the largest _id for this unit test.
       // Copying it the first transaction to the end and remove it.
-      const t1Object = t1.toObject();
-      await t1.deleteOne(); // we have to remove BEFORE creating the clone because otherwise MongoDB sees the stale (removed) doc!!!
+      const t1Object = t1?.toObject();
+      await t1?.deleteOne(); // we have to remove BEFORE creating the clone because otherwise MongoDB sees the stale (removed) doc!!!
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       delete t1Object._id;
       await transactionModel.create(t1Object);
 
@@ -149,7 +163,7 @@ describe("balance model", function () {
     });
   });
 
-  describe("getBestSnapshot with custom schema", () => {
+  describe("getBestBalanceSnapshot with custom schema", () => {
     let book: Book<ITransactionTest>;
 
     before(async function () {
@@ -189,7 +203,7 @@ describe("balance model", function () {
       expect(res.results[2].meta).to.have.property("otherMeta");
       expect(res.results[2].meta).to.not.have.property("clientId");
 
-      const snapshot = await getBestSnapshot({ book: book.name, account });
+      const snapshot = await getBestBalanceSnapshot({ book: book.name, account });
       expect(snapshot).to.have.property("balance", 3);
     });
 
@@ -206,7 +220,7 @@ describe("balance model", function () {
       expect(res.results[1].meta).to.have.property("otherMeta");
       expect(res.results[1].meta).to.not.have.property("clientId");
 
-      const snapshot = await getBestSnapshot({ book: book.name, account, clientId });
+      const snapshot = await getBestBalanceSnapshot({ book: book.name, account, clientId });
       expect(snapshot).to.have.property("balance", 2);
     });
 
@@ -224,10 +238,10 @@ describe("balance model", function () {
       expect(res.results[0].meta).to.have.property("otherMeta");
       expect(res.results[0].meta).to.not.have.property("clientId");
 
-      const snapshot1 = await getBestSnapshot({ book: book.name, account, clientId, meta: { otherMeta } });
+      const snapshot1 = await getBestBalanceSnapshot({ book: book.name, account, clientId, meta: { otherMeta } });
       expect(snapshot1).to.have.property("balance", 1);
 
-      const snapshot2 = await getBestSnapshot({ book: book.name, account, clientId, otherMeta });
+      const snapshot2 = await getBestBalanceSnapshot({ book: book.name, account, clientId, otherMeta });
       expect(snapshot2).to.have.property("balance", 1);
     });
   });
