@@ -1,6 +1,6 @@
 {
   "name": "medici",
-  "version": "6.3.0",
+  "version": "6.3.1",
   "description": "Double-entry accounting ledger for Node + Mongoose",
   "main": "build/index.js",
   "types": "types/index.d.ts",
