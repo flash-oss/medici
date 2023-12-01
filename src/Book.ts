@@ -44,7 +44,7 @@ function fromDistinctToAccounts(distinctResult: string[]) {
       accountsSet.add(path);
     }
   }
-  return Array.from(accountsSet);
+  return Array.from(accountsSet).sort();
 }
 
 export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJournal> {
