@@ -35,16 +35,16 @@ const GROUP = {
 
 function fromDistinctToAccounts(distinctResult: string[]) {
   const accountsSet: Set<string> = new Set();
-  for (const fullAccountName of distinctResult) {
-    const paths = fullAccountName.split(":");
-    let path = paths[0];
-    accountsSet.add(path);
-    for (let i = 1; i < paths.length; ++i) {
-      path += ":" + paths[i];
-      accountsSet.add(path);
+  for (const result of distinctResult) {
+    const prev: string[] = [];
+    const paths: string[] = result.split(":");
+    for (const acct of paths) {
+      prev.push(acct);
+      accountsSet.add(prev.join(":"));
     }
   }
-  return Array.from(accountsSet).sort();
+
+  return Array.from(accountsSet);
 }
 
 export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJournal> {
