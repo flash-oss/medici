@@ -611,12 +611,12 @@ describe("book", function () {
 
     it("should sort accounts alphabetically", async () => {
       const book1 = new Book("MyBook-listAccounts sorting 1");
-      await book1.entry("MyBook-listAccounts sorting 1").credit("Assets", 1).debit("Income:Rent Taxable", 1).commit();
+      await book1.entry("MyBook-listAccounts sorting 1").debit("Income:Rent Taxable", 1).credit("Assets", 1).commit();
       await book1.entry("MyBook-listAccounts sorting 1").credit("Liabilities", 1).debit("Client Custody", 1).commit();
       const accounts1 = await book1.listAccounts();
 
       const book2 = new Book("MyBook-listAccounts sorting 2");
-      await book2.entry("MyBook-listAccounts sorting 2").credit("Liabilities", 2).debit("Client Custody", 2).commit();
+      await book2.entry("MyBook-listAccounts sorting 2").debit("Client Custody", 2).credit("Liabilities", 2).commit();
       await book2.entry("MyBook-listAccounts sorting 2").credit("Assets", 3).debit("Income:Rent Taxable", 3).commit();
       const accounts2 = await book2.listAccounts();
 
