@@ -10,6 +10,8 @@ import delay from "./helper/delay";
 import * as moment from "moment";
 import { DateTime } from "luxon";
 
+require("./helper/MongoDB.spec"); // allows single test debugging
+
 describe("book", function () {
   describe("constructor", () => {
     it("should throw an error when name of book is not a string", () => {
@@ -622,6 +624,37 @@ describe("book", function () {
 
       expect(accounts1).to.deep.equal(accounts2);
       expect(accounts1).to.deep.equal(["Assets", "Client Custody", "Income", "Income:Rent Taxable", "Liabilities"]);
+    });
+
+    it("should sort accounts alphabetically including cached values", async () => {
+      const book1 = new Book("MyBook-listAccounts sorting 1");
+      await book1.entry("MyBook-listAccounts sorting 1").debit("Income:Rent Taxable", 1).credit("Assets", 1).commit();
+      await book1.entry("MyBook-listAccounts sorting 1").credit("Liabilities", 1).debit("Client Custody", 1).commit();
+      await book1.listAccounts(); // creates cached doc
+      await book1.entry("MyBook-listAccounts sorting 1").credit("Z", 1).debit("ZZ", 1).commit();
+      await book1.entry("MyBook-listAccounts sorting 1").credit("A", 1).debit("AA", 1).commit();
+      const accounts1 = await book1.listAccounts();
+
+      const book2 = new Book("MyBook-listAccounts sorting 2");
+      await book2.entry("MyBook-listAccounts sorting 2").debit("Client Custody", 2).credit("Liabilities", 2).commit();
+      await book2.entry("MyBook-listAccounts sorting 2").credit("Assets", 3).debit("Income:Rent Taxable", 3).commit();
+      await book2.listAccounts(); // created cached doc
+      await book2.entry("MyBook-listAccounts sorting 2").credit("Z", 3).debit("ZZ", 3).commit();
+      await book2.entry("MyBook-listAccounts sorting 2").credit("A", 3).debit("AA", 3).commit();
+      const accounts2 = await book2.listAccounts();
+
+      expect(accounts1).to.deep.equal(accounts2);
+      expect(accounts1).to.deep.equal([
+        "A",
+        "AA",
+        "Assets",
+        "Client Custody",
+        "Income",
+        "Income:Rent Taxable",
+        "Liabilities",
+        "Z",
+        "ZZ",
+      ]);
     });
 
     async function addBalance(book: Book, suffix = "") {

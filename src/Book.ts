@@ -35,16 +35,16 @@ const GROUP = {
 
 function fromDistinctToAccounts(distinctResult: string[]) {
   const accountsSet: Set<string> = new Set();
-  for (const result of distinctResult) {
-    const prev: string[] = [];
-    const paths: string[] = result.split(":");
-    for (const acct of paths) {
-      prev.push(acct);
-      accountsSet.add(prev.join(":"));
+  for (const fullAccountName of distinctResult) {
+    const paths = fullAccountName.split(":");
+    let path = paths[0];
+    accountsSet.add(path);
+    for (let i = 1; i < paths.length; ++i) {
+      path += ":" + paths[i];
+      accountsSet.add(path);
     }
   }
-
-  return Array.from(accountsSet);
+  return Array.from(accountsSet).sort();
 }
 
 export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJournal> {
@@ -370,7 +370,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     let uniqueAccounts = fromDistinctToAccounts(results);
 
     if (listAccountsSnapshot) {
-      uniqueAccounts = Array.from(new Set([...uniqueAccounts, ...listAccountsSnapshot.meta.accounts]));
+      uniqueAccounts = Array.from(new Set([...uniqueAccounts, ...listAccountsSnapshot.meta.accounts])).sort();
     }
 
     if (uniqueAccounts.length === 0) return uniqueAccounts;
