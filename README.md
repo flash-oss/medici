@@ -286,121 +286,77 @@ const myBook = new Book("MyBook", { balanceSnapshotSec: 0 })
 
 ### Indexes
 
-Medici <=v2 was slow when number of records reach 30k. Starting from v3.0 the [following](https://github.com/flash-oss/medici/commit/274528ef5d1dae0beedca4a98dbf706808be53bd) indexes are auto generated on the `medici_transactions` collection:
+Medici adds a few **default** indexes on the `medici_transactions` collection:
 
 ```
     "_journal": 1
 ```
 
 ```
+    "book": 1,
     "accounts": 1,
-    "book": 1,
-    "datetime": -1,
-    "timestamp": -1
+    "timestamp": -1,
 ```
 
 ```
-    "account_path.0": 1,
     "book": 1,
-```
-
-```
-    "account_path.0": 1,
-    "account_path.1": 1,
-    "book": 1,
-```
-
-```
     "account_path.0": 1,
     "account_path.1": 1,
     "account_path.2": 1,
+    "timestamp": -1,
+```
+
+However, if you are doing lots of queries using the `meta` data you probably would want to add the following index(es):
+
+```
     "book": 1,
-```
-
-Added in version 5:
-
-```
-    "datetime": -1,
-    "timestamp": -1
-```
-
-However, if you are doing lots of queries using the `meta` data (which is a typical scenario) you probably would want to add the following index(es):
-
-```
-    "meta.myCustomProperty": 1,
-    "book": 1,
-    "datetime": -1,
-    "timestamp": -1
+    "accounts": 1,
+    "meta.myClientId": 1,
+    "timestamp": -1,
 ```
 
 and/or
 
 ```
-    "meta.myCustomProperty": 1,
-    "account_path.0": 1,
     "book": 1,
-```
-
-and/or
-
-```
-    "meta.myCustomProperty": 1,
-    "account_path.0": 1,
-    "account_path.1": 1,
-    "book": 1,
-```
-
-and/or
-
-```
-    "meta.myCustomProperty": 1,
+    "meta.myClientId": 1,
     "account_path.0": 1,
     "account_path.1": 1,
     "account_path.2": 1,
-    "book": 1,
+    "timestamp": -1,
 ```
 
 Here is how to add an index manually via MongoDB CLI or other tool:
 
 ```
-db = db.getSiblingDB("my_db_name")
-db.getCollection("medici_transactions").createIndex({
-    "meta.myCustomProperty": 1,
+db.getSiblingDB("my_db_name").getCollection("medici_transactions").createIndex({
     "book": 1,
-    "datetime": -1,
-    "timestamp": -1
-}, {background: true})
-```
-
-Keep in mind, that the order of the fields in the Index is important. Always sort them by cardinality. E.g. If your Accounts are like "Expenses:Salary:Employee1","Expenses:Salary:Employee2" etc. then the cardinality of the last account-path is bigger than from the first part. So you would order the fields in the indexes like this:
-
-```
-    "account_path.2": 1,
-    "account_path.1": 1,
-    "account_path.0": 1,
-    "book": 1,
-```
-
-But if your Accounts are like "Employee1:Expenses:Salary", "Employee2:Expenses:Salary" than the cardinality of the first part is bigger. So you would order the fields in the indexes like this (=default Indexes):
-
-```
-    "account_path.0": 1,
-    "account_path.1": 1,
-    "account_path.2": 1,
-    "book": 1,
+    "accounts": 1,
+    "meta.myClientId": 1,
+    "timestamp": -1,
+}, { background: true })
 ```
 
 For more information, see [Performance Best Practices: Indexing](https://www.mongodb.com/blog/post/performance-best-practices-indexing)
 
-#### Index memory consumption example
-
-For `medici_transactions` collection with 50000 documents:
-
-- the mandatory `_id` index takes about 600 KB,
-- each of the medici default indexes take from 300 to 600 KB.
-- your custom indexes containing `meta.*` properties would take 600 to 1200 KB.
-
 ## Changelog
+
+### 7.0
+
+Unluckily, all the **default** indexes were suboptimal. The `book` property always had the lowest cardinality. However, we always query by the `book` first and then by some other properties. Thus all the default indexes were near useless.
+
+This release fixes the unfortunate mistake.
+
+- The `book` property cardinality was moved to the beginning of all default indexes.
+- Most of the default indexes were useless in majority of use cases. Thus, were removed. Only 4 default indexes left for `medici` v7.0:
+  - `_id`
+  - `_journal`
+  - `book,accounts,timestamp`
+  - `book,account_path.0,account_path.1,account_path.2,timestamp`
+- The `timestamp` is the only one to be used in the default indexes. We won't index `datetime` by default. Reasons:
+  - `timestamp` is a read-only field created by `medici` thus `medici` can rely on it.
+  - but `datetime` is an **arbitrary** value you can pass when creating ledger entries. Almost nobody is doing that though.
+  - If you need indexes for the `datetime` field then please create yourself.
 
 ### 6.3
 

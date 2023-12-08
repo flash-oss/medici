@@ -72,28 +72,20 @@ export function setTransactionSchema(schema: Schema, collection?: string, option
   }
 
   if (defaultIndexes) {
-    schema.index({ _journal: 1 });
     schema.index({
+      _journal: 1,
+    });
+    schema.index({
+      book: 1,
       accounts: 1,
-      book: 1,
-      datetime: -1,
       timestamp: -1,
     });
     schema.index({
-      datetime: -1,
-      timestamp: -1,
-    });
-    schema.index({ "account_path.0": 1, book: 1 });
-    schema.index({
-      "account_path.0": 1,
-      "account_path.1": 1,
       book: 1,
-    });
-    schema.index({
       "account_path.0": 1,
       "account_path.1": 1,
       "account_path.2": 1,
-      book: 1,
+      timestamp: -1,
     });
   }
 
