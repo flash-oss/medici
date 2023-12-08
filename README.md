@@ -354,7 +354,7 @@ This release fixes the unfortunate mistake.
   - `book,accounts,datetime`
   - `book,account_path.0,account_path.1,account_path.2,datetime`
 - The `datetime` is the only one to be used in the default indexes. Additional `timestamp` doesn't make any sense.
-- Removed the `book.listAccounts()` caching which added in the previous release (v6.3) because the default indexes cover this use case now. Moreover, the index works faster than the cache.
+- Removed the `book.listAccounts()` caching which was added in the previous release (v6.3). The default indexes cover this use case now. Moreover, the index works faster than the cache.
 
 ### 6.3
 
