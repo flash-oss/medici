@@ -357,6 +357,7 @@ This release fixes the unfortunate mistake.
   - `timestamp` is a read-only field created by `medici` thus `medici` can rely on it.
   - but `datetime` is an **arbitrary** value you can pass when creating ledger entries. Almost nobody is doing that though.
   - If you need indexes for the `datetime` field then please create yourself.
+- Removed the `book.listAccounts()` caching which added in the previous release (v6.3) because the default indexes cover this use case now. Moreover, the index works faster than the cache.
 
 ### 6.3
 

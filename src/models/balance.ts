@@ -102,33 +102,3 @@ export function getBestBalanceSnapshot(query: FilterQuery<IBalance>, options: IO
   const key = hashKey(constructKey(book, account, { ...meta, ...extras }));
   return balanceModel.collection.findOne({ key }, { sort: { _id: -1 }, ...options }) as Promise<IBalance | null>;
 }
-
-export async function snapshotListAccounts(
-  balanceData: { book: string; accounts: string[]; createdAt: Date; expireInSec: number },
-  options: IOptions = {}
-): Promise<boolean> {
-  const rawKey = "@listAccounts:" + balanceData.book;
-  const key = hashKey(rawKey);
-  const balanceDoc = {
-    key,
-    rawKey,
-    book: balanceData.book,
-    meta: { accounts: balanceData.accounts },
-    createdAt: balanceData.createdAt,
-    expireAt: new Date(balanceData.createdAt.getTime() + balanceData.expireInSec * 1000),
-  };
-  const result = await balanceModel.collection.insertOne(balanceDoc, {
-    session: options.session,
-    writeConcern: options.session ? undefined : { w: 1, j: true }, // Ensure at least ONE node wrote to JOURNAL (disk)
-    forceServerObjectId: true,
-  });
-  return result.acknowledged;
-}
-
-export async function getBestListAccountsSnapshot(
-  query: { book: string },
-  options: IOptions = {}
-): Promise<IBalance | null> {
-  const key = hashKey("@listAccounts:" + query.book);
-  return (await balanceModel.collection.findOne({ key }, { sort: { _id: -1 }, ...options })) as IBalance | null;
-}

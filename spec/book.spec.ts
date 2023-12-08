@@ -615,22 +615,6 @@ describe("book", function () {
       const book1 = new Book("MyBook-listAccounts sorting 1");
       await book1.entry("MyBook-listAccounts sorting 1").debit("Income:Rent Taxable", 1).credit("Assets", 1).commit();
       await book1.entry("MyBook-listAccounts sorting 1").credit("Liabilities", 1).debit("Client Custody", 1).commit();
-      const accounts1 = await book1.listAccounts();
-
-      const book2 = new Book("MyBook-listAccounts sorting 2");
-      await book2.entry("MyBook-listAccounts sorting 2").debit("Client Custody", 2).credit("Liabilities", 2).commit();
-      await book2.entry("MyBook-listAccounts sorting 2").credit("Assets", 3).debit("Income:Rent Taxable", 3).commit();
-      const accounts2 = await book2.listAccounts();
-
-      expect(accounts1).to.deep.equal(accounts2);
-      expect(accounts1).to.deep.equal(["Assets", "Client Custody", "Income", "Income:Rent Taxable", "Liabilities"]);
-    });
-
-    it("should sort accounts alphabetically including cached values", async () => {
-      const book1 = new Book("MyBook-listAccounts sorting 1");
-      await book1.entry("MyBook-listAccounts sorting 1").debit("Income:Rent Taxable", 1).credit("Assets", 1).commit();
-      await book1.entry("MyBook-listAccounts sorting 1").credit("Liabilities", 1).debit("Client Custody", 1).commit();
-      await book1.listAccounts(); // creates cached doc
       await book1.entry("MyBook-listAccounts sorting 1").credit("Z", 1).debit("ZZ", 1).commit();
       await book1.entry("MyBook-listAccounts sorting 1").credit("A", 1).debit("AA", 1).commit();
       const accounts1 = await book1.listAccounts();
@@ -638,7 +622,6 @@ describe("book", function () {
       const book2 = new Book("MyBook-listAccounts sorting 2");
       await book2.entry("MyBook-listAccounts sorting 2").debit("Client Custody", 2).credit("Liabilities", 2).commit();
       await book2.entry("MyBook-listAccounts sorting 2").credit("Assets", 3).debit("Income:Rent Taxable", 3).commit();
-      await book2.listAccounts(); // created cached doc
       await book2.entry("MyBook-listAccounts sorting 2").credit("Z", 3).debit("ZZ", 3).commit();
       await book2.entry("MyBook-listAccounts sorting 2").credit("A", 3).debit("AA", 3).commit();
       const accounts2 = await book2.listAccounts();
@@ -669,71 +652,6 @@ describe("book", function () {
         .credit("Income:Rent" + suffix, 500)
         .commit();
     }
-
-    it("should reuse the snapshot listAccounts", async () => {
-      const book = new Book("MyBook-listAccounts-snapshot");
-      await addBalance(book);
-
-      await book.listAccounts();
-
-      let snapshots = await balanceModel.find({ book: book.name });
-      expect(snapshots).to.have.length(1);
-      expect(snapshots[0].meta.accounts).to.deep.equal(["Assets", "Assets:Receivable", "Income", "Income:Rent"]);
-
-      snapshots[0].meta.accounts = ["new-list"];
-      await snapshots[0].save();
-
-      await book.listAccounts();
-      snapshots = await balanceModel.find({ book: book.name });
-
-      expect(snapshots).to.have.length(1);
-      expect(snapshots[0].meta.accounts).to.deep.equal(["Assets", "Assets:Receivable", "Income", "Income:Rent"]);
-    });
-
-    it("should create only one snapshot document", async () => {
-      const book = new Book("MyBook-listAccounts-snapshot-count");
-      await addBalance(book);
-
-      await book.listAccounts();
-      await book.listAccounts();
-      await book.listAccounts();
-
-      const snapshots = await balanceModel.find({ book: book.name });
-      expect(snapshots).to.have.length(1);
-      expect(snapshots[0].meta.accounts).to.deep.equal(["Assets", "Assets:Receivable", "Income", "Income:Rent"]);
-    });
-
-    it("should create periodic balance snapshot document", async () => {
-      const howOften = 50; // milliseconds
-      const book = new Book("MyBook-listAccounts-snapshot-periodic", { balanceSnapshotSec: howOften / 1000 });
-
-      await addBalance(book);
-
-      await book.listAccounts();
-      // Should be one snapshot.
-      let snapshots = await balanceModel.find({ book: book.name });
-      expect(snapshots.length).to.equal(1);
-      expect(snapshots[0].meta.accounts).to.deep.equal(["Assets", "Assets:Receivable", "Income", "Income:Rent"]);
-
-      await delay(howOften + 1); // wait long enough to create a second periodic snapshot
-
-      await addBalance(book, "2");
-      await book.listAccounts();
-      await delay(10); // wait until the full listAccounts snapshot is recalculated in the background
-
-      // Should be two snapshots now.
-      snapshots = await balanceModel.find({ book: book.name });
-      expect(snapshots.length).to.equal(2);
-      expect(snapshots[0].meta.accounts).to.deep.equal(["Assets", "Assets:Receivable", "Income", "Income:Rent"]);
-      expect(snapshots[1].meta.accounts).to.deep.equal([
-        "Assets",
-        "Assets:Receivable",
-        "Assets:Receivable2",
-        "Income",
-        "Income:Rent",
-        "Income:Rent2",
-      ]);
-    });
 
     it("should not do listAccounts snapshots if turned off", async () => {
       const book = new Book("MyBook-balance-listAccounts-off", { balanceSnapshotSec: 0 });
