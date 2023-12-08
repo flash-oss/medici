@@ -295,7 +295,7 @@ Medici adds a few **default** indexes on the `medici_transactions` collection:
 ```
     "book": 1,
     "accounts": 1,
-    "timestamp": -1,
+    "datetime": -1,
 ```
 
 ```
@@ -303,7 +303,7 @@ Medici adds a few **default** indexes on the `medici_transactions` collection:
     "account_path.0": 1,
     "account_path.1": 1,
     "account_path.2": 1,
-    "timestamp": -1,
+    "datetime": -1,
 ```
 
 However, if you are doing lots of queries using the `meta` data you probably would want to add the following index(es):
@@ -312,7 +312,7 @@ However, if you are doing lots of queries using the `meta` data you probably wou
     "book": 1,
     "accounts": 1,
     "meta.myClientId": 1,
-    "timestamp": -1,
+    "datetime": -1,
 ```
 
 and/or
@@ -323,7 +323,7 @@ and/or
     "account_path.0": 1,
     "account_path.1": 1,
     "account_path.2": 1,
-    "timestamp": -1,
+    "datetime": -1,
 ```
 
 Here is how to add an index manually via MongoDB CLI or other tool:
@@ -333,7 +333,7 @@ db.getSiblingDB("my_db_name").getCollection("medici_transactions").createIndex({
     "book": 1,
     "accounts": 1,
     "meta.myClientId": 1,
-    "timestamp": -1,
+    "datetime": -1,
 }, { background: true })
 ```
 
@@ -351,12 +351,9 @@ This release fixes the unfortunate mistake.
 - Most of the default indexes were useless in majority of use cases. Thus, were removed. Only 4 default indexes left for `medici` v7.0:
   - `_id`
   - `_journal`
-  - `book,accounts,timestamp`
-  - `book,account_path.0,account_path.1,account_path.2,timestamp`
-- The `timestamp` is the only one to be used in the default indexes. We won't index `datetime` by default. Reasons:
-  - `timestamp` is a read-only field created by `medici` thus `medici` can rely on it.
-  - but `datetime` is an **arbitrary** value you can pass when creating ledger entries. Almost nobody is doing that though.
-  - If you need indexes for the `datetime` field then please create yourself.
+  - `book,accounts,datetime`
+  - `book,account_path.0,account_path.1,account_path.2,datetime`
+- The `datetime` is the only one to be used in the default indexes. Additional `timestamp` doesn't make any sense.
 - Removed the `book.listAccounts()` caching which added in the previous release (v6.3) because the default indexes cover this use case now. Moreover, the index works faster than the cache.
 
 ### 6.3

@@ -78,14 +78,14 @@ export function setTransactionSchema(schema: Schema, collection?: string, option
     schema.index({
       book: 1,
       accounts: 1,
-      timestamp: -1,
+      datetime: -1,
     });
     schema.index({
       book: 1,
       "account_path.0": 1,
       "account_path.1": 1,
       "account_path.2": 1,
-      timestamp: -1,
+      datetime: -1,
     });
   }
 
