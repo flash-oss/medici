@@ -1,18 +1,11 @@
 import Entry from "../Entry";
-import { TransactionError } from "../errors";
-import * as mongoose from "mongoose";
+import { mongoTransaction } from "./mongoTransaction";
+import { IJournal } from "../models/journal";
 
-export async function commit(...entries: Entry[]) {
-  const mongooseSession = await mongoose.startSession();
-  try {
-    mongooseSession.startTransaction();
-    const journals = await Promise.all(entries.map(entry => entry.commit()));
-    await mongooseSession.commitTransaction();
-    return journals;
-  } catch (error) {
-    await mongooseSession.abortTransaction();
-    throw new TransactionError(`Failure to commit entries: ${(error as Error).message}`, entries.length,500);
-  } finally {
-    await mongooseSession.endSession();
-  }
+export async function commit(...entries: Entry[]): Promise<IJournal[]> {
+  let journals: IJournal[] = [];
+  await mongoTransaction(async session => {
+      journals = await Promise.all(entries.map(entry => entry.commit({ session })));
+  });
+  return journals;
 }
