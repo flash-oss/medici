@@ -7,6 +7,7 @@ export { setLockSchema } from "./models/lock";
 export { mongoTransaction } from "./helper/mongoTransaction";
 export { initModels } from "./helper/initModels";
 export { syncIndexes } from "./helper/syncIndexes";
+export { commit } from "./helper/commit";
 
 export { MediciError } from "./errors/MediciError";
 export { BookConstructorError } from "./errors/BookConstructorError";
