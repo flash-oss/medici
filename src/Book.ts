@@ -102,6 +102,8 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
       if (balanceSnapshot) {
         // Use cached balance
         parsedQuery._id = { $gt: balanceSnapshot.transaction };
+        // And make sure to use the appropriate (default "_id_") index for the additional balance
+        options.hint = { _id: 1 };
       }
     }
 
