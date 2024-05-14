@@ -102,14 +102,15 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
       if (balanceSnapshot) {
         // Use cached balance
         parsedQuery._id = { $gt: balanceSnapshot.transaction };
-        // And make sure to use the appropriate (default "_id_") index for the additional balance
-        options.hint = { _id: 1 };
       }
     }
 
     const match = { $match: parsedQuery };
 
-    const result = (await transactionModel.collection.aggregate([match, GROUP], options).toArray())[0];
+    const partialBalanceOptions = { ...options };
+    // If using a balance snapshot then make sure to use the appropriate (default "_id_") index for the additional balance calc.
+    if (parsedQuery._id) partialBalanceOptions.hint =  { _id: 1 };
+    const result = (await transactionModel.collection.aggregate([match, GROUP], partialBalanceOptions).toArray())[0];
 
     let balance = 0;
     let notes = 0;
