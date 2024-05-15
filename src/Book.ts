@@ -109,7 +109,13 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
 
     const partialBalanceOptions = { ...options };
     // If using a balance snapshot then make sure to use the appropriate (default "_id_") index for the additional balance calc.
-    if (parsedQuery._id) partialBalanceOptions.hint =  { _id: 1 };
+    if (parsedQuery._id && balanceSnapshot) {
+      const lastTransactionDate =  balanceSnapshot.transaction.getTimestamp();
+      if (lastTransactionDate.getTime() + this.expireBalanceSnapshotSec * 1000 > Date.now()) {
+        // last transaction for this balance was just recently, then let's use the "_id" index as it will likely be faster than any other.
+        partialBalanceOptions.hint =  { _id: 1 };
+      }
+    }
     const result = (await transactionModel.collection.aggregate([match, GROUP], partialBalanceOptions).toArray())[0];
 
     let balance = 0;
