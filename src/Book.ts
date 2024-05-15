@@ -22,7 +22,6 @@ const GROUP = {
     _id: null,
     balance: { $sum: { $subtract: ["$credit", "$debit"] } },
     notes: { $sum: 1 },
-    lastTransactionId: { $max: "$_id" },
   },
 };
 
@@ -110,6 +109,9 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     const partialBalanceOptions = { ...options };
     // If using a balance snapshot then make sure to use the appropriate (default "_id_") index for the additional balance calc.
     if (parsedQuery._id) partialBalanceOptions.hint =  { _id: 1 };
+    const lastCheckedTransaction = await transactionModel.collection
+      .findOne({}, { ...partialBalanceOptions, projection: { _id: 1 }, sort: { _id: -1 } });
+    const lastCheckedTransactionId = lastCheckedTransaction?._id;
     const result = (await transactionModel.collection.aggregate([match, GROUP], partialBalanceOptions).toArray())[0];
 
     let balance = 0;
@@ -124,8 +126,8 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
       balance += parseFloat(result.balance.toFixed(this.precision));
       notes += result.notes;
 
-      // We can do snapshots only if there is at least one entry for this balance
-      if (this.balanceSnapshotSec && result.lastTransactionId) {
+      // We can do snapshots only if there is at least one entry
+      if (this.balanceSnapshotSec && lastCheckedTransactionId) {
         // It's the first (ever?) snapshot for this balance. We just need to save whatever we've just aggregated
         // so that the very next balance query would use cached snapshot.
         if (!balanceSnapshot) {
@@ -134,7 +136,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
               book: this.name,
               account: accountForBalanceSnapshot,
               meta,
-              transaction: result.lastTransactionId,
+              transaction: lastCheckedTransactionId,
               balance,
               notes,
               expireInSec: this.expireBalanceSnapshotSec,
@@ -166,7 +168,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
                     book: this.name,
                     account: accountForBalanceSnapshot,
                     meta,
-                    transaction: resultFull.lastTransactionId,
+                    transaction: lastCheckedTransactionId,
                     balance: parseFloat(resultFull.balance.toFixed(this.precision)),
                     notes: resultFull.notes,
                     expireInSec: this.expireBalanceSnapshotSec,
