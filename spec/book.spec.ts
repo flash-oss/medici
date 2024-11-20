@@ -591,7 +591,7 @@ describe("book", function () {
       await book.void(journal._id.toString());
     });
 
-    it("should void string journal IDs without original date", async () => {
+    it("should have balance unchanged immediately after event date, when voiding event", async () => {
       const justBeforeDate = new Date("2000-02-20T00:01:00.000Z");
       const date = new Date("2000-02-20T00:02:00.000Z");
       const justAfterDate = new Date("2000-02-20T00:03:00.000Z");
@@ -602,24 +602,24 @@ describe("book", function () {
         .credit("Income:RentVoid", 700)
         .commit();
 
-      const balance = await book.balance({ account: "Assets:ReceivableVoid", start_date: justBeforeDate, end_date: justAfterDate });
-      expect(balance.balance).to.be.equal(-700);
+      const balanceAfterEvent = await book.balance({ account: "Assets:ReceivableVoid", start_date: justBeforeDate, end_date: justAfterDate });
+      expect(balanceAfterEvent.balance).to.be.equal(-700);
       
-      await book.void(journal._id.toString(), undefined, undefined, false);
+      await book.void(journal._id.toString());
       
       // need to delete the balance snapshots to test the balance after as the query is similar
       await balanceModel.deleteMany({ book: book.name });
 
-      const balance2 = await book.balance({ account: "Assets:ReceivableVoid", start_date: justBeforeDate, end_date: oneDayAfter });
-      expect(balance2.balance).to.be.equal(-700);
+      const balanceAfterVoidingBeforeVoidingDate = await book.balance({ account: "Assets:ReceivableVoid", start_date: justBeforeDate, end_date: oneDayAfter });
+      expect(balanceAfterVoidingBeforeVoidingDate.balance).to.be.equal(-700);
       
       await balanceModel.deleteMany({ book: book.name });
       
-      const balance3 = await book.balance({ account: "Assets:ReceivableVoid" });
-      expect(balance3.balance).to.be.equal(0);
+      const balanceAfterVoidingAfterVoidingDate = await book.balance({ account: "Assets:ReceivableVoid" });
+      expect(balanceAfterVoidingAfterVoidingDate.balance).to.be.equal(0);
     });
 
-    it("should void string journal IDs with original date", async () => {
+    it("should have balance changed immediately after event date, when void journal keeps date of original journal", async () => {
       const justBeforeDate = new Date("2000-02-20T00:01:00.000Z");
       const date = new Date("2000-02-20T00:02:00.000Z");
       const justAfterDate = new Date("2000-02-20T00:03:00.000Z");
@@ -630,16 +630,16 @@ describe("book", function () {
         .credit("Income:RentVoid2", 700)
         .commit();
 
-      const balance = await book.balance({ account: "Assets:ReceivableVoid2", start_date: justBeforeDate, end_date: justAfterDate });
-      expect(balance.balance).to.be.equal(-700);
+      const balanceBeforeVoiding = await book.balance({ account: "Assets:ReceivableVoid2", start_date: justBeforeDate, end_date: justAfterDate });
+      expect(balanceBeforeVoiding.balance).to.be.equal(-700);
 
       await book.void(journal._id.toString(), undefined, undefined, true);
-
+      
       // need to delete the balance snapshots to test the balance after void
       await balanceModel.deleteMany({ book: book.name });
 
-      const balance2 = await book.balance({ account: "Assets:ReceivableVoid2", start_date: justAfterDate, end_date: oneDayAfter });
-      expect(balance2.balance).to.be.equal(0);
+      const balanceAfterVoidingAfterEventDate = await book.balance({ account: "Assets:ReceivableVoid2", start_date: justAfterDate, end_date: oneDayAfter });
+      expect(balanceAfterVoidingAfterEventDate.balance).to.be.equal(0);
     });
   });
 
