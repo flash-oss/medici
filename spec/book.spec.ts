@@ -602,19 +602,27 @@ describe("book", function () {
         .credit("Income:RentVoid", 700)
         .commit();
 
-      const balanceAfterEvent = await book.balance({ account: "Assets:ReceivableVoid", start_date: justBeforeDate, end_date: justAfterDate });
+      const balanceAfterEvent = await book.balance({
+        account: "Assets:ReceivableVoid",
+        start_date: justBeforeDate,
+        end_date: justAfterDate,
+      });
       expect(balanceAfterEvent.balance).to.be.equal(-700);
-      
+
       await book.void(journal._id.toString());
-      
+
       // need to delete the balance snapshots to test the balance after as the query is similar
       await balanceModel.deleteMany({ book: book.name });
 
-      const balanceAfterVoidingBeforeVoidingDate = await book.balance({ account: "Assets:ReceivableVoid", start_date: justBeforeDate, end_date: oneDayAfter });
+      const balanceAfterVoidingBeforeVoidingDate = await book.balance({
+        account: "Assets:ReceivableVoid",
+        start_date: justBeforeDate,
+        end_date: oneDayAfter,
+      });
       expect(balanceAfterVoidingBeforeVoidingDate.balance).to.be.equal(-700);
-      
+
       await balanceModel.deleteMany({ book: book.name });
-      
+
       const balanceAfterVoidingAfterVoidingDate = await book.balance({ account: "Assets:ReceivableVoid" });
       expect(balanceAfterVoidingAfterVoidingDate.balance).to.be.equal(0);
     });
@@ -630,15 +638,23 @@ describe("book", function () {
         .credit("Income:RentVoid2", 700)
         .commit();
 
-      const balanceBeforeVoiding = await book.balance({ account: "Assets:ReceivableVoid2", start_date: justBeforeDate, end_date: justAfterDate });
+      const balanceBeforeVoiding = await book.balance({
+        account: "Assets:ReceivableVoid2",
+        start_date: justBeforeDate,
+        end_date: justAfterDate,
+      });
       expect(balanceBeforeVoiding.balance).to.be.equal(-700);
 
       await book.void(journal._id.toString(), undefined, undefined, true);
-      
+
       // need to delete the balance snapshots to test the balance after void
       await balanceModel.deleteMany({ book: book.name });
 
-      const balanceAfterVoidingAfterEventDate = await book.balance({ account: "Assets:ReceivableVoid2", start_date: justAfterDate, end_date: oneDayAfter });
+      const balanceAfterVoidingAfterEventDate = await book.balance({
+        account: "Assets:ReceivableVoid2",
+        start_date: justAfterDate,
+        end_date: oneDayAfter,
+      });
       expect(balanceAfterVoidingAfterEventDate.balance).to.be.equal(0);
     });
   });
