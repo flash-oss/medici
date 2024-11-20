@@ -229,7 +229,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     };
   }
 
-  async void(journal_id: string | Types.ObjectId, reason?: undefined | string, options = {} as IOptions) {
+  async void(journal_id: string | Types.ObjectId, reason?: undefined | string, options = {} as IOptions, use_original_date = false) {
     journal_id = typeof journal_id === "string" ? new Types.ObjectId(journal_id) : journal_id;
 
     const journal = await journalModel.collection.findOne(
@@ -245,6 +245,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
           memo: true,
           void_reason: true,
           voided: true,
+          datetime: true,
         },
       }
     );
@@ -266,7 +267,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
       throw new MediciError(`Transactions for journal ${journal._id} not found on book ${journal.book}`);
     }
 
-    const entry = this.entry(reason, null, journal_id);
+    const entry = this.entry(reason, use_original_date ? journal.datetime : null, journal_id);
 
     addReversedTransactions(entry, transactions as ITransaction[]);
 
