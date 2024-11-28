@@ -110,10 +110,10 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     const partialBalanceOptions = { ...options };
     // If using a balance snapshot then make sure to use the appropriate (default "_id_") index for the additional balance calc.
     if (parsedQuery._id && balanceSnapshot) {
-      const lastTransactionDate =  balanceSnapshot.transaction.getTimestamp();
+      const lastTransactionDate = balanceSnapshot.transaction.getTimestamp();
       if (lastTransactionDate.getTime() + this.expireBalanceSnapshotSec * 1000 > Date.now()) {
         // last transaction for this balance was just recently, then let's use the "_id" index as it will likely be faster than any other.
-        partialBalanceOptions.hint =  { _id: 1 };
+        partialBalanceOptions.hint = { _id: 1 };
       }
     }
     const result = (await transactionModel.collection.aggregate([match, GROUP], partialBalanceOptions).toArray())[0];
@@ -229,7 +229,12 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     };
   }
 
-  async void(journal_id: string | Types.ObjectId, reason?: undefined | string, options = {} as IOptions) {
+  async void(
+    journal_id: string | Types.ObjectId,
+    reason?: undefined | string,
+    options = {} as IOptions,
+    use_original_date = false
+  ) {
     journal_id = typeof journal_id === "string" ? new Types.ObjectId(journal_id) : journal_id;
 
     const journal = await journalModel.collection.findOne(
@@ -245,6 +250,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
           memo: true,
           void_reason: true,
           voided: true,
+          datetime: true,
         },
       }
     );
@@ -266,7 +272,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
       throw new MediciError(`Transactions for journal ${journal._id} not found on book ${journal.book}`);
     }
 
-    const entry = this.entry(reason, null, journal_id);
+    const entry = this.entry(reason, use_original_date ? journal.datetime : null, journal_id);
 
     addReversedTransactions(entry, transactions as ITransaction[]);
 

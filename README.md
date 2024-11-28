@@ -106,6 +106,10 @@ await myBook.void("5eadfd84d7d587fb794eaacb", "I made a mistake");
 
 If you do not specify a void reason, the system will set the memo of the new journal to the original journal's memo prepended with "[VOID]".
 
+By default, voided journals will have the `datetime` set to the current date and time (at the time of voiding). Optionally, you can set `use_original_date` to `true` to use the original journal's `datetime` instead (`book.void(journal_id, void_reason, {}, true)`).
+
+**Known Issue:** Note that, when using the original date, the cached balances will be out of sync until they are recalculated (within 48 hours at most). Check this [discussion](https://github.com/flash-oss/medici/issues/117) for more details.
+
 ## ACID checks of an account balance
 
 Sometimes you need to guarantee that an account balance never goes negative. You can employ MongoDB ACID transactions for that. As of 2022 the recommended way is to use special Medici writelock mechanism. See comments in the code example below.
