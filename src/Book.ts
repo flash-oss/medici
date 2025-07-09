@@ -213,12 +213,18 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
           timestamp: -1,
         },
         session: options.session,
+        readPreference: options.readPreference,
+        readConcern: options.readConcern,
       })
       .toArray();
 
     let countPromise = Promise.resolve(0);
     if (paginationOptions.limit) {
-      countPromise = transactionModel.collection.countDocuments(filterQuery, { session: options.session });
+      countPromise = transactionModel.collection.countDocuments(filterQuery, {
+        session: options.session,
+        readPreference: options.readPreference,
+        readConcern: options.readConcern,
+      });
     }
 
     const results = (await findPromise) as T[];
@@ -244,6 +250,8 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
       },
       {
         session: options.session,
+        readPreference: options.readPreference,
+        readConcern: options.readConcern,
         projection: {
           _id: true,
           _transactions: true,
@@ -266,7 +274,11 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     reason = handleVoidMemo(reason, journal.memo);
 
     // Not using options.session here as this read operation is not necessary to be in the ACID session.
-    const transactions = await transactionModel.collection.find({ _journal: journal._id }).toArray();
+    const transactions = await transactionModel.collection.find({ _journal: journal._id }, {
+      session: options.session,
+      readPreference: options.readPreference,
+      readConcern: options.readConcern,
+    }).toArray();
 
     if (transactions.length !== journal._transactions.length) {
       throw new MediciError(`Transactions for journal ${journal._id} not found on book ${journal.book}`);
@@ -340,7 +352,10 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     const distinctResult = await transactionModel.collection.distinct(
       "accounts",
       { book: this.name },
-      { session: options.session }
+      { session: options.session,
+        readPreference: options.readPreference,
+        readConcern: options.readConcern,
+      }
     );
     const accountsSet: Set<string> = new Set();
     for (const fullAccountName of distinctResult) {
