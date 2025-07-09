@@ -274,11 +274,16 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     reason = handleVoidMemo(reason, journal.memo);
 
     // Not using options.session here as this read operation is not necessary to be in the ACID session.
-    const transactions = await transactionModel.collection.find({ _journal: journal._id }, {
-      session: options.session,
-      readPreference: options.readPreference,
-      readConcern: options.readConcern,
-    }).toArray();
+    const transactions = await transactionModel.collection
+      .find(
+        { _journal: journal._id },
+        {
+          session: options.session,
+          readPreference: options.readPreference,
+          readConcern: options.readConcern,
+        }
+      )
+      .toArray();
 
     if (transactions.length !== journal._transactions.length) {
       throw new MediciError(`Transactions for journal ${journal._id} not found on book ${journal.book}`);
@@ -352,7 +357,7 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     const distinctResult = await transactionModel.collection.distinct(
       "accounts",
       { book: this.name },
-      { 
+      {
         session: options.session,
         readPreference: options.readPreference,
         readConcern: options.readConcern,
