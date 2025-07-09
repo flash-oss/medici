@@ -352,7 +352,8 @@ export class Book<U extends ITransaction = ITransaction, J extends IJournal = IJ
     const distinctResult = await transactionModel.collection.distinct(
       "accounts",
       { book: this.name },
-      { session: options.session,
+      { 
+        session: options.session,
         readPreference: options.readPreference,
         readConcern: options.readConcern,
       }
