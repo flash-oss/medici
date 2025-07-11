@@ -94,6 +94,38 @@ const { results, total } = await myBook.ledger({
 });
 ```
 
+## Customizing `readConcern` for Reads
+
+Medici supports passing a custom MongoDB `readConcern` level when performing read operations such as `.balance()` or `.ledger()`. This is especially important when you're using MongoDB in a replica set configuration, where consistency and availability trade-offs must be considered.
+
+#### Example:
+
+```js
+const { balance } = await myBook.balance(
+  { account: "Assets:Cash" },
+  { readConcern: "local" } // Options: "local", "majority", "available", etc.
+);
+```
+
+```js
+const { results, total } = await myBook.ledger(
+  { account: "Income" },
+  { readConcern: "local" }
+);
+```
+
+#### ⚠️ Important Note on `readConcern: "majority"`
+
+Using `readConcern: "majority"` in production has led to serious issues in MongoDB replica set environments, including:
+
+- Negative balances appearing unexpectedly  
+- Recently credited transactions missing from balance queries  
+- Inconsistent ledger reads during failovers or secondary lag  
+
+These issues are caused by delays in replica set propagation, where majority-acknowledged reads may not reflect the latest writes. Since Medici relies on up-to-date read accuracy to maintain ledger integrity, stale reads can break fundamental accounting guarantees.
+
+Switching to `readConcern: "local"` resolved all issues by ensuring reads are performed from the primary node, even if they are not yet acknowledged by the majority.
+
 ## Voiding Journal Entries
 
 Sometimes you will make an entry that turns out to be inaccurate or that otherwise needs to be voided. Keeping with traditional double-entry accounting, instead of simply deleting that journal entry, Medici instead will mark the entry as "voided", and then add an equal, opposite journal entry to offset the transactions in the original. This gives you a clear picture of all actions taken with your book.
