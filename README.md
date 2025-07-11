@@ -377,6 +377,14 @@ For more information, see [Performance Best Practices: Indexing](https://www.mon
 
 ## Changelog
 
+### 7.2
+
+- support MongoDB's `readConcern` in `book.ledger()`, `book.void()`, `book.listAccounts()` and `.entry.commit()`. #120 
+
+### 7.1
+
+- option to use date of original entry for the voiding instead of the current date. #118
+
 ### 7.0
 
 Unluckily, all the **default** indexes were suboptimal. The `book` property always had the lowest cardinality. However, we always query by the `book` first and then by some other properties. Thus all the default indexes were near useless.
