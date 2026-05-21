@@ -4,6 +4,7 @@ jobs:
   test:
     name: Node ${{ matrix.node }}, Mongo ${{ matrix.mongodb-version }}, on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -30,3 +31,6 @@ jobs:
       - run: npm run ci-mongoose6
       - run: npm run ci-mongoose7
       - run: npm run ci-mongoose8
+      # mongoose 9 requires Node >= 20, so skip this step on older Node versions
+      - if: matrix.node >= 20
+        run: npm run ci-mongoose9

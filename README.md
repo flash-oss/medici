@@ -377,6 +377,10 @@ For more information, see [Performance Best Practices: Indexing](https://www.mon
 
 ## Changelog
 
+### 7.3
+
+- Add `mongoose` v9 support.
+
 ### 7.2
 
 - support MongoDB's `readConcern` in `book.ledger()`, `book.void()`, `book.listAccounts()` and `.entry.commit()`. #120 
