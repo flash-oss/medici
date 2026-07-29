@@ -12,6 +12,8 @@ export type IBalanceQuery = {
   account?: string | string[];
   start_date?: Date | string | number;
   end_date?: Date | string | number;
+  start_tx_id?: Types.ObjectId;
+  end_tx_id?: Types.ObjectId;
 } & {
   [key: string]: string[] | number | string | Date | boolean | Types.ObjectId | IAnyObject;
 };
@@ -23,7 +25,7 @@ export function parseBalanceQuery(
   query: IBalanceQuery,
   book: Pick<Book, "name"> & Partial<Pick<Book, "maxAccountPath">>
 ): IFilter {
-  const { account, start_date, end_date, ...extra } = query;
+  const { account, start_date, end_date, start_tx_id, end_tx_id, ...extra } = query;
 
   const filterQuery: IFilter = {
     book: book.name,
@@ -32,6 +34,17 @@ export function parseBalanceQuery(
 
   if (start_date || end_date) {
     filterQuery["datetime"] = parseDateQuery(start_date, end_date);
+  }
+
+  if (start_tx_id || end_tx_id) {
+    const q : { $gt?: Types.ObjectId; $lte?: Types.ObjectId; } = {};
+    if (start_tx_id) {
+      q.$gt = start_tx_id
+    }
+    if (end_tx_id) {
+      q.$lte = end_tx_id
+    }
+    filterQuery["_id"] = q;
   }
 
   const meta: IAnyObject = {};

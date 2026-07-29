@@ -77,7 +77,16 @@ const { balance } = await myBook.balance({
 console.log("Joe Blow owes me", balance);
 ```
 
-Note that the `meta` query parameters are on the same level as the default query parameters (account, \_journal, start_date, end_date). Medici parses the query and automatically turns any values that do not match top-level schema properties into meta parameters.
+Note that the `meta` query parameters are on the same level as the default query parameters (account, \_journal, start_date, end_date, start_tx_id, end_tx_id). Medici parses the query and automatically turns any values that do not match top-level schema properties into meta parameters.
+
+You can also get balance by transaction `_id` range using `start_tx_id` (exclusive, `$gt`) and `end_tx_id` (inclusive, `$lte`). This is handy to retrieve a balance for a certain ledger transaction.
+
+```js
+const { results, total } = await myBook.balance({
+  account: "Income",
+  end_tx_id: lastSeenTransactionId,
+});
+```
 
 ## Retrieving Transactions
 
@@ -376,6 +385,10 @@ db.getSiblingDB("my_db_name").getCollection("medici_transactions").createIndex({
 For more information, see [Performance Best Practices: Indexing](https://www.mongodb.com/blog/post/performance-best-practices-indexing)
 
 ## Changelog
+
+### 7.4
+
+- changed `book.balance()` arguments - added `start_tx_id` (exclusive) and `end_tx_id` (inclusive) query parameters to filter transactions by `_id` range.
 
 ### 7.3
 

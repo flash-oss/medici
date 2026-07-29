@@ -66,6 +66,52 @@ describe("parseBalanceQuery", () => {
     expect(result.datetime["$lte"].getTime()).to.be.equal(999);
   });
 
+  it("should handle start_tx_id correctly", () => {
+    const start_tx_id = new Types.ObjectId();
+    const result = parseBalanceQuery({ start_tx_id }, { name: "MyBook" });
+    expect(result).to.deep.equal({
+      book: "MyBook",
+      _id: { $gt: start_tx_id },
+    });
+  });
+
+  it("should handle end_tx_id correctly", () => {
+    const end_tx_id = new Types.ObjectId();
+    const result = parseBalanceQuery({ end_tx_id }, { name: "MyBook" });
+    expect(result).to.deep.equal({
+      book: "MyBook",
+      _id: { $lte: end_tx_id },
+    });
+  });
+
+  it("should handle start_tx_id and end_tx_id correctly", () => {
+    const start_tx_id = new Types.ObjectId();
+    const end_tx_id = new Types.ObjectId();
+    const result = parseBalanceQuery({ start_tx_id, end_tx_id }, { name: "MyBook" });
+    expect(result).to.deep.equal({
+      book: "MyBook",
+      _id: { $gt: start_tx_id, $lte: end_tx_id },
+    });
+  });
+
+  it("should handle start_tx_id, end_tx_id together with date range correctly", () => {
+    const start_tx_id = new Types.ObjectId();
+    const end_tx_id = new Types.ObjectId();
+    const start_date = new Date(666);
+    const end_date = new Date(999);
+    const result = parseBalanceQuery({ start_tx_id, end_tx_id, start_date, end_date }, { name: "MyBook" });
+    expect(result).to.deep.equal({
+      book: "MyBook",
+      datetime: { $gte: new Date(666), $lte: new Date(999) },
+      _id: { $gt: start_tx_id, $lte: end_tx_id },
+    });
+  });
+
+  it("should not set _id when neither start_tx_id nor end_tx_id are provided", () => {
+    const result = parseBalanceQuery({}, { name: "MyBook" });
+    expect(result).to.not.have.property("_id");
+  });
+
   it("should handle meta correctly", () => {
     const clientId = "619af485cd56547936847584";
     let bookmarked = true;
